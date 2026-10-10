@@ -98,6 +98,104 @@
     "D17",
     "D17 - LIPOMAS"
    ]
+  ],
+  "CONSULTA EM NEUROLOGIA - ADULTO": [
+   [
+    "G40",
+    "EPILEPSIA E CONVULSÕES"
+   ],
+   [
+    "G41",
+    "EPILEPSIA E CONVULSÕES"
+   ],
+   [
+    "R56",
+    "EPILEPSIA E CONVULSÕES"
+   ],
+   [
+    "R51",
+    "CEFALEIAS"
+   ],
+   [
+    "G43",
+    "CEFALEIAS"
+   ],
+   [
+    "G44",
+    "CEFALEIAS"
+   ],
+   [
+    "I6",
+    "DOENÇA CEREBROVASCULAR"
+   ],
+   [
+    "G45",
+    "DOENÇA CEREBROVASCULAR"
+   ],
+   [
+    "G46",
+    "DOENÇA CEREBROVASCULAR"
+   ],
+   [
+    "F00",
+    "DEMÊNCIA E DÉFICIT COGNITIVO"
+   ],
+   [
+    "F01",
+    "DEMÊNCIA E DÉFICIT COGNITIVO"
+   ],
+   [
+    "F02",
+    "DEMÊNCIA E DÉFICIT COGNITIVO"
+   ],
+   [
+    "F03",
+    "DEMÊNCIA E DÉFICIT COGNITIVO"
+   ],
+   [
+    "G30",
+    "DEMÊNCIA E DÉFICIT COGNITIVO"
+   ],
+   [
+    "G31",
+    "DEMÊNCIA E DÉFICIT COGNITIVO"
+   ],
+   [
+    "R41",
+    "DEMÊNCIA E DÉFICIT COGNITIVO"
+   ],
+   [
+    "G20",
+    "PARKINSON E TRANSTORNOS DO MOVIMENTO"
+   ],
+   [
+    "G21",
+    "PARKINSON E TRANSTORNOS DO MOVIMENTO"
+   ],
+   [
+    "G22",
+    "PARKINSON E TRANSTORNOS DO MOVIMENTO"
+   ],
+   [
+    "G23",
+    "PARKINSON E TRANSTORNOS DO MOVIMENTO"
+   ],
+   [
+    "G24",
+    "PARKINSON E TRANSTORNOS DO MOVIMENTO"
+   ],
+   [
+    "G25",
+    "PARKINSON E TRANSTORNOS DO MOVIMENTO"
+   ],
+   [
+    "G26",
+    "PARKINSON E TRANSTORNOS DO MOVIMENTO"
+   ],
+   [
+    "R25",
+    "PARKINSON E TRANSTORNOS DO MOVIMENTO"
+   ]
   ]
  },
  "notas": {

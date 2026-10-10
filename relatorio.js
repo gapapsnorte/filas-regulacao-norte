@@ -84,7 +84,12 @@
     cids.forEach(([c, n]) => { const g = grupos.find(([pr]) => c.startsWith(pr)); somaG[g ? g[1] : "OUTROS CIDS"] += n; });
     const totC = Object.values(somaG).reduce((a, b) => a + b, 0) || 1;
     r.cids = Object.entries(somaG).map(([g, n]) => ({grupo: g, n, pct: Math.round(n / totC * 1000) / 10}));
-    r.cidsDetalhe = cids.sort((a, b) => b[1] - a[1]);
+    const grupoDe = c => { const g = grupos.find(([pr]) => c.startsWith(pr)); return g ? g[1] : "OUTROS CIDS"; };
+    r.cidsDetalhe = cids.sort((a, b) => b[1] - a[1]).map(([c, n]) => [c, n, grupoDe(c)]);
+    let acum = 0;
+    r.topCids = r.cidsDetalhe.slice(0, 15).map(([c, n, g]) => { acum += n; return {c, n, pct: n / totC * 100, acum: acum / totC * 100, g}; });
+    r.restoCids = {qt: Math.max(cids.length - 15, 0), n: totC - acum};
+    r.totFila = totC;
 
     // Figura 4 e Tabela 1 – devolvidas
     const nivel = u => { for (const [p, n, dest] of REF.niveis) if (casa(p, u)) return [n, dest]; return ["OUTROS", false]; };
@@ -171,7 +176,11 @@
       f4: `Figura 4 – Proporção de solicitações devolvidas de ${r.nome} na Região Norte`,
       n4: [FONTE, `Nota: Dados extraídos em ${e}. Rótulos apresentam número absoluto e percentual em relação ao total de ${fmt(r.totDev)} solicitações devolvidas.` +
         (r.notas.destacadas.length ? " DIRASE inclui Policlínicas, CEO, NUFIRF e CAPS; unidades com 5% ou mais das devolvidas aparecem separadas." : "")],
-      t1: `Tabela 1 – Distribuição das solicitações devolvidas de ${r.nome} na APS, por UBS`,
+      tc: `Tabela 1 – CIDs mais frequentes nas solicitações pendentes em ${r.nome}`,
+      ntc: [FONTE, `Nota: Dados extraídos em ${e}. Percentuais em relação às ${fmt(r.totFila)} solicitações pendentes e reenviadas.` +
+        (r.restoCids.qt ? ` Os demais ${fmt(r.restoCids.qt)} CIDs somam ${fmt(r.restoCids.n)} solicitações (${fmt(r.restoCids.n / Math.max(r.totFila, 1) * 100, 1)}%).` : "") +
+        " CIDs registrados com e sem subcategoria (ex.: G40 e G400) aparecem separados, como no Mapa Social."],
+      t1: `Tabela 2 – Distribuição das solicitações devolvidas de ${r.nome} na APS, por UBS`,
       nt1: [FONTE, nt],
       rascunho: "[Rascunho para revisão] ",
     };
@@ -279,6 +288,7 @@
     const novaPag = () => { doc.addPage("a4", "portrait"); W = 210; M = 25; y = 22; };
     const imagem = (url, larg, alt) => { if (y + alt > (W > 250 ? 200 : 285)) novaPag(); doc.addImage(url, "PNG", (W - larg) / 2, y, larg, alt); y += alt + 3; };
     const rodape = ls => { ls.forEach((l, i) => texto(l, 10, {depois: i === ls.length - 1 ? 5 : 0})); };
+    const garantir = h => { if (y + h > (W > 250 ? 200 : 285)) novaPag(); };  // mantém título junto da figura/tabela
     const rascunho = t => texto(N.rascunho + t, 11, {realce: true, depois: 7});
 
     texto(N.titulo, 12, {negrito: true, centro: true, depois: 6});
@@ -300,13 +310,24 @@
     });
     y = doc.lastAutoTable.finalY + 4;
     rodape(N.n2); rascunho(r.textos.fig2);
-    texto(N.f3, 12, {depois: 2});
+    garantir(115); texto(N.f3, 12, {depois: 2});
     imagem(graficoCids(r), 140, 100.6);
-    rodape(N.n3); rascunho(r.textos.fig3);
-    texto(N.f4, 12, {depois: 2});
+    rodape(N.n3);
+    garantir(45); texto(N.tc, 12, {depois: 3});
+    doc.autoTable({
+      startY: y, margin: {left: M, right: M}, theme: "grid",
+      styles: {font: "times", fontSize: 8.5, textColor: 0, lineColor: 120, lineWidth: 0.2, cellPadding: 0.8},
+      headStyles: {fillColor: 255, textColor: 0, fontStyle: "bold", halign: "center", fontSize: 9.5},
+      columnStyles: {0: {halign: "left", cellWidth: 70}, 1: {halign: "right"}, 2: {halign: "right"}, 3: {halign: "right"}, 4: {halign: "left"}},
+      head: [["CID", "Solicitações", "%", "% acumulado", "Grupo na Figura 3"]],
+      body: r.topCids.map(x => [x.c, fmt(x.n), fmt(x.pct, 1) + "%", fmt(x.acum, 1) + "%", x.g]),
+    });
+    y = doc.lastAutoTable.finalY + 4;
+    rodape(N.ntc); rascunho(r.textos.fig3);
+    garantir(115); texto(N.f4, 12, {depois: 2});
     imagem(graficoNiveis(r), 140, 100.6);
     rodape(N.n4);
-    texto(N.t1, 12, {depois: 3});
+    garantir(45); texto(N.t1, 12, {depois: 3});
     doc.autoTable({
       startY: y, margin: {left: M, right: M}, theme: "grid",
       styles: {font: "times", fontSize: 9, textColor: 0, lineColor: 120, lineWidth: 0.2, cellPadding: 0.8},
@@ -350,12 +371,17 @@
         cel(x.esf != null ? fmt(x.esf) : "", {...o9, al: R_}), cel(x.taxa != null ? fmt(x.taxa, 2) : "", {...o9, al: R_})]})),
       new D.TableRow({children: [cel("TOTAL", {...o9, al: L_}), cel(fmt(r.totAps), {...o9, al: R_}), cel("100,00%", {...o9, al: R_}), cel(fmt(r.esfTotal), {...o9, al: R_}), cel(fmt(r.totAps / r.esfTotal, 2), {...o9, al: R_})]}),
     ]});
+    const tCid = new D.Table({alignment: D.AlignmentType.CENTER, columnWidths: [3900, 1150, 900, 1250, 2050], rows: [
+      new D.TableRow({tableHeader: true, children: ["CID", "Solicitações", "%", "% acumulado", "Grupo na Figura 3"].map(t => cel(t, {fonte: "Times New Roman", tam: 10, negrito: true}))}),
+      ...r.topCids.map(x => new D.TableRow({children: [cel(x.c, {...o9, al: L_}), cel(fmt(x.n), {...o9, al: R_}), cel(fmt(x.pct, 1) + "%", {...o9, al: R_}),
+        cel(fmt(x.acum, 1) + "%", {...o9, al: R_}), cel(x.g, {...o9, al: L_})]})),
+    ]});
     const doc = new D.Document({sections: [
       {properties: {page: {size: {orientation: D.PageOrientation.LANDSCAPE, width: 16838, height: 11906}, margin: {top: 1000, bottom: 1000, left: 1134, right: 1134}}},
         children: [par(N.titulo, {negrito: true, centro: true, depois: 18}), par(N.f1, {depois: 4}), img(graficoSerie(r), 940, 393), ...rodape(N.n1), rascunho(r.textos.fig1)]},
       {properties: {page: {size: {orientation: D.PageOrientation.PORTRAIT, width: 11906, height: 16838}, margin: {top: 1134, bottom: 1134, left: 1417, right: 1417}}},
         children: [par(N.f2, {depois: 6}), tRisco, ...rodape(N.n2), rascunho(r.textos.fig2),
-          par(N.f3, {depois: 4}), img(graficoCids(r), 540, 388), ...rodape(N.n3), rascunho(r.textos.fig3),
+          par(N.f3, {depois: 4}), img(graficoCids(r), 540, 388), ...rodape(N.n3), par(N.tc, {antes: 6, depois: 6}), tCid, ...rodape(N.ntc), rascunho(r.textos.fig3),
           par(N.f4, {depois: 4}), img(graficoNiveis(r), 540, 388), ...rodape(N.n4),
           par(N.t1, {antes: 6, depois: 6}), tUbs, ...rodape(N.nt1), rascunho(r.textos.fig4)]},
     ]});
@@ -374,13 +400,13 @@
     aba("Tempo de espera por risco", [["Classificação", "Mais antiga", "Solicitações", "Tempo de espera em DIAS"], ...r.risco.map(x => [x.cor, x.antiga, x.n, x.dias ?? ""]),
       ["TOTAL", "", r.risco.reduce((a, x) => a + x.n, 0), ""]], [14, 12, 12, 22]);
     aba("CIDs (grupos)", [["Grupo", "Solicitações", "%"], ...r.cids.map(x => [x.grupo, x.n, x.pct])], [45, 12, 8]);
-    aba("CIDs (detalhe)", [["CID", "Solicitações pendentes/reenviadas"], ...r.cidsDetalhe], [80, 30]);
+    aba("CIDs (detalhe)", [["CID", "Solicitações pendentes/reenviadas", "Grupo na Figura 3"], ...r.cidsDetalhe], [80, 30, 40]);
     aba("Devolvidas por nível", [["Nível", "Solicitações", "%"], ...r.niveis.map(x => [x.nivel, x.n, x.pct])], [24, 12, 8]);
     aba("Devolvidas por unidade", [["Unidade solicitante", "Nível / fatia", "Solicitações devolvidas"], ...r.devUnidade.map(x => [x.u, x.nivel, x.n])], [32, 22, 22]);
     aba("Devolvidas APS por UBS", [["UNIDADE", "Número de solicitações", "Percentual da APS", "Quantidade de eSF", "Solicitações por eSF"],
       ...r.ubs.map(x => [x.u, x.n, Math.round(x.pct * 100) / 100, x.esf ?? "", x.taxa != null ? Math.round(x.taxa * 100) / 100 : ""]),
       ["TOTAL", r.totAps, 100, r.esfTotal, Math.round(r.totAps / r.esfTotal * 100) / 100]], [26, 22, 18, 18, 20]);
-    aba("Notas", [[N.titulo], [""], ...[N.n1, N.n2, N.n3, N.n4, N.nt1].flat().map(t => [t])], [160]);
+    aba("Notas", [[N.titulo], [""], ...[N.n1, N.n2, N.n3, N.ntc, N.n4, N.nt1].flat().map(t => [t])], [160]);
     aba("Avisos", [["Avisos para revisão"], ...(r.avisos.length ? r.avisos : ["Nenhum"]).map(a => [a])], [140]);
     X.writeFile(wb, `Bases e tabelas - ${r.nome} (${r.extracao.toLocaleDateString("pt-BR").replace(/\//g, "-")}).xlsx`);
   }
