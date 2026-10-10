@@ -90,6 +90,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
   <select id="alerta">
     <option value="">Com ou sem alerta</option>
     <option value="qualquer">Só com alertas</option>
+    <option value="nenhum">Só sem alertas</option>
     <option value="crescendo">Fila crescendo</option>
     <option value="esperando">Espera acima da meta</option>
     <option value="parada">Fila parada</option>
@@ -178,7 +179,7 @@ function item(f){
 function filtrar(){
   const q=norm($("busca").value.trim()), t=$("tipo").value, al=$("alerta").value, o=$("ordem").value;
   let L=D.filas.filter(f=>(!q||norm(f.p).includes(q))&&(!t||f.tipo===t)&&
-    (!al || (al==="qualquer" ? f.alertas.length : f.alertas.some(a=>TIPO_ALERTA[al].test(a)))));
+    (!al || (al==="qualquer" ? f.alertas.length : al==="nenhum" ? !f.alertas.length : f.alertas.some(a=>TIPO_ALERTA[al].test(a)))));
   const k={fila:f=>-f.fila,espera:f=>-(f.espera_max||0),saldo:f=>-f.saldo12,devolvidas:f=>-f.devolvidas};
   L.sort(o==="nome"?(a,b)=>a.p.localeCompare(b.p,"pt"):(a,b)=>k[o](a)-k[o](b));
   return L;
