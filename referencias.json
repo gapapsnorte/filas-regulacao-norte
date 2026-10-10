@@ -195,6 +195,34 @@
    [
     "R25",
     "PARKINSON E TRANSTORNOS DO MOVIMENTO"
+   ],
+   [
+    "R42",
+    "TONTURA E SÍNCOPE"
+   ],
+   [
+    "R55",
+    "TONTURA E SÍNCOPE"
+   ],
+   [
+    "H81",
+    "TONTURA E SÍNCOPE"
+   ],
+   [
+    "F7",
+    "NEURODESENVOLVIMENTO"
+   ],
+   [
+    "F84",
+    "NEURODESENVOLVIMENTO"
+   ],
+   [
+    "F90",
+    "NEURODESENVOLVIMENTO"
+   ],
+   [
+    "G80",
+    "NEURODESENVOLVIMENTO"
    ]
   ]
  },

@@ -278,7 +278,7 @@
     return c.toDataURL("image/png");
   }
   const graficoCids = r => pizza(r.cids.map(x => x.n), r.cids.map(x => x.grupo),
-    [...["#4472C4", "#ED7D31", "#FF0000", "#7F7F7F", "#70AD47"].slice(0, r.cids.length - 1), "#FFC000"], (v, t) => `${Math.round(v / t * 100)}%`);
+    [...["#4472C4", "#ED7D31", "#FF0000", "#7F7F7F", "#70AD47", "#7030A0", "#00B0F0", "#9E480E", "#264478"].slice(0, r.cids.length - 1), "#FFC000"], (v, t) => `${Math.round(v / t * 100)}%`);
   function graficoNiveis(r) {
     const base = {APS: "#70AD47", DIRASE: "#2F5597", HRS: "#FF0000", HRPL: "#C00000", UPA: "#FFC000", OUTROS: "#7F7F7F"};
     const extra = ["#7030A0", "#00B0F0", "#A5A5A5", "#264478"]; let k = 0;
