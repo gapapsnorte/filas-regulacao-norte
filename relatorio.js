@@ -162,7 +162,7 @@
     if (r.notas.semDev.length) nt += " UBS sem solicitações devolvidas: " + r.notas.semDev.join(", ") + ".";
     nt += ` Total de eSF da Região Norte: ${r.esfTotal}.`;
     return {
-      titulo: `Análise da fila de Consulta em ${r.nome} - Região Norte`,
+      titulo: `Análise da fila de ${/^CONSULTA/i.test(r.p) ? "Consulta em " : ""}${r.nome} - Região Norte`,
       f1: `Figura 1 – Comportamento da fila de ${r.nome}`,
       n1: [FONTE, `Nota: Dados extraídos em ${e}, referentes ao período de ${MESES_EXT[MESES.indexOf(m0)]} de 20${a0} a ${MESES_EXT[MESES.indexOf(m1)]} de 20${a1}.`],
       f2: `Figura 2 – Tempo de espera por prioridade em ${r.nome}`, n2,
