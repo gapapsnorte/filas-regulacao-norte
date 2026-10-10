@@ -78,7 +78,7 @@
         const desc = (cids.find(([c]) => c.startsWith(k)) || [k])[0].split(" - ").slice(1).join(" - ") || k;
         return [k, `${k} - ${desc.length > 35 ? desc.slice(0, 35).replace(/[ ,]+$/, "") + "..." : desc}`];
       });
-      r.avisos.push("Sem grupos de CID definidos para este procedimento: a Figura 3 usa as 3 categorias mais frequentes (" + top.join(", ") + ").");
+      r.avisos.push("Sem grupos de CID definidos para este procedimento: a Figura 3.1 usa as 3 categorias mais frequentes (" + top.join(", ") + ").");
     }
     const somaG = {}; grupos.forEach(([, g]) => somaG[g] = 0); somaG["OUTROS CIDS"] = 0;
     cids.forEach(([c, n]) => { const g = grupos.find(([pr]) => c.startsWith(pr)); somaG[g ? g[1] : "OUTROS CIDS"] += n; });
@@ -187,17 +187,17 @@
       f1: `Figura 1 – Comportamento da fila de ${r.nome}`,
       n1: [FONTE, `Nota: Dados extraídos em ${e}, referentes ao período de ${MESES_EXT[MESES.indexOf(m0)]} de 20${a0} a ${MESES_EXT[MESES.indexOf(m1)]} de 20${a1}.`],
       f2: `Figura 2 – Tempo de espera por prioridade em ${r.nome}`, n2,
-      f3: `Figura 3 – Distribuição de solicitações pendentes em ${r.nome} por Código Internacional de Doenças (CID)`,
+      f3: `Figura 3.1 – Distribuição de solicitações pendentes em ${r.nome} por Código Internacional de Doenças (CID)`,
       n3: [FONTE, `Nota: Dados extraídos em ${e}.`],
       f4: `Figura 4 – Proporção de solicitações devolvidas de ${r.nome} na Região Norte`,
       n4: [FONTE, `Nota: Dados extraídos em ${e}. Rótulos apresentam número absoluto e percentual em relação ao total de ${fmt(r.totDev)} solicitações devolvidas.` +
         (r.notas.destacadas.length ? " DIRASE inclui Policlínicas, CEO, NUFIRF e CAPS; unidades com 5% ou mais das devolvidas aparecem separadas." : "")],
-      tc: `Tabela 1 – Categorias de CID mais frequentes nas solicitações pendentes em ${r.nome}`,
+      tc: `Figura 3.2 – Detalhamento das categorias de CID mais frequentes nas solicitações pendentes em ${r.nome}`,
       ntc: [FONTE, `Nota: Dados extraídos em ${e}. Percentuais em relação às ${fmt(r.totFila)} solicitações pendentes e reenviadas.` +
-        " Categorias do CID (3 caracteres) numeradas de 1 a 15; abaixo de cada uma, as subcategorias registradas (1.1, 1.2...)." +
+        " As 15 categorias do CID (3 caracteres) mais frequentes aparecem em negrito; abaixo de cada uma, recuadas, as subcategorias registradas." +
         (r.restoCids.qt ? ` As demais ${fmt(r.restoCids.qt)} categorias somam ${fmt(r.restoCids.n)} solicitações (${fmt(r.restoCids.n / Math.max(r.totFila, 1) * 100, 1)}%).` : "") +
 ""],
-      t1: `Tabela 2 – Distribuição das solicitações devolvidas de ${r.nome} na APS, por UBS`,
+      t1: `Tabela 1 – Distribuição das solicitações devolvidas de ${r.nome} na APS, por UBS`,
       nt1: [FONTE, nt],
       rascunho: "[Rascunho para revisão] ",
     };
@@ -335,10 +335,10 @@
       startY: y, margin: {left: M, right: M}, theme: "grid",
       styles: {font: "times", fontSize: 8.5, textColor: 0, lineColor: 120, lineWidth: 0.2, cellPadding: 0.8},
       headStyles: {fillColor: 255, textColor: 0, fontStyle: "bold", halign: "center", fontSize: 9.5},
-      columnStyles: {0: {halign: "left", cellWidth: 9}, 1: {halign: "left", cellWidth: 66}, 2: {halign: "right"}, 3: {halign: "right"}, 4: {halign: "right"}, 5: {halign: "left"}},
-      head: [["Nº", "CID", "Solicitações", "%", "% acum.", "Grupo na Figura 3"]],
-      body: r.topCids.map(x => [x.num, x.cat ? x.c : "   " + x.c, fmt(x.n), fmt(x.pct, 1) + "%", x.acum != null ? fmt(x.acum, 1) + "%" : "", x.g]),
-      didParseCell: h => { if (h.section === "body" && h.row.raw[0].indexOf(".") < 0) { h.cell.styles.fontStyle = "bold"; h.cell.styles.fillColor = 242; } },
+      columnStyles: {0: {halign: "left", cellWidth: 72}, 1: {halign: "right"}, 2: {halign: "right"}, 3: {halign: "right"}, 4: {halign: "left"}},
+      head: [["CID", "Solicitações", "%", "% acum.", "Grupo na Figura 3.1"]],
+      body: r.topCids.map(x => [x.cat ? x.c : "      " + x.c, fmt(x.n), fmt(x.pct, 1) + "%", x.acum != null ? fmt(x.acum, 1) + "%" : "", x.g]),
+      didParseCell: h => { if (h.section === "body" && r.topCids[h.row.index].cat) { h.cell.styles.fontStyle = "bold"; h.cell.styles.fillColor = 242; } },
     });
     y = doc.lastAutoTable.finalY + 4;
     rodape(N.ntc); rascunho(r.textos.fig3);
@@ -389,10 +389,10 @@
         cel(x.esf != null ? fmt(x.esf) : "", {...o9, al: R_}), cel(x.taxa != null ? fmt(x.taxa, 2) : "", {...o9, al: R_})]})),
       new D.TableRow({children: [cel("TOTAL", {...o9, al: L_}), cel(fmt(r.totAps), {...o9, al: R_}), cel("100,00%", {...o9, al: R_}), cel(fmt(r.esfTotal), {...o9, al: R_}), cel(fmt(r.totAps / r.esfTotal, 2), {...o9, al: R_})]}),
     ]});
-    const tCid = new D.Table({alignment: D.AlignmentType.CENTER, columnWidths: [550, 3600, 1100, 800, 1000, 2050], rows: [
-      new D.TableRow({tableHeader: true, children: ["Nº", "CID", "Solicitações", "%", "% acum.", "Grupo na Figura 3"].map(t => cel(t, {fonte: "Times New Roman", tam: 10, negrito: true}))}),
+    const tCid = new D.Table({alignment: D.AlignmentType.CENTER, columnWidths: [4150, 1100, 800, 1000, 2050], rows: [
+      new D.TableRow({tableHeader: true, children: ["CID", "Solicitações", "%", "% acum.", "Grupo na Figura 3.1"].map(t => cel(t, {fonte: "Times New Roman", tam: 10, negrito: true}))}),
       ...r.topCids.map(x => { const o = {...o9, negrito: x.cat, fill: x.cat ? "F2F2F2" : undefined};
-        return new D.TableRow({children: [cel(x.num, {...o, al: L_}), cel(x.cat ? x.c : "    " + x.c, {...o, al: L_}), cel(fmt(x.n), {...o, al: R_}),
+        return new D.TableRow({children: [cel(x.cat ? x.c : "      " + x.c, {...o, al: L_}), cel(fmt(x.n), {...o, al: R_}),
           cel(fmt(x.pct, 1) + "%", {...o, al: R_}), cel(x.acum != null ? fmt(x.acum, 1) + "%" : "", {...o, al: R_}), cel(x.g, {...o, al: L_})]}); }),
     ]});
     const doc = new D.Document({sections: [
@@ -418,10 +418,10 @@
     aba("Saldo Regulatório", [["Mês/Ano", "INPUT", "OUTPUT", "SALDO REGULATÓRIO"], ...r.serie.meses.map((m, i) => [m, r.serie.in[i], r.serie.out[i], r.serie.saldo[i]])], [10, 10, 10, 20]);
     aba("Tempo de espera por risco", [["Classificação", "Mais antiga", "Solicitações", "Tempo de espera em DIAS"], ...r.risco.map(x => [x.cor, x.antiga, x.n, x.dias ?? ""]),
       ["TOTAL", "", r.risco.reduce((a, x) => a + x.n, 0), ""]], [14, 12, 12, 22]);
-    aba("CIDs (grupos)", [["Grupo", "Solicitações", "%"], ...r.cids.map(x => [x.grupo, x.n, x.pct])], [45, 12, 8]);
-    aba("CIDs mais frequentes", [["Nº", "CID", "Solicitações", "%", "% acumulado", "Grupo na Figura 3"],
-      ...r.topCids.map(x => [x.num, x.c, x.n, Math.round(x.pct * 10) / 10, x.acum != null ? Math.round(x.acum * 10) / 10 : "", x.g])], [6, 80, 12, 8, 12, 36]);
-    aba("CIDs (detalhe)", [["CID", "Solicitações pendentes/reenviadas", "Grupo na Figura 3"], ...r.cidsDetalhe], [80, 30, 40]);
+    aba("Figura 3.1 CIDs grupos", [["Grupo", "Solicitações", "%"], ...r.cids.map(x => [x.grupo, x.n, x.pct])], [45, 12, 8]);
+    aba("Figura 3.2 CIDs detalhe", [["Nível", "CID", "Solicitações", "%", "% acumulado", "Grupo na Figura 3.1"],
+      ...r.topCids.map(x => [x.cat ? "Categoria" : "Subcategoria", x.c, x.n, Math.round(x.pct * 10) / 10, x.acum != null ? Math.round(x.acum * 10) / 10 : "", x.g])], [13, 80, 12, 8, 12, 36]);
+    aba("CIDs (todos)", [["CID", "Solicitações pendentes/reenviadas", "Grupo na Figura 3.1"], ...r.cidsDetalhe], [80, 30, 40]);
     aba("Devolvidas por nível", [["Nível", "Solicitações", "%"], ...r.niveis.map(x => [x.nivel, x.n, x.pct])], [24, 12, 8]);
     aba("Devolvidas por unidade", [["Unidade solicitante", "Nível / fatia", "Solicitações devolvidas"], ...r.devUnidade.map(x => [x.u, x.nivel, x.n])], [32, 22, 22]);
     aba("Devolvidas APS por UBS", [["UNIDADE", "Número de solicitações", "Percentual da APS", "Quantidade de eSF", "Solicitações por eSF"],
