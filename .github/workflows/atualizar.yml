@@ -1,0 +1,31 @@
+name: Atualizar painel
+on:
+  schedule:
+    - cron: "0 9 * * *"   # 6h em Brasília
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install playwright==1.47.0 && python -m playwright install --with-deps chromium
+      - name: Coletar dados do Mapa Social
+        env:
+          MAPA_CHROME_CANAL: ""
+          PAINEL_DIR: ${{ github.workspace }}
+          TZ: America/Sao_Paulo
+        run: python coleta/painel.py
+      - name: Publicar (substitui a versão anterior, sem acumular histórico de dados)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan publicacao
+          git add -A
+          git commit -q -m "Painel – dados de $(TZ=America/Sao_Paulo date +%F)"
+          git push -f origin publicacao:main

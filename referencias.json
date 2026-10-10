@@ -1,0 +1,109 @@
+{
+ "esf": {
+  "UBS 1 - Fercal": 3,
+  "UBS 1 - Planaltina": 3,
+  "UBS 1 - Sobradinho": 7,
+  "UBS 1 - Sobradinho II": 4,
+  "UBS 10 - Planaltina": 1,
+  "UBS 11 - Planaltina": 1,
+  "UBS 12 - Planaltina": 1,
+  "UBS 13 - Planaltina": 1,
+  "UBS 14 - Planaltina": 1,
+  "UBS 15 - Planaltina": 1,
+  "UBS 16 - Planaltina": 1,
+  "UBS 17 - Planaltina": 2,
+  "UBS 18 - Planaltina": 2,
+  "UBS 19 - Planaltina": 1,
+  "UBS 2 - Fercal": 1,
+  "UBS 2 - Planaltina": 4,
+  "UBS 2 - Sobradinho": 8,
+  "UBS 2 - Sobradinho II": 7,
+  "UBS 20 - Planaltina": 6,
+  "UBS 3 - Fercal": 1,
+  "UBS 3 - Planaltina": 1,
+  "UBS 3 - Sobradinho": 6,
+  "UBS 3 - Sobradinho II": 1,
+  "UBS 4 - Planaltina": 10,
+  "UBS 4 - Sobradinho": 1,
+  "UBS 4 - Sobradinho II": 1,
+  "UBS 5 - Planaltina": 9,
+  "UBS 5 - Sobradinho": 1,
+  "UBS 5 - Sobradinho II": 2,
+  "UBS 6 - Planaltina": 3,
+  "UBS 6 - Sobradinho": 1,
+  "UBS 6 - Sobradinho II": 2,
+  "UBS 7 - Planaltina": 4,
+  "UBS 7 - Sobradinho II": 4,
+  "UBS 8 - Planaltina": 3,
+  "UBS 9 - Planaltina": 2
+ },
+ "niveis": [
+  [
+   "UBS*",
+   "APS",
+   false
+  ],
+  [
+   "PSR*",
+   "APS",
+   false
+  ],
+  [
+   "Policlínica*",
+   "DIRASE",
+   false
+  ],
+  [
+   "CEO*",
+   "DIRASE",
+   true
+  ],
+  [
+   "NUFIRF*",
+   "DIRASE",
+   true
+  ],
+  [
+   "CAPS*",
+   "DIRASE",
+   true
+  ],
+  [
+   "HRS",
+   "HRS",
+   false
+  ],
+  [
+   "HRPl",
+   "HRPL",
+   false
+  ],
+  [
+   "UPA*",
+   "UPA",
+   false
+  ]
+ ],
+ "grupos_cid": {
+  "CONSULTA EM CIRURGIA GERAL": [
+   [
+    "K4",
+    "K4 - HÉRNIAS"
+   ],
+   [
+    "K8",
+    "K8 - VESÍCULA E VIAS BILIARES"
+   ],
+   [
+    "D17",
+    "D17 - LIPOMAS"
+   ]
+  ]
+ },
+ "notas": {
+  "CONSULTA EM CIRURGIA GERAL": {
+   "nome": "Cirurgia Geral",
+   "azul": "Não há classificação de risco AZUL no Protocolo de Regulação para Acesso a Consultas em Cirurgia Geral e em Pequena Cirurgia, aprovado pela Portaria SES-DF Nº 79 de 02 de fevereiro de 2026, publicada no DODF Nº 29 de 12/02/2026."
+  }
+ }
+}

@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Filas de Regulação – Região Norte</title>
+<meta name="robots" content="noindex">
+<style>
+:root{
+  --bg:#f6f7f9;--card:#fff;--txt:#1d2430;--muted:#5b6575;--line:#e2e6ec;--accent:#1f5fa8;
+  --in:#1d2430;--out:#13915a;--saldo:#d33a2c;
+  --vermelho:#e0322b;--amarelo:#f2c200;--verde:#6cb33f;--azul:#1aa7e0;--semrisco:#9aa3af;
+  --alerta-bg:#fff4e5;--alerta-txt:#8a4b00;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12161c;--card:#1b2129;--txt:#e6e9ee;--muted:#9aa4b2;--line:#2c3440;--accent:#6ea8ff;
+  --in:#e6e9ee;--out:#3ccf8e;--saldo:#ff6b5e;--alerta-bg:#3a2a12;--alerta-txt:#ffc27a;}}
+:root[data-theme="dark"]{
+  --bg:#12161c;--card:#1b2129;--txt:#e6e9ee;--muted:#9aa4b2;--line:#2c3440;--accent:#6ea8ff;
+  --in:#e6e9ee;--out:#3ccf8e;--saldo:#ff6b5e;--alerta-bg:#3a2a12;--alerta-txt:#ffc27a;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 40px}
+header h1{font-size:1.45rem;margin:0}
+header p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
+.piloto{display:inline-block;background:var(--accent);color:#fff;border-radius:999px;padding:1px 9px;font-size:.75rem;font-weight:600;margin-left:6px;vertical-align:middle}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:18px 0}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.kpi b{display:block;font-size:1.5rem;font-variant-numeric:tabular-nums}
+.kpi span{color:var(--muted);font-size:.82rem}
+.ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.ctrl input[type=search]{flex:1 1 260px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt);font-size:.95rem}
+.ctrl select{padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt)}
+.ctrl label{font-size:.88rem;color:var(--muted);display:flex;gap:5px;align-items:center}
+.lista{display:flex;flex-direction:column;gap:8px}
+.fila{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer}
+.fila:hover{border-color:var(--accent)}
+.lin{display:grid;grid-template-columns:minmax(0,2.6fr) 80px minmax(0,2.2fr) 130px 120px;gap:12px;align-items:center}
+.nome{font-weight:600;font-size:.92rem;overflow-wrap:anywhere}
+.nome small{display:block;color:var(--muted);font-weight:400}
+.num{font-variant-numeric:tabular-nums;text-align:right}
+.num b{font-size:1.1rem}
+.num small{display:block;color:var(--muted);font-size:.75rem}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{display:inline-flex;gap:4px;align-items:center;border-radius:6px;padding:2px 7px;font-size:.78rem;font-variant-numeric:tabular-nums;color:#111}
+.chip.vermelho{background:var(--vermelho);color:#fff}.chip.amarelo{background:var(--amarelo)}.chip.verde{background:var(--verde)}
+.chip.azul{background:var(--azul)}.chip.semrisco{background:var(--semrisco)}
+.alertas{margin-top:6px;display:flex;flex-wrap:wrap;gap:5px}
+.alerta{background:var(--alerta-bg);color:var(--alerta-txt);border-radius:6px;padding:2px 8px;font-size:.78rem}
+.det{display:none;margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+.fila.aberta .det{display:block}
+.leg{display:flex;gap:14px;font-size:.8rem;color:var(--muted);margin:4px 0}
+.leg i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:4px}
+table.cores{border-collapse:collapse;font-size:.85rem;margin-top:8px}
+table.cores td,table.cores th{padding:4px 10px;border-bottom:1px solid var(--line);text-align:right}
+table.cores td:first-child,table.cores th:first-child{text-align:left}
+.gerar{margin-top:12px;padding:12px;border:1px dashed var(--line);border-radius:10px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;cursor:default}
+.gerar label{font-size:.85rem;color:var(--muted);display:flex;gap:6px;align-items:center;flex:1 1 240px}
+.gerar input{flex:1;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--txt)}
+.botoes{display:flex;gap:6px}
+.botoes button{padding:8px 16px;border-radius:7px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-weight:600;cursor:pointer}
+.botoes button:disabled{opacity:.5;cursor:wait}
+.gerar .status{flex-basis:100%;color:var(--muted)}
+footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid var(--line);padding-top:12px}
+.mais{display:block;margin:14px auto 0;padding:9px 18px;border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:8px;cursor:pointer}
+@media (max-width:760px){
+  .lin{grid-template-columns:1fr 1fr;grid-template-areas:"n n" "f s" "c c"}
+  .lin .nome{grid-area:n}.lin .f{grid-area:f;text-align:left}.lin .s{grid-area:s}.lin .c{grid-area:c}.lin .sp{display:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Filas de regulação – Região Norte <span class="piloto">versão piloto</span></h1>
+  <p>GAPAPS Norte · <span id="info">carregando…</span></p>
+</header>
+<section class="kpis" id="kpis"></section>
+<div class="ctrl">
+  <input type="search" id="busca" placeholder="Buscar procedimento (ex.: cirurgia, holter, oftalmo)">
+  <select id="tipo"><option value="">Todos os tipos</option></select>
+  <select id="ordem">
+    <option value="fila">Maior fila</option>
+    <option value="espera">Maior espera</option>
+    <option value="saldo">Maior saldo em 12 meses</option>
+    <option value="devolvidas">Mais devolvidas</option>
+    <option value="nome">Nome (A–Z)</option>
+  </select>
+  <label><input type="checkbox" id="soAlerta"> só com alertas</label>
+</div>
+<div class="lista" id="lista"></div>
+<button class="mais" id="mais" hidden>Mostrar mais</button>
+<footer>
+  <p><b>Fonte:</b> Mapa Social do Distrito Federal (MPDFT), painel público de regulação. Dados agregados por procedimento, sem identificação de usuários.</p>
+  <p><b>Como ler:</b> <i>Fila</i> = solicitações pendentes + reenviadas da Região Norte. Cores: Prioridade 1 = vermelho, 2 = amarelo, 3 = verde, 4 = azul; o número de dias é a espera da solicitação mais antiga de cada cor.
+  <i>Entrada</i> = solicitações pela data da solicitação (pendentes, reenviadas e agendadas); <i>saída</i> = agendamentos pela data do atendimento; <i>saldo</i> = entrada − saída, em meses completos.
+  O Mapa Social tem defasagem de cerca de 7 dias em relação ao SISREG, por isso os totais podem diferir.</p>
+  <p><b>Alertas:</b> saldo positivo em 9 ou mais dos últimos 12 meses; vermelho esperando há mais de 30 dias; fila parada (20+ solicitações aguardando, ninguém agendado nos últimos 3 meses nem marcado à frente). Os limites são referências gerais — conferir o protocolo de cada procedimento.</p>
+  <p>Versão piloto, atualizada automaticamente todos os dias.</p>
+</footer>
+</div>
+<script src="relatorio.js"></script>
+<script>
+const fmt = n => n == null ? "–" : n.toLocaleString("pt-BR");
+const COR = ["vermelho","amarelo","verde","azul","sem risco"];
+let D, vis = 60;
+const $ = id => document.getElementById(id);
+
+function spark(f, w=120, h=34){
+  const max = Math.max(1, ...f.in, ...f.out), n = f.in.length;
+  const pts = a => a.map((v,i)=>`${(i/(n-1)*w).toFixed(1)},${(h-2-(v/max)*(h-4)).toFixed(1)}`).join(" ");
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-label="Entrada e saída, 24 meses">
+    <polyline fill="none" stroke="var(--in)" stroke-width="1.4" points="${pts(f.in)}"/>
+    <polyline fill="none" stroke="var(--out)" stroke-width="1.4" points="${pts(f.out)}"/></svg>`;
+}
+function grafico(f){
+  const w=760,h=220,pl=40,pb=24,n=f.in.length, saldo=f.in.map((v,i)=>v-f.out[i]);
+  const all=[...f.in,...f.out,...saldo], mx=Math.max(1,...all), mn=Math.min(0,...all);
+  const X=i=>pl+i/(n-1)*(w-pl-8), Y=v=>8+(mx-v)/(mx-mn)*(h-pb-8);
+  const line=(a,c)=>`<polyline fill="none" stroke="${c}" stroke-width="2" points="${a.map((v,i)=>X(i)+","+Y(v)).join(" ")}"/>`;
+  let ticks="";
+  for(let i=0;i<n;i+=3) ticks+=`<text x="${X(i)}" y="${h-6}" font-size="10" text-anchor="middle" fill="var(--muted)">${D.meses[i]}</text>`;
+  const ys=[mn,0,mx].filter((v,i,a)=>a.indexOf(v)===i);
+  for(const v of ys) ticks+=`<text x="${pl-6}" y="${Y(v)+3}" font-size="10" text-anchor="end" fill="var(--muted)">${fmt(v)}</text><line x1="${pl}" x2="${w-8}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/>`;
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:${w}px">${ticks}${line(f.in,"var(--in)")}${line(f.out,"var(--out)")}${line(saldo,"var(--saldo)")}</svg>`;
+}
+function chips(f){
+  return COR.filter(c=>f.cores[c]).map(c=>{const k=f.cores[c];
+    return `<span class="chip ${c.replace(" ","")}" title="${c}: ${fmt(k.n)} solicitações; mais antiga de ${k.antiga?k.antiga.split("-").reverse().join("/"):"–"}">${fmt(k.n)}${k.dias!=null?" · "+fmt(k.dias)+" d":""}</span>`}).join("") || `<span style="color:var(--muted);font-size:.8rem">sem fila</span>`;
+}
+function item(f){
+  const linhas = COR.filter(c=>f.cores[c]).map(c=>{const k=f.cores[c];
+    return `<tr><td>${c}</td><td>${fmt(k.n)}</td><td>${k.antiga?k.antiga.split("-").reverse().join("/"):"–"}</td><td>${fmt(k.dias)}</td></tr>`}).join("");
+  return `<div class="fila" tabindex="0">
+   <div class="lin">
+     <div class="nome">${f.p}<small>${f.tipo||""}</small></div>
+     <div class="num f"><b>${fmt(f.fila)}</b><small>na fila</small></div>
+     <div class="c chips">${chips(f)}</div>
+     <div class="num s"><b style="color:${f.saldo12>0?"var(--saldo)":"var(--out)"}">${f.saldo12>0?"+":""}${fmt(f.saldo12)}</b><small>saldo 12 meses</small></div>
+     <div class="sp">${spark(f)}</div>
+   </div>
+   ${f.alertas.length?`<div class="alertas">${f.alertas.map(a=>`<span class="alerta">⚠ ${a}</span>`).join("")}</div>`:""}
+   <div class="det">
+     <div class="leg"><span><i style="background:var(--in)"></i>Entrada</span><span><i style="background:var(--out)"></i>Saída</span><span><i style="background:var(--saldo)"></i>Saldo</span></div>
+     ${grafico(f)}
+     <table class="cores"><tr><th>Prioridade</th><th>Solicitações</th><th>Mais antiga</th><th>Dias de espera</th></tr>${linhas}</table>
+     <p style="font-size:.85rem;color:var(--muted)">Devolvidas: ${fmt(f.devolvidas)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)}</p>
+     <div class="gerar" data-id="${f.id}" data-p="${f.p.replace(/"/g,"&quot;")}">
+       <b>Gerar análise completa</b>
+       <label>Nome nos títulos <input class="nome-curto" placeholder="ex.: Cirurgia Geral"></label>
+       <div class="botoes"><button data-f="pdf">PDF</button><button data-f="word">Word</button><button data-f="excel">Excel</button></div>
+       <small class="status"></small>
+     </div>
+   </div></div>`;
+}
+function render(){
+  const q=$("busca").value.trim().toUpperCase(), t=$("tipo").value, so=$("soAlerta").checked, o=$("ordem").value;
+  let L=D.filas.filter(f=>(!q||f.p.toUpperCase().includes(q))&&(!t||f.tipo===t)&&(!so||f.alertas.length));
+  const k={fila:f=>-f.fila,espera:f=>-(f.espera_max||0),saldo:f=>-f.saldo12,devolvidas:f=>-f.devolvidas};
+  L.sort(o==="nome"?(a,b)=>a.p.localeCompare(b.p,"pt"):(a,b)=>k[o](a)-k[o](b));
+  $("lista").innerHTML=L.slice(0,vis).map(item).join("")||"<p>Nenhuma fila encontrada.</p>";
+  $("mais").hidden=L.length<=vis;
+  $("mais").textContent=`Mostrar mais (${fmt(L.length-vis)} restantes)`;
+}
+fetch("dados.json",{cache:"no-store"}).then(r=>r.json()).then(d=>{
+  D=d;
+  $("info").textContent=`atualizado em ${d.gerado_em} · solicitações registradas até ${d.solicitacoes_ate}`;
+  const ativos=d.filas.filter(f=>f.fila>0);
+  $("kpis").innerHTML=[
+    [fmt(ativos.length),"filas com solicitações aguardando"],
+    [fmt(ativos.reduce((s,f)=>s+f.fila,0)),"solicitações na fila"],
+    [fmt(d.filas.filter(f=>f.alertas.length).length),"filas com alertas"],
+    [fmt(d.filas.reduce((s,f)=>s+f.devolvidas,0)),"solicitações devolvidas"]
+  ].map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join("");
+  [...new Set(d.filas.map(f=>f.tipo).filter(Boolean))].sort().forEach(t=>$("tipo").insertAdjacentHTML("beforeend",`<option>${t}</option>`));
+  render();
+});
+["busca","tipo","ordem","soAlerta"].forEach(id=>$(id).addEventListener("input",()=>{vis=60;render();}));
+$("mais").onclick=()=>{vis+=60;render();};
+$("lista").addEventListener("click",async e=>{
+  const g=e.target.closest(".gerar");
+  if(g){
+    const b=e.target.closest("button[data-f]"); if(!b) return;
+    const st=g.querySelector(".status"), bs=g.querySelectorAll("button");
+    bs.forEach(x=>x.disabled=true); st.textContent="Gerando… (a primeira vez pode levar alguns segundos)";
+    try{
+      const r=await window.gerarAnalise(g.dataset.id,b.dataset.f,g.querySelector(".nome-curto").value.trim()||null);
+      st.textContent="Pronto. O arquivo foi baixado."+(r.avisos.length?" Avisos: "+r.avisos.join(" | "):"");
+    }catch(err){st.textContent="Não foi possível gerar: "+err.message;}
+    bs.forEach(x=>x.disabled=false); return;
+  }
+  const c=e.target.closest(".fila"); if(c){c.classList.toggle("aberta");
+    const inp=c.querySelector(".nome-curto"); if(inp&&!inp.value&&window._analiseNomeCurto) inp.value=window._analiseNomeCurto(c.querySelector(".gerar").dataset.p);}
+});
+$("lista").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.target.closest(".gerar")){const c=e.target.closest(".fila"); if(c) c.classList.toggle("aberta");}});
+</script>
+</body>
+</html>
