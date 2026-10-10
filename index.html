@@ -5,36 +5,39 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Filas de Regulação – Região Norte</title>
 <meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f5fa8'/%3E%3Cpath d='M7 22l6-7 5 4 7-10' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
 :root{
   --bg:#f6f7f9;--card:#fff;--txt:#1d2430;--muted:#5b6575;--line:#e2e6ec;--accent:#1f5fa8;
   --in:#1d2430;--out:#13915a;--saldo:#d33a2c;
   --vermelho:#e0322b;--amarelo:#f2c200;--verde:#6cb33f;--azul:#1aa7e0;--semrisco:#9aa3af;
-  --alerta-bg:#fff4e5;--alerta-txt:#8a4b00;
+  --alerta-bg:#fff4e5;--alerta-txt:#8a4b00;--aviso-bg:#fdecec;--aviso-txt:#8f1d1d;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#12161c;--card:#1b2129;--txt:#e6e9ee;--muted:#9aa4b2;--line:#2c3440;--accent:#6ea8ff;
-  --in:#e6e9ee;--out:#3ccf8e;--saldo:#ff6b5e;--alerta-bg:#3a2a12;--alerta-txt:#ffc27a;}}
+  --in:#e6e9ee;--out:#3ccf8e;--saldo:#ff6b5e;--alerta-bg:#3a2a12;--alerta-txt:#ffc27a;--aviso-bg:#3d1b1b;--aviso-txt:#ffb3b3;}}
 :root[data-theme="dark"]{
   --bg:#12161c;--card:#1b2129;--txt:#e6e9ee;--muted:#9aa4b2;--line:#2c3440;--accent:#6ea8ff;
-  --in:#e6e9ee;--out:#3ccf8e;--saldo:#ff6b5e;--alerta-bg:#3a2a12;--alerta-txt:#ffc27a;}
+  --in:#e6e9ee;--out:#3ccf8e;--saldo:#ff6b5e;--alerta-bg:#3a2a12;--alerta-txt:#ffc27a;--aviso-bg:#3d1b1b;--aviso-txt:#ffb3b3;}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 .wrap{max-width:1180px;margin:0 auto;padding:20px 16px 40px}
 header h1{font-size:1.45rem;margin:0}
 header p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
 .piloto{display:inline-block;background:var(--accent);color:#fff;border-radius:999px;padding:1px 9px;font-size:.75rem;font-weight:600;margin-left:6px;vertical-align:middle}
+.aviso{background:var(--aviso-bg);color:var(--aviso-txt);border-radius:10px;padding:10px 14px;margin-top:12px;font-size:.9rem}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:18px 0}
 .kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
 .kpi b{display:block;font-size:1.5rem;font-variant-numeric:tabular-nums}
 .kpi span{color:var(--muted);font-size:.82rem}
 .ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
-.ctrl input[type=search]{flex:1 1 260px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt);font-size:.95rem}
-.ctrl select{padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt)}
-.ctrl label{font-size:.88rem;color:var(--muted);display:flex;gap:5px;align-items:center}
+.ctrl input[type=search]{flex:1 1 240px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt);font-size:.95rem}
+.ctrl select,.ctrl button{padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt);font-size:.9rem;cursor:pointer}
+.ctrl .cont{color:var(--muted);font-size:.85rem;margin-left:auto}
 .lista{display:flex;flex-direction:column;gap:8px}
 .fila{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer}
-.fila:hover{border-color:var(--accent)}
+.fila:hover,.fila:focus-visible{border-color:var(--accent);outline:none}
+.fila.destaque{box-shadow:0 0 0 2px var(--accent)}
 .lin{display:grid;grid-template-columns:minmax(0,2.6fr) 80px minmax(0,2.2fr) 130px 120px;gap:12px;align-items:center}
 .nome{font-weight:600;font-size:.92rem;overflow-wrap:anywhere}
 .nome small{display:block;color:var(--muted);font-weight:400}
@@ -54,11 +57,13 @@ header p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
 table.cores{border-collapse:collapse;font-size:.85rem;margin-top:8px}
 table.cores td,table.cores th{padding:4px 10px;border-bottom:1px solid var(--line);text-align:right}
 table.cores td:first-child,table.cores th:first-child{text-align:left}
+.acima{color:var(--saldo);font-weight:600}
 .gerar{margin-top:12px;padding:12px;border:1px dashed var(--line);border-radius:10px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;cursor:default}
 .gerar label{font-size:.85rem;color:var(--muted);display:flex;gap:6px;align-items:center;flex:1 1 240px}
 .gerar input{flex:1;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--txt)}
-.botoes{display:flex;gap:6px}
+.botoes{display:flex;gap:6px;flex-wrap:wrap}
 .botoes button{padding:8px 16px;border-radius:7px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-weight:600;cursor:pointer}
+.botoes button.sec{background:transparent;color:var(--accent)}
 .botoes button:disabled{opacity:.5;cursor:wait}
 .gerar .status{flex-basis:100%;color:var(--muted)}
 footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid var(--line);padding-top:12px}
@@ -66,6 +71,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 @media (max-width:760px){
   .lin{grid-template-columns:1fr 1fr;grid-template-areas:"n n" "f s" "c c"}
   .lin .nome{grid-area:n}.lin .f{grid-area:f;text-align:left}.lin .s{grid-area:s}.lin .c{grid-area:c}.lin .sp{display:none}
+  .ctrl .cont{margin-left:0;flex-basis:100%}
 }
 </style>
 </head>
@@ -74,11 +80,19 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 <header>
   <h1>Filas de regulação – Região Norte <span class="piloto">versão piloto</span></h1>
   <p>GAPAPS Norte · <span id="info">carregando…</span></p>
+  <div class="aviso" id="aviso" hidden></div>
 </header>
 <section class="kpis" id="kpis"></section>
 <div class="ctrl">
   <input type="search" id="busca" placeholder="Buscar procedimento (ex.: cirurgia, holter, oftalmo)">
   <select id="tipo"><option value="">Todos os tipos</option></select>
+  <select id="alerta">
+    <option value="">Com ou sem alerta</option>
+    <option value="qualquer">Só com alertas</option>
+    <option value="crescendo">Fila crescendo</option>
+    <option value="esperando">Espera acima da meta</option>
+    <option value="parada">Fila parada</option>
+  </select>
   <select id="ordem">
     <option value="fila">Maior fila</option>
     <option value="espera">Maior espera</option>
@@ -86,7 +100,8 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
     <option value="devolvidas">Mais devolvidas</option>
     <option value="nome">Nome (A–Z)</option>
   </select>
-  <label><input type="checkbox" id="soAlerta"> só com alertas</label>
+  <button id="baixar" title="Baixa a lista filtrada em Excel">Baixar lista (Excel)</button>
+  <span class="cont" id="cont"></span>
 </div>
 <div class="lista" id="lista"></div>
 <button class="mais" id="mais" hidden>Mostrar mais</button>
@@ -95,15 +110,20 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
   <p><b>Como ler:</b> <i>Fila</i> = solicitações pendentes + reenviadas da Região Norte. Cores: Prioridade 1 = vermelho, 2 = amarelo, 3 = verde, 4 = azul; o número de dias é a espera da solicitação mais antiga de cada cor.
   <i>Entrada</i> = solicitações pela data da solicitação (pendentes, reenviadas e agendadas); <i>saída</i> = agendamentos pela data do atendimento; <i>saldo</i> = entrada − saída, em meses completos.
   O Mapa Social tem defasagem de cerca de 7 dias em relação ao SISREG, por isso os totais podem diferir.</p>
-  <p><b>Alertas:</b> saldo positivo em 9 ou mais dos últimos 12 meses; vermelho esperando há mais de 30 dias; fila parada (20+ solicitações aguardando, ninguém agendado nos últimos 3 meses nem marcado à frente). Os limites são referências gerais — conferir o protocolo de cada procedimento.</p>
-  <p>Versão piloto, atualizada automaticamente todos os dias.</p>
+  <p><b>Alertas:</b> <i>fila crescendo</i> = saldo positivo em 9 ou mais dos últimos 12 meses; <i>espera acima da meta</i> = solicitação mais antiga de uma cor com espera maior que a meta do protocolo do procedimento (quando o protocolo não tem meta cadastrada, usa-se 30 dias para o vermelho como referência geral); <i>fila parada</i> = 20+ solicitações aguardando, ninguém agendado nos últimos 3 meses nem marcado à frente.</p>
+  <p><b>Gerar análise completa:</b> abra uma fila e escolha PDF, Word ou Excel. O documento segue a metodologia padronizada (Figuras 1 a 4 e Tabela 1); os parágrafos de interpretação saem em amarelo, como rascunho para revisão.</p>
+  <p>Versão piloto, atualizada automaticamente todos os dias às 6h.</p>
 </footer>
 </div>
 <script src="relatorio.js"></script>
 <script>
 const fmt = n => n == null ? "–" : n.toLocaleString("pt-BR");
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase();
+const dd = s => s ? s.split("-").reverse().join("/") : "–";
 const COR = ["vermelho","amarelo","verde","azul","sem risco"];
-let D, vis = 60;
+const TIPO_ALERTA = {crescendo:/^Fila crescendo/, esperando:/esperando há/, parada:/^Fila parada/};
+let D, vis = 60, ultimaLista = [];
 const $ = id => document.getElementById(id);
 
 function spark(f, w=120, h=34){
@@ -122,49 +142,79 @@ function grafico(f){
   for(let i=0;i<n;i+=3) ticks+=`<text x="${X(i)}" y="${h-6}" font-size="10" text-anchor="middle" fill="var(--muted)">${D.meses[i]}</text>`;
   const ys=[mn,0,mx].filter((v,i,a)=>a.indexOf(v)===i);
   for(const v of ys) ticks+=`<text x="${pl-6}" y="${Y(v)+3}" font-size="10" text-anchor="end" fill="var(--muted)">${fmt(v)}</text><line x1="${pl}" x2="${w-8}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/>`;
-  return `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:${w}px">${ticks}${line(f.in,"var(--in)")}${line(f.out,"var(--out)")}${line(saldo,"var(--saldo)")}</svg>`;
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:${w}px" role="img" aria-label="Entrada, saída e saldo mensais">${ticks}${line(f.in,"var(--in)")}${line(f.out,"var(--out)")}${line(saldo,"var(--saldo)")}</svg>`;
 }
 function chips(f){
   return COR.filter(c=>f.cores[c]).map(c=>{const k=f.cores[c];
-    return `<span class="chip ${c.replace(" ","")}" title="${c}: ${fmt(k.n)} solicitações; mais antiga de ${k.antiga?k.antiga.split("-").reverse().join("/"):"–"}">${fmt(k.n)}${k.dias!=null?" · "+fmt(k.dias)+" d":""}</span>`}).join("") || `<span style="color:var(--muted);font-size:.8rem">sem fila</span>`;
+    return `<span class="chip ${c.replace(" ","")}" title="${c}: ${fmt(k.n)} solicitações; mais antiga de ${dd(k.antiga)}">${fmt(k.n)}${k.dias!=null?" · "+fmt(k.dias)+" d":""}</span>`}).join("") || `<span style="color:var(--muted);font-size:.8rem">sem fila</span>`;
 }
 function item(f){
-  const linhas = COR.filter(c=>f.cores[c]).map(c=>{const k=f.cores[c];
-    return `<tr><td>${c}</td><td>${fmt(k.n)}</td><td>${k.antiga?k.antiga.split("-").reverse().join("/"):"–"}</td><td>${fmt(k.dias)}</td></tr>`}).join("");
-  return `<div class="fila" tabindex="0">
+  const meta = (window._analiseMeta && window._analiseMeta(f.p)) || {vermelho:30};
+  const linhas = COR.filter(c=>f.cores[c]).map(c=>{const k=f.cores[c], m=meta[c];
+    return `<tr><td>${c}</td><td>${fmt(k.n)}</td><td>${dd(k.antiga)}</td><td class="${m&&k.dias>m?"acima":""}">${fmt(k.dias)}</td><td>${m?fmt(m):"–"}</td></tr>`}).join("");
+  return `<div class="fila" tabindex="0" id="f-${f.id}" data-id="${f.id}">
    <div class="lin">
-     <div class="nome">${f.p}<small>${f.tipo||""}</small></div>
+     <div class="nome">${esc(f.p)}<small>${esc(f.tipo||"")}</small></div>
      <div class="num f"><b>${fmt(f.fila)}</b><small>na fila</small></div>
      <div class="c chips">${chips(f)}</div>
      <div class="num s"><b style="color:${f.saldo12>0?"var(--saldo)":"var(--out)"}">${f.saldo12>0?"+":""}${fmt(f.saldo12)}</b><small>saldo 12 meses</small></div>
      <div class="sp">${spark(f)}</div>
    </div>
-   ${f.alertas.length?`<div class="alertas">${f.alertas.map(a=>`<span class="alerta">⚠ ${a}</span>`).join("")}</div>`:""}
+   ${f.alertas.length?`<div class="alertas">${f.alertas.map(a=>`<span class="alerta">⚠ ${esc(a)}</span>`).join("")}</div>`:""}
    <div class="det">
      <div class="leg"><span><i style="background:var(--in)"></i>Entrada</span><span><i style="background:var(--out)"></i>Saída</span><span><i style="background:var(--saldo)"></i>Saldo</span></div>
      ${grafico(f)}
-     <table class="cores"><tr><th>Prioridade</th><th>Solicitações</th><th>Mais antiga</th><th>Dias de espera</th></tr>${linhas}</table>
-     <p style="font-size:.85rem;color:var(--muted)">Devolvidas: ${fmt(f.devolvidas)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)}</p>
-     <div class="gerar" data-id="${f.id}" data-p="${f.p.replace(/"/g,"&quot;")}">
+     <table class="cores"><tr><th>Prioridade</th><th>Solicitações</th><th>Mais antiga</th><th>Dias de espera</th><th>Meta (dias)</th></tr>${linhas}</table>
+     <p style="font-size:.85rem;color:var(--muted)">Devolvidas: ${fmt(f.devolvidas)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Meta: referência geral (protocolo sem meta cadastrada)"}</p>
+     <div class="gerar" data-id="${f.id}" data-p="${esc(f.p)}">
        <b>Gerar análise completa</b>
        <label>Nome nos títulos <input class="nome-curto" placeholder="ex.: Cirurgia Geral"></label>
-       <div class="botoes"><button data-f="pdf">PDF</button><button data-f="word">Word</button><button data-f="excel">Excel</button></div>
+       <div class="botoes"><button data-f="pdf">PDF</button><button data-f="word">Word</button><button data-f="excel">Excel</button><button class="sec" data-link="1" title="Copia o endereço desta fila">Copiar link</button></div>
        <small class="status"></small>
      </div>
    </div></div>`;
 }
-function render(){
-  const q=$("busca").value.trim().toUpperCase(), t=$("tipo").value, so=$("soAlerta").checked, o=$("ordem").value;
-  let L=D.filas.filter(f=>(!q||f.p.toUpperCase().includes(q))&&(!t||f.tipo===t)&&(!so||f.alertas.length));
+function filtrar(){
+  const q=norm($("busca").value.trim()), t=$("tipo").value, al=$("alerta").value, o=$("ordem").value;
+  let L=D.filas.filter(f=>(!q||norm(f.p).includes(q))&&(!t||f.tipo===t)&&
+    (!al || (al==="qualquer" ? f.alertas.length : f.alertas.some(a=>TIPO_ALERTA[al].test(a)))));
   const k={fila:f=>-f.fila,espera:f=>-(f.espera_max||0),saldo:f=>-f.saldo12,devolvidas:f=>-f.devolvidas};
   L.sort(o==="nome"?(a,b)=>a.p.localeCompare(b.p,"pt"):(a,b)=>k[o](a)-k[o](b));
+  return L;
+}
+function render(){
+  const L = ultimaLista = filtrar();
   $("lista").innerHTML=L.slice(0,vis).map(item).join("")||"<p>Nenhuma fila encontrada.</p>";
   $("mais").hidden=L.length<=vis;
   $("mais").textContent=`Mostrar mais (${fmt(L.length-vis)} restantes)`;
+  $("cont").textContent=`${fmt(L.length)} de ${fmt(D.filas.length)} filas`;
 }
-fetch("dados.json",{cache:"no-store"}).then(r=>r.json()).then(d=>{
+function abrir(c){
+  c.classList.add("aberta");
+  const inp=c.querySelector(".nome-curto"); if(inp&&!inp.value&&window._analiseNomeCurto) inp.value=window._analiseNomeCurto(c.querySelector(".gerar").dataset.p);
+}
+function abrirPorHash(){
+  const id=(location.hash||"").replace(/^#f-?/,""); if(!id||!D) return;
+  const f=D.filas.find(x=>x.id===id); if(!f) return;
+  if(!ultimaLista.slice(0,vis).includes(f)){ $("busca").value=f.p; $("tipo").value=""; $("alerta").value=""; vis=60; render(); }
+  const c=$("f-"+id); if(c){ abrir(c); c.classList.add("destaque"); c.scrollIntoView({block:"start",behavior:"smooth"}); }
+}
+async function baixarLista(){
+  if(!window.XLSX) await new Promise((ok,er)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";s.onload=ok;s.onerror=er;document.head.appendChild(s);});
+  const L=filtrar(), cab=["Procedimento","Tipo","Na fila","Vermelho","Vermelho – dias","Amarelo","Amarelo – dias","Verde","Verde – dias","Azul","Azul – dias","Sem risco","Devolvidas","Saldo 12 meses","Agendados à frente","Alertas"];
+  const g=(f,c,k)=>f.cores[c]?f.cores[c][k]:"";
+  const linhas=L.map(f=>[f.p,f.tipo,f.fila,g(f,"vermelho","n"),g(f,"vermelho","dias"),g(f,"amarelo","n"),g(f,"amarelo","dias"),g(f,"verde","n"),g(f,"verde","dias"),g(f,"azul","n"),g(f,"azul","dias"),g(f,"sem risco","n"),f.devolvidas,f.saldo12,f.futuros,f.alertas.join(" | ")]);
+  const wb=XLSX.utils.book_new(), ws=XLSX.utils.aoa_to_sheet([cab,...linhas]);
+  ws["!cols"]=[{wch:50},{wch:10},{wch:9},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:11},{wch:13},{wch:14},{wch:80}];
+  XLSX.utils.book_append_sheet(wb,ws,"Filas");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Fonte","Mapa Social do Distrito Federal (MPDFT) – dados agregados"],["Atualizado em",D.gerado_em],["Solicitações registradas até",D.solicitacoes_ate],["Filtro",`${$("busca").value||"(todos)"} · ${$("tipo").value||"todos os tipos"} · ${$("alerta").options[$("alerta").selectedIndex].text}`],["Painel",location.href.split("#")[0]]]),"Leia-me");
+  XLSX.writeFile(wb,`Filas Região Norte (${D.data.split("-").reverse().join("-")}).xlsx`);
+}
+fetch("dados.json",{cache:"no-store"}).then(r=>{if(!r.ok) throw new Error(r.status); return r.json();}).then(d=>{
   D=d;
   $("info").textContent=`atualizado em ${d.gerado_em} · solicitações registradas até ${d.solicitacoes_ate}`;
+  const idade=(Date.now()-new Date(d.data+"T12:00:00"))/864e5;
+  if(idade>2){ $("aviso").hidden=false; $("aviso").textContent=`Atenção: os dados são de ${d.data.split("-").reverse().join("/")} (${Math.floor(idade)} dias). A atualização automática pode ter falhado.`; }
   const ativos=d.filas.filter(f=>f.fila>0);
   $("kpis").innerHTML=[
     [fmt(ativos.length),"filas com solicitações aguardando"],
@@ -172,16 +222,28 @@ fetch("dados.json",{cache:"no-store"}).then(r=>r.json()).then(d=>{
     [fmt(d.filas.filter(f=>f.alertas.length).length),"filas com alertas"],
     [fmt(d.filas.reduce((s,f)=>s+f.devolvidas,0)),"solicitações devolvidas"]
   ].map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join("");
-  [...new Set(d.filas.map(f=>f.tipo).filter(Boolean))].sort().forEach(t=>$("tipo").insertAdjacentHTML("beforeend",`<option>${t}</option>`));
-  render();
+  [...new Set(d.filas.map(f=>f.tipo).filter(Boolean))].sort().forEach(t=>$("tipo").insertAdjacentHTML("beforeend",`<option>${esc(t)}</option>`));
+  render(); abrirPorHash();
+}).catch(err=>{
+  $("info").textContent="não foi possível carregar os dados";
+  $("aviso").hidden=false; $("aviso").textContent="Erro ao carregar dados.json ("+err.message+"). Tente recarregar a página; se persistir, a atualização automática falhou.";
 });
-["busca","tipo","ordem","soAlerta"].forEach(id=>$(id).addEventListener("input",()=>{vis=60;render();}));
+["busca","tipo","alerta","ordem"].forEach(id=>$(id).addEventListener("input",()=>{vis=60;render();}));
 $("mais").onclick=()=>{vis+=60;render();};
+$("baixar").onclick=()=>baixarLista().catch(e=>alert("Não foi possível gerar a planilha: "+e.message));
+window.addEventListener("hashchange",abrirPorHash);
 $("lista").addEventListener("click",async e=>{
   const g=e.target.closest(".gerar");
   if(g){
-    const b=e.target.closest("button[data-f]"); if(!b) return;
-    const st=g.querySelector(".status"), bs=g.querySelectorAll("button");
+    const b=e.target.closest("button"); if(!b) return;
+    const st=g.querySelector(".status");
+    if(b.dataset.link){
+      const url=location.href.split("#")[0]+"#f-"+g.dataset.id;
+      try{ await navigator.clipboard.writeText(url); st.textContent="Link copiado: "+url; }
+      catch(_){ st.textContent="Copie o link: "+url; }
+      return;
+    }
+    const bs=g.querySelectorAll("button[data-f]");
     bs.forEach(x=>x.disabled=true); st.textContent="Gerando… (a primeira vez pode levar alguns segundos)";
     try{
       const r=await window.gerarAnalise(g.dataset.id,b.dataset.f,g.querySelector(".nome-curto").value.trim()||null);
@@ -189,10 +251,9 @@ $("lista").addEventListener("click",async e=>{
     }catch(err){st.textContent="Não foi possível gerar: "+err.message;}
     bs.forEach(x=>x.disabled=false); return;
   }
-  const c=e.target.closest(".fila"); if(c){c.classList.toggle("aberta");
-    const inp=c.querySelector(".nome-curto"); if(inp&&!inp.value&&window._analiseNomeCurto) inp.value=window._analiseNomeCurto(c.querySelector(".gerar").dataset.p);}
+  const c=e.target.closest(".fila"); if(c){ if(c.classList.contains("aberta")) c.classList.remove("aberta"); else abrir(c); }
 });
-$("lista").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.target.closest(".gerar")){const c=e.target.closest(".fila"); if(c) c.classList.toggle("aberta");}});
+$("lista").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.target.closest(".gerar")){const c=e.target.closest(".fila"); if(c){ if(c.classList.contains("aberta")) c.classList.remove("aberta"); else abrir(c); }}});
 </script>
 </body>
 </html>

@@ -135,6 +135,8 @@
     r.notas.ausentes = Object.keys(REF.esf).filter(u => !vistas.has(u));
     r.notas.semDev = Object.keys(REF.esf).filter(u => vistas.has(u) && !aps.some(([x]) => x === u));
     r.notas.azul = notaRef.azul || "";
+    r.meta = REF.metas && REF.metas[d.p] || null;
+    r.risco.forEach(x => { const m = r.meta && r.meta[x.cor.toLowerCase()]; x.meta = m || null; x.acima = !!(m && x.dias != null && x.dias > m); });
     const azul = r.risco[3].n;
     if (azul && r.notas.azul) r.avisos.push(`Há ${azul} solicitações AZUL na fila, embora a nota do procedimento diga que o protocolo não prevê azul.`);
     if (!r.notas.azul) r.avisos.push("Sem nota sobre a classificação de risco deste procedimento: confira no protocolo vigente se há classificação AZUL.");
@@ -163,6 +165,11 @@
     const tot = r.risco.reduce((a, x) => a + x.n, 0);
     t.fig2 = `A fila tem ${fmt(tot)} solicitações pendentes ou reenviadas.` + (tot ? " Por prioridade, " + r.risco.filter(x => x.n).map(x =>
       `${x.cor.toLowerCase()}: ${fmt(x.n)} (${fmt(x.n / tot * 100, 1)}%), a mais antiga de ${x.antiga}, com ${fmt(x.dias)} dias de espera`).join("; ") + "." : "");
+    if (r.meta && tot) {
+      const acima = r.risco.filter(x => x.n && x.acima), ok = r.risco.filter(x => x.n && x.meta && !x.acima);
+      t.fig2 += acima.length ? " Em relação às metas do protocolo, a espera máxima ultrapassa a meta em " + acima.map(x => `${x.cor.toLowerCase()} (${fmt(x.dias)} dias; meta de ${x.meta})`).join(", ") + "." : "";
+      t.fig2 += ok.length ? ` Dentro da meta: ${ok.map(x => x.cor.toLowerCase()).join(", ")}.` : "";
+    }
     t.fig3 = "Os principais grupos de CID são " + [...r.cids].sort((a, b) => b.n - a.n).filter(x => x.n).map(x => `${x.grupo} (${fmt(x.pct)}%)`).join(", ") + ".";
     const top = [...r.ubs].sort((a, b) => b.n - a.n).slice(0, 3);
     const tx = r.ubs.filter(x => x.taxa != null).sort((a, b) => b.taxa - a.taxa).slice(0, 3);
@@ -177,6 +184,7 @@
     const e = dataBr(r.extracao), s = r.serie, n = s.meses.length;
     const [m0, a0] = s.meses[0].split("/"), [m1, a1] = s.meses[n - 1].split("/");
     const n2 = [FONTE, `Nota: Dados extraídos em ${e}. Considera as solicitações pendentes e reenviadas; o tempo de espera vai da solicitação mais antiga de cada prioridade até a data da extração. O Mapa Social registra solicitações até ${r.solicAte} (defasagem de cerca de 7 dias em relação ao SISREG), por isso os totais podem diferir do SISREG.`];
+    if (r.meta) n2.push("Metas de tempo de espera do protocolo vigente (mediana): " + ["vermelho", "amarelo", "verde", "azul"].filter(c => r.meta[c]).map(c => `${c} até ${r.meta[c]} dias`).join(", ") + `. ${(r.meta.fonte || "").trim().replace(/\.$/, "")}.`);
     if (r.notas.azul) n2.push("*" + r.notas.azul);
     let nt = `Nota: Percentuais calculados em relação às ${fmt(r.totAps)} solicitações devolvidas provenientes da Atenção Primária.`;
     if (r.notas.ausentes.length) nt += " O Mapa Social não apresenta solicitações deste procedimento da(s) " + r.notas.ausentes.join(", ") + ".";
@@ -389,7 +397,7 @@
         cel(x.esf != null ? fmt(x.esf) : "", {...o9, al: R_}), cel(x.taxa != null ? fmt(x.taxa, 2) : "", {...o9, al: R_})]})),
       new D.TableRow({children: [cel("TOTAL", {...o9, al: L_}), cel(fmt(r.totAps), {...o9, al: R_}), cel("100,00%", {...o9, al: R_}), cel(fmt(r.esfTotal), {...o9, al: R_}), cel(fmt(r.totAps / r.esfTotal, 2), {...o9, al: R_})]}),
     ]});
-    const tCid = new D.Table({alignment: D.AlignmentType.CENTER, columnWidths: [4150, 1100, 800, 1000, 2050], rows: [
+    const tCid = new D.Table({alignment: D.AlignmentType.CENTER, columnWidths: [3700, 1400, 800, 1000, 2200], rows: [
       new D.TableRow({tableHeader: true, children: ["CID", "Solicitações", "%", "% acum.", "Grupo na Figura 3.1"].map(t => cel(t, {fonte: "Times New Roman", tam: 10, negrito: true}))}),
       ...r.topCids.map(x => { const o = {...o9, negrito: x.cat, fill: x.cat ? "F2F2F2" : undefined};
         return new D.TableRow({children: [cel(x.cat ? x.c : "      " + x.c, {...o, al: L_}), cel(fmt(x.n), {...o, al: R_}),
@@ -400,7 +408,7 @@
         children: [par(N.titulo, {negrito: true, centro: true, depois: 18}), par(N.f1, {depois: 4}), img(graficoSerie(r), 940, 393), ...rodape(N.n1), rascunho(r.textos.fig1)]},
       {properties: {page: {size: {orientation: D.PageOrientation.PORTRAIT, width: 11906, height: 16838}, margin: {top: 1134, bottom: 1134, left: 1417, right: 1417}}},
         children: [par(N.f2, {depois: 6}), tRisco, ...rodape(N.n2), rascunho(r.textos.fig2),
-          par(N.f3, {depois: 4}), img(graficoCids(r), 540, 388), ...rodape(N.n3), par(N.tc, {antes: 6, depois: 6}), tCid, ...rodape(N.ntc), rascunho(r.textos.fig3),
+          par(N.f3, {depois: 4}), img(graficoCids(r), 540, 388), ...rodape(N.n3), new D.Paragraph({pageBreakBefore: true, spacing: {after: 120}, children: [run(N.tc)]}), tCid, ...rodape(N.ntc), rascunho(r.textos.fig3),
           par(N.f4, {depois: 4}), img(graficoNiveis(r), 540, 388), ...rodape(N.n4),
           par(N.t1, {antes: 6, depois: 6}), tUbs, ...rodape(N.nt1), rascunho(r.textos.fig4)]},
     ]});
@@ -416,8 +424,9 @@
       ["Solicitações registradas até", r.solicAte], ["Fonte", "Mapa Social do Distrito Federal (MPDFT) – dados agregados, sem identificação de usuários"],
       ["Gerado pelo painel", location.href.split("#")[0]]], [30, 90]);
     aba("Saldo Regulatório", [["Mês/Ano", "INPUT", "OUTPUT", "SALDO REGULATÓRIO"], ...r.serie.meses.map((m, i) => [m, r.serie.in[i], r.serie.out[i], r.serie.saldo[i]])], [10, 10, 10, 20]);
-    aba("Tempo de espera por risco", [["Classificação", "Mais antiga", "Solicitações", "Tempo de espera em DIAS"], ...r.risco.map(x => [x.cor, x.antiga, x.n, x.dias ?? ""]),
-      ["TOTAL", "", r.risco.reduce((a, x) => a + x.n, 0), ""]], [14, 12, 12, 22]);
+    aba("Tempo de espera por risco", [["Classificação", "Mais antiga", "Solicitações", "Tempo de espera em DIAS", "Meta do protocolo (dias)", "Acima da meta?"],
+      ...r.risco.map(x => [x.cor, x.antiga, x.n, x.dias ?? "", x.meta ?? "", x.meta && x.dias != null ? (x.acima ? "Sim" : "Não") : ""]),
+      ["TOTAL", "", r.risco.reduce((a, x) => a + x.n, 0), "", "", ""]], [14, 12, 12, 22, 22, 14]);
     aba("Figura 3.1 CIDs grupos", [["Grupo", "Solicitações", "%"], ...r.cids.map(x => [x.grupo, x.n, x.pct])], [45, 12, 8]);
     aba("Figura 3.2 CIDs detalhe", [["Nível", "CID", "Solicitações", "%", "% acumulado", "Grupo na Figura 3.1"],
       ...r.topCids.map(x => [x.cat ? "Categoria" : "Subcategoria", x.c, x.n, Math.round(x.pct * 10) / 10, x.acum != null ? Math.round(x.acum * 10) / 10 : "", x.g])], [13, 80, 12, 8, 12, 36]);
@@ -445,6 +454,7 @@
     return r;
   };
   fetch("referencias.json", {cache: "no-store"}).then(x => x.json()).then(j => { REF = REF || j; }).catch(() => {});
+  window._analiseMeta = p => REF && REF.metas && REF.metas[p] || null;
   window._analiseNomeCurto = p => (REF && REF.notas[p] && REF.notas[p].nome) || nomeCurto(p);
   window._analiseCalcular = async (id) => { if (!REF) REF = await (await fetch("referencias.json")).json(); return calcular(await (await fetch(`analises/${id}.json`)).json()); };
 })();

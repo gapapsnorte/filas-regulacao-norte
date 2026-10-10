@@ -10,7 +10,7 @@ Gera:
 import hashlib
 import json
 import os
-import shutil
+import sys
 from collections import defaultdict
 from datetime import date, datetime
 from pathlib import Path
@@ -25,6 +25,8 @@ DEV = '[status_solicitacao_solicitacao]={"*DEVOLVIDA*"}'
 MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
 CORES = {"Prioridade 1": "vermelho", "Prioridade 2": "amarelo", "Prioridade 3": "verde", "Prioridade 4": "azul"}
 N_PAINEL = 24          # meses mostrados no painel
+MIN_FILAS = 500        # abaixo disso a coleta é considerada falha (não publica)
+META_PADRAO = {"vermelho": 30}   # referência geral quando o protocolo não tem meta cadastrada
 ANOS_SERIE = 5         # série da análise: de janeiro de (ano - 5) até o mês anterior
 
 
@@ -61,7 +63,15 @@ def _valido(p):
     return p not in ("-", "")
 
 
-def montar(b, hoje):
+def metas_ref():
+    try:
+        return json.loads((PAINEL / "referencias.json").read_text(encoding="utf-8")).get("metas", {})
+    except (OSError, ValueError):
+        return {}
+
+
+def montar(b, hoje, metas=None):
+    metas = metas or {}
     fim = (hoje.year, hoje.month - 1) if hoje.month > 1 else (hoje.year - 1, 12)
     meses, a, mm = [], hoje.year - ANOS_SERIE, 1
     while (a, mm) <= fim:
@@ -123,9 +133,12 @@ def montar(b, hoje):
         alertas = []
         if pos >= 9:
             alertas.append("Fila crescendo: saldo positivo em %d dos últimos 12 meses" % pos)
-        v = cores.get("vermelho")
-        if v and v["dias"] is not None and v["dias"] > 30:
-            alertas.append("Vermelho esperando há %s dias" % f"{v['dias']:,}".replace(",", "."))
+        meta = metas.get(p) or META_PADRAO
+        for cor in ("vermelho", "amarelo", "verde", "azul"):
+            c, lim = cores.get(cor), meta.get(cor)
+            if c and lim and c["dias"] is not None and c["dias"] > lim:
+                alertas.append("%s esperando há %s dias (meta: %d)" % (
+                    cor.capitalize(), f"{c['dias']:,}".replace(",", "."), lim))
         if d["fila"] >= 20 and sum(sai[-3:]) == 0 and d["futuros"] == 0:
             alertas.append("Fila parada: ninguém agendado nos últimos 3 meses nem marcado à frente")
         esperas = [c["dias"] for c in cores.values() if c["dias"] is not None]
@@ -143,11 +156,15 @@ def montar(b, hoje):
 
 def main():
     hoje = date.today()
-    dados, detalhes, meta = montar(coletar(hoje), hoje)
+    dados, detalhes, meta = montar(coletar(hoje), hoje, metas_ref())
+    if len(dados["filas"]) < MIN_FILAS or not dados["solicitacoes_ate"] or dados["solicitacoes_ate"] == "-":
+        print(f"ERRO: coleta incompleta ({len(dados['filas'])} filas, solicitações até {dados['solicitacoes_ate']!r}); nada foi gravado.")
+        sys.exit(1)
     (PAINEL / "dados.json").write_text(json.dumps(dados, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     pasta = PAINEL / "analises"
-    shutil.rmtree(pasta, ignore_errors=True)
-    pasta.mkdir()
+    pasta.mkdir(exist_ok=True)
+    for velho in pasta.glob("*.json"):   # apaga arquivo a arquivo (rmtree falha com pasta sincronizada pelo OneDrive)
+        velho.unlink()
     for i, d in detalhes.items():
         (pasta / f"{i}.json").write_text(json.dumps(dict(meta, **d), ensure_ascii=False, separators=(",", ":")),
                                          encoding="utf-8")

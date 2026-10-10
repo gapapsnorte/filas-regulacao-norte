@@ -1,0 +1,4 @@
+# gerados pela coleta diária; publicados só no branch gh-pages
+dados.json
+analises/
+__pycache__/

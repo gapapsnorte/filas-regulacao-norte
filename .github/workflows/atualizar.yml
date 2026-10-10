@@ -5,27 +5,36 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+concurrency:
+  group: atualizar-painel
+  cancel-in-progress: false
 jobs:
   atualizar:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install playwright==1.47.0 && python -m playwright install --with-deps chromium
-      - name: Coletar dados do Mapa Social
+      - name: Coletar dados do Mapa Social (até 3 tentativas)
         env:
           MAPA_CHROME_CANAL: ""
           PAINEL_DIR: ${{ github.workspace }}
           TZ: America/Sao_Paulo
-        run: python coleta/painel.py
-      - name: Publicar (substitui a versão anterior, sem acumular histórico de dados)
+        run: |
+          for i in 1 2 3; do
+            python coleta/painel.py && exit 0
+            echo "Tentativa $i falhou"; sleep 90
+          done
+          exit 1
+      - name: Publicar no branch gh-pages (código fica em main, com histórico; dados são substituídos a cada dia)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout --orphan publicacao
-          git add -A
+          git checkout --orphan gh-pages
+          git rm -r -q --cached .
+          git add -A -f -- index.html relatorio.js referencias.json dados.json analises README.md
           git commit -q -m "Painel – dados de $(TZ=America/Sao_Paulo date +%F)"
-          git push -f origin publicacao:main
+          git push -f origin gh-pages
