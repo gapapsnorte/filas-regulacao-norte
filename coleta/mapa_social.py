@@ -43,10 +43,16 @@ async def _consultar(specs, layout=False):
         # Às vezes a página abre sem a biblioteca do Qlik (ex.: durante a recarga do Mapa Social): espera e recarrega
         for tentativa in range(4):
             try:
-                await pg.goto(URL, wait_until="networkidle", timeout=120000)
+                resp = await pg.goto(URL, wait_until="networkidle", timeout=120000)
                 await pg.wait_for_function("typeof require === 'function'", timeout=60000)
                 break
-            except Exception:
+            except Exception as e:
+                try:   # diagnóstico: o que a página devolveu
+                    txt = (await pg.inner_text("body"))[:400].replace("\n", " ")
+                    print("Mapa Social sem Qlik (tentativa %d): HTTP %s, url %s, título %r, texto %r" % (
+                        tentativa + 1, resp.status if resp else "?", pg.url, await pg.title(), txt), flush=True)
+                except Exception:
+                    print("Mapa Social sem Qlik (tentativa %d): %s" % (tentativa + 1, e), flush=True)
                 if tentativa == 3:
                     raise
                 await asyncio.sleep(30)
