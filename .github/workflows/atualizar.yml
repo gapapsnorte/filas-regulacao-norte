@@ -1,8 +1,15 @@
 name: Atualizar painel
 on:
   schedule:
-    - cron: "0 9 * * *"   # 6h em Brasília
+    # A cada 2 horas confere se o Mapa Social recarregou (ele recarrega 1 vez por dia, à noite).
+    # Só coleta e publica quando há recarga nova ou quando o dia virou (para atualizar os dias de espera).
+    - cron: "17 */2 * * *"
   workflow_dispatch:
+    inputs:
+      forcar:
+        description: "Coletar mesmo sem recarga nova do Mapa Social"
+        type: boolean
+        default: true
 permissions:
   contents: write
 concurrency:
@@ -11,7 +18,7 @@ concurrency:
 jobs:
   atualizar:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -19,22 +26,25 @@ jobs:
           python-version: "3.12"
       - run: pip install playwright==1.47.0 && python -m playwright install --with-deps chromium
       - name: Coletar dados do Mapa Social (até 3 tentativas)
+        id: coleta
         env:
           MAPA_CHROME_CANAL: ""
           PAINEL_DIR: ${{ github.workspace }}
           TZ: America/Sao_Paulo
+          MODO: ${{ (github.event_name == 'workflow_dispatch' && inputs.forcar) && '--forcar' || '--se-mudou' }}
         run: |
           for i in 1 2 3; do
-            python coleta/painel.py && exit 0
+            python coleta/painel.py $MODO && exit 0
             echo "Tentativa $i falhou"; sleep 90
           done
           exit 1
-      - name: Publicar no branch gh-pages (código fica em main, com histórico; dados são substituídos a cada dia)
+      - name: Publicar no branch gh-pages (código fica em main, com histórico; dados são substituídos a cada atualização)
+        if: steps.coleta.outputs.publicar == 'sim'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout --orphan gh-pages
           git rm -r -q --cached .
-          git add -A -f -- index.html relatorio.js referencias.json dados.json analises README.md
-          git commit -q -m "Painel – dados de $(TZ=America/Sao_Paulo date +%F)"
+          git add -A -f -- index.html relatorio.js referencias.json dados.json devolvidas.json analises detalhe README.md
+          git commit -q -m "Painel – dados de $(TZ=America/Sao_Paulo date '+%F %H:%M')"
           git push -f origin gh-pages

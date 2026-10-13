@@ -126,7 +126,7 @@
     r.ubs = aps.map(([u, n]) => {
       const e = REF.esf[u];
       return {u, n, pct: n / Math.max(totA, 1) * 100, esf: e ?? null, taxa: e ? n / e : null};
-    });
+    }).sort((a, b) => (b.taxa ?? -1) - (a.taxa ?? -1) || b.n - a.n);  // ranking: quem mais devolve por eSF primeiro
     const semEsf = r.ubs.filter(x => x.esf == null).map(x => x.u);
     if (semEsf.length) r.avisos.push("Unidades da APS sem nº de eSF na referência: " + semEsf.join("; "));
     r.totAps = totA;
@@ -183,13 +183,13 @@
   function notas(r) {
     const e = dataBr(r.extracao), s = r.serie, n = s.meses.length;
     const [m0, a0] = s.meses[0].split("/"), [m1, a1] = s.meses[n - 1].split("/");
-    const n2 = [FONTE, `Nota: Dados extraídos em ${e}. Considera as solicitações pendentes e reenviadas; o tempo de espera vai da solicitação mais antiga de cada prioridade até a data da extração. O Mapa Social registra solicitações até ${r.solicAte} (defasagem de cerca de 7 dias em relação ao SISREG), por isso os totais podem diferir do SISREG.`];
+    const n2 = [FONTE, `Nota: Dados extraídos em ${e}. Considera as solicitações pendentes e reenviadas; o tempo de espera vai da solicitação mais antiga de cada prioridade até a data da extração. O Mapa Social registra solicitações até ${r.solicAte} (atraso fixo de 6 a 7 dias em relação ao SISREG), por isso os totais podem diferir do SISREG.`];
     if (r.meta) n2.push("Metas de tempo de espera do protocolo vigente (mediana): " + ["vermelho", "amarelo", "verde", "azul"].filter(c => r.meta[c]).map(c => `${c} até ${r.meta[c]} dias`).join(", ") + `. ${(r.meta.fonte || "").trim().replace(/\.$/, "")}.`);
     if (r.notas.azul) n2.push("*" + r.notas.azul);
     let nt = `Nota: Percentuais calculados em relação às ${fmt(r.totAps)} solicitações devolvidas provenientes da Atenção Primária.`;
     if (r.notas.ausentes.length) nt += " O Mapa Social não apresenta solicitações deste procedimento da(s) " + r.notas.ausentes.join(", ") + ".";
     if (r.notas.semDev.length) nt += " UBS sem solicitações devolvidas: " + r.notas.semDev.join(", ") + ".";
-    nt += ` Total de eSF da Região Norte: ${r.esfTotal}.`;
+    nt += ` UBS ordenadas da que mais devolve por eSF para a que menos devolve. Total de eSF da Região Norte: ${r.esfTotal}.`;
     return {
       titulo: `Análise da fila de ${/^CONSULTA/i.test(r.p) ? "Consulta em " : ""}${r.nome} - Região Norte`,
       f1: `Figura 1 – Comportamento da fila de ${r.nome}`,
@@ -453,6 +453,74 @@
     await ({pdf: gerarPdf, word: gerarWord, excel: gerarExcel})[formato](r);
     return r;
   };
+  // ------------------------------------------------------------------------------ dados detalhados (linhas do Mapa Social)
+  // Datas vão como número de série do Excel (Date do JS desloca um dia por causa do fuso histórico de Brasília)
+  const dataNum = s => { const [d, m, a] = (s || "").split("/").map(Number); return a ? (Date.UTC(a, m - 1, d) - Date.UTC(1899, 11, 30)) / 864e5 : 0; };
+  const dataXl = s => dataNum(s) ? {t: "n", v: dataNum(s), z: "dd/mm/yyyy"} : (s || "");
+  const nivelDe = u => { for (const [p, n] of REF.niveis) if (casa(p, u)) return n; return "OUTROS"; };
+  const COR_TXT = {vermelho: "Vermelho", amarelo: "Amarelo", verde: "Verde", azul: "Azul"};
+  function folha(X, linhas, larg) {
+    const ws = X.utils.aoa_to_sheet(linhas);
+    ws["!cols"] = larg.map(w => ({wch: w}));
+    if (linhas.length > 1) ws["!autofilter"] = {ref: X.utils.encode_range({s: {r: 0, c: 0}, e: {r: linhas.length - 1, c: larg.length - 1}})};
+    return ws;
+  }
+  function leiaMe(d, extra) {
+    return [["Informação", "Valor"], ["Fonte", "Mapa Social do Distrito Federal (MPDFT) – painel público de regulação"],
+      ["Região", "Região Norte (unidade solicitante)"], ["Data da extração", dd(d.data)],
+      ["Solicitações registradas até", `${d.solicitacoes_ate} (atraso fixo de 6 a 7 dias em relação ao SISREG)`],
+      ...extra, ["Identificação", "Sem nome, telefone ou CNS. O código da solicitação é o código SISREG, público no Mapa Social."],
+      ["Gerado pelo painel", location.href.split("#")[0]]];
+  }
+  window.baixarDetalhe = async function (id, nome) {
+    for (const u of LIBS.excel) await lib(u);
+    if (!REF) REF = await (await fetch("referencias.json", {cache: "no-store"})).json();
+    const r = await fetch(`detalhe/${id}.json`, {cache: "no-store"});
+    if (!r.ok) throw new Error("dados detalhados ainda não publicados para esta fila");
+    const d = await r.json(), X = window.XLSX, wb = X.utils.book_new();
+    const p = d.p || (await (await fetch(`analises/${id}.json`)).json()).p;
+    nome = nome || (REF.notas[p] && REF.notas[p].nome) || nomeCurto(p);
+    const S = d.s.slice().sort((a, b) => cmp(a[2], b[2]) || dataNum(a[1]) - dataNum(b[1]));
+    X.utils.book_append_sheet(wb, folha(X, [["Código SISREG da solicitação", "Data da solicitação", "Status", "Classificação de risco",
+      "CID", "Unidade solicitante", "Nível de atenção", "Data da devolução", "Dias desde a solicitação"],
+      ...S.map(([c, ds, st, cor, cid, u, dv]) => [c, dataXl(ds), st, COR_TXT[cor] || "", cid, u, u ? nivelDe(u) : "", dataXl(dv),
+        /PENDENTE|REENVIADA/.test(st) && ds ? Math.round(dataNum(dd(d.data)) - dataNum(ds)) : ""])],
+      [16, 12, 24, 12, 60, 34, 12, 12, 12]), "Solicitações");
+    const A = d.a.slice().sort((a, b) => dataNum(b[2]) - dataNum(a[2]));
+    X.utils.book_append_sheet(wb, folha(X, [["Código SISREG da solicitação", "Data da solicitação", "Data do agendamento", "Status do agendamento",
+      "Classificação de risco", "Unidade solicitante"], ...A.map(([c, ds, da, st, cor, u]) => [c, dataXl(ds), dataXl(da), st, COR_TXT[cor] || "", u])],
+      [16, 12, 12, 36, 12, 34]), "Agendamentos");
+    X.utils.book_append_sheet(wb, folha(X, leiaMe(d, [["Procedimento", p],
+      ["Aba Solicitações", "Pendentes e reenviadas ao regulador (fila) e devolvidas, uma linha por solicitação. Não inclui fila de espera."],
+      ["Aba Agendamentos", `Agendamentos com data a partir de ${dd(d.agendamentos_desde)}, inclusive os marcados à frente, com cancelados e faltas (mesma regra do OUTPUT).`]]), [30, 110]), "Leia-me");
+    X.writeFile(wb, `Dados detalhados - ${nome} (${dd(d.data).replace(/\//g, "-")}).xlsx`);
+    return {s: S.length, a: A.length};
+  };
+  let DEV_DET = null;
+  // filtro: {unidades?: [...], procs?: [...], tipo?: "", nivel?: "", titulo}; porId: mapa id -> fila do painel (para o tipo)
+  window.baixarDevolvidas = async function (filtro, porId) {
+    for (const u of LIBS.excel) await lib(u);
+    if (!REF) REF = await (await fetch("referencias.json", {cache: "no-store"})).json();
+    if (!DEV_DET) { const r = await fetch("detalhe/devolvidas.json", {cache: "no-store"}); if (!r.ok) throw new Error("devolvidas detalhadas ainda não publicadas"); DEV_DET = await r.json(); }
+    const tipoDe = {}; Object.values(porId || {}).forEach(f => tipoDe[f.p] = f.tipo);
+    const us = filtro.unidades && new Set(filtro.unidades), ps = filtro.procs && new Set(filtro.procs);
+    const L = DEV_DET.r.filter(([pi, , , , , u]) => {
+      const p = DEV_DET.p[pi];
+      return (!us || us.has(u)) && (!ps || ps.has(p)) && (!filtro.tipo || tipoDe[p] === filtro.tipo) && (!filtro.nivel || nivelDe(u) === filtro.nivel);
+    }).sort((a, b) => cmp(a[5], b[5]) || cmp(DEV_DET.p[a[0]], DEV_DET.p[b[0]]) || dataNum(a[2]) - dataNum(b[2]));
+    if (!L.length) throw new Error("nenhuma devolvida com esse filtro");
+    const X = window.XLSX, wb = X.utils.book_new();
+    X.utils.book_append_sheet(wb, folha(X, [["Unidade solicitante", "Nível de atenção", "Procedimento", "Tipo", "Código SISREG da solicitação",
+      "Data da solicitação", "Data da devolução", "Classificação de risco", "CID"],
+      ...L.map(([pi, c, ds, cor, cid, u, dv]) => [u, nivelDe(u), DEV_DET.p[pi], tipoDe[DEV_DET.p[pi]] || "", c, dataXl(ds), dataXl(dv), COR_TXT[cor] || "", cid])],
+      [34, 12, 55, 10, 16, 12, 12, 12, 60]), "Devolvidas");
+    X.utils.book_append_sheet(wb, folha(X, leiaMe(DEV_DET, [["Conteúdo", "Solicitações devolvidas pelo regulador (status DEVOLVIDA / REGULADOR), uma linha por solicitação, sem recorte de ano."],
+      ["Filtro", [filtro.unidades && filtro.unidades.length <= 5 ? "Unidade(s): " + filtro.unidades.join("; ") : filtro.unidades ? `${filtro.unidades.length} unidades` : "",
+        filtro.procs ? "Procedimento: " + filtro.procs.join("; ") : "", filtro.tipo ? "Tipo: " + filtro.tipo : "", filtro.nivel ? "Nível: " + filtro.nivel : ""].filter(Boolean).join(" · ") || "nenhum"]]), [30, 110]), "Leia-me");
+    X.writeFile(wb, `${filtro.titulo} (${dd(DEV_DET.data).replace(/\//g, "-")}).xlsx`.replace(/[\\/:*?"<>|]/g, "-"));
+    return L.length;
+  };
+
   fetch("referencias.json", {cache: "no-store"}).then(x => x.json()).then(j => { REF = REF || j; }).catch(() => {});
   window._analiseMeta = p => REF && REF.metas && REF.metas[p] || null;
   window._analiseNomeCurto = p => (REF && REF.notas[p] && REF.notas[p].nome) || nomeCurto(p);

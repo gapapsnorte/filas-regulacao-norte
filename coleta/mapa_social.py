@@ -40,7 +40,16 @@ async def _consultar(specs, layout=False):
     async with async_playwright() as p:
         nav = await p.chromium.launch(channel=CANAL or None, headless=True)
         pg = await nav.new_page()
-        await pg.goto(URL, wait_until="networkidle", timeout=120000)
+        # Às vezes a página abre sem a biblioteca do Qlik (ex.: durante a recarga do Mapa Social): espera e recarrega
+        for tentativa in range(4):
+            try:
+                await pg.goto(URL, wait_until="networkidle", timeout=120000)
+                await pg.wait_for_function("typeof require === 'function'", timeout=60000)
+                break
+            except Exception:
+                if tentativa == 3:
+                    raise
+                await asyncio.sleep(30)
         res = await pg.evaluate(_JS, [specs, layout])
         await nav.close()
         return res

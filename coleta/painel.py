@@ -1,38 +1,58 @@
-"""Atualiza o painel diário das filas (todas as filas da Região Norte).
+"""Atualiza o painel das filas (todas as filas da Região Norte).
 
-Roda todo dia no GitHub Actions (.github/workflows/atualizar.yml), que grava os dados e publica.
-Uso local: python coleta/painel.py     (só coleta e grava, sem publicar)
+Roda no GitHub Actions (.github/workflows/atualizar.yml), que grava os dados e publica.
+Uso local: python coleta/painel.py             (coleta e grava, sem publicar)
+           python coleta/painel.py --se-mudou  (só coleta se o Mapa Social recarregou ou se o dia virou)
 
 Gera:
-  dados.json          resumo de todas as filas (painel)
-  analises/<id>.json  detalhes agregados de cada fila, usados pelo botão "Gerar análise"
+  dados.json                resumo de todas as filas (painel)
+  devolvidas.json           devolvidas por fila × unidade solicitante (abas de devolvidas)
+  analises/<id>.json        detalhes agregados de cada fila, usados pelo botão "Gerar análise"
+  detalhe/<id>.json         linhas do Mapa Social de cada fila (código SISREG, datas, status, risco, CID, unidade)
+  detalhe/devolvidas.json   todas as devolvidas da região, linha a linha
 """
 import hashlib
 import json
 import os
 import sys
+import urllib.request
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
+from fnmatch import fnmatchcase
 from pathlib import Path
 
 import mapa_social as m
 
 AQUI = Path(__file__).resolve().parent
 PAINEL = Path(os.environ.get("PAINEL_DIR", AQUI.parent))
+PUBLICADO = os.environ.get("PAINEL_URL", "https://gapapsnorte.github.io/filas-regulacao-norte/")
 R = "[regiao_saude_solicitante]={'%s'}" % m.REGIAO
-FILA = '[status_solicitacao_solicitacao]={"*PENDENTE*","*REENVIADA*"}'
-DEV = '[status_solicitacao_solicitacao]={"*DEVOLVIDA*"}'
+# Elegíveis (fila) = pendentes + reenviadas ao regulador. "PENDENTE / FILA DE ESPERA" fica fora do painel.
+PEND, REENV, DEVOL = ("SOLICITAÇÃO / PENDENTE / REGULADOR", "SOLICITAÇÃO / REENVIADA / REGULADOR",
+                      "SOLICITAÇÃO / DEVOLVIDA / REGULADOR")
+FILA = '[status_solicitacao_solicitacao]={"%s","%s"}' % (PEND, REENV)
+DEV = '[status_solicitacao_solicitacao]={"%s"}' % DEVOL
+FILA_DEV = '[status_solicitacao_solicitacao]={"%s","%s","%s"}' % (PEND, REENV, DEVOL)
 MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
 CORES = {"Prioridade 1": "vermelho", "Prioridade 2": "amarelo", "Prioridade 3": "verde", "Prioridade 4": "azul"}
-N_PAINEL = 24          # meses mostrados no painel
+N_PAINEL = 24          # meses mostrados no painel (e janela dos agendamentos no detalhe)
 MIN_FILAS = 500        # abaixo disso a coleta é considerada falha (não publica)
 META_PADRAO = {"vermelho": 30}   # referência geral quando o protocolo não tem meta cadastrada
 ANOS_SERIE = 5         # série da análise: de janeiro de (ano - 5) até o mês anterior
+SEM_SAIDA_DIAS = 365   # alerta "sem saída há mais de 1 ano"
+
+
+def _mes_inicial_painel(hoje):
+    a, mm = hoje.year, hoje.month - N_PAINEL
+    while mm < 1:
+        a, mm = a - 1, mm + 12
+    return date(a, mm, 1)
 
 
 def coletar(hoje):
     ini = hoje.year - ANOS_SERIE
     P, PA, U = "descrição_procedimento_solicitacao", "descrição_procedimento_agendamento", "nome_unidade_solicitante"
+    ano_det = _mes_inicial_painel(hoje).year
     return m.consultar([
         ["fila", [P, "status_solicitacao_solicitacao", "classificacao_risco"],
          ["Count({<%s>} distinct codigo_solicitacao)" % R, "Date(Min({<%s>} data_solicitacao))" % R]],
@@ -42,12 +62,19 @@ def coletar(hoje):
          ['Count({<%s,[Calendar.Ano_Solicitacao]={">=%d"}>} distinct codigo_solicitacao)' % (R, ini)]],
         ["out", [PA, "Ano_Agendamento", "Mes_Agendamento"],
          ['Count({<%s,[Ano_Agendamento]={">=%d"}>} distinct codigo_solicitacao)' % (R, ini)]],
+        ["ult_ag", [PA], ["Date(Max({<%s>} data_agendamento))" % R]],
         ["cid", [P, "CID_solicitacao"], ["Count({<%s,%s>} distinct codigo_solicitacao)" % (R, FILA)]],
         ["dev_un", [P, U], ["Count({<%s,%s>} distinct codigo_solicitacao)" % (R, DEV)]],
         ["un_sol", [P, U], ["Count({<%s>} distinct codigo_solicitacao)" % R]],
         ["un_ag", [PA, U], ["Count({<%s>} distinct codigo_solicitacao)" % R]],
         ["tipo", [P, "tipo_procedimento_solicitacao"], ["Count({<%s>} distinct codigo_solicitacao)" % R]],
         ["ultima", [], ["Date(Max(data_solicitacao))"]],
+        ["det_sol", [P, "codigo_solicitacao", "data_solicitacao", "status_solicitacao_solicitacao",
+                     "classificacao_risco", "CID_solicitacao", U, "data_devolucao"],
+         ["Count({<%s,%s>} codigo_solicitacao)" % (R, FILA_DEV)]],
+        ["det_ag", [PA, "codigo_solicitacao", "Calendar.Data_Solicitacao", "data_agendamento",
+                    "status_solicitacao_agendamento", "classificacao_risco", U],
+         ['Count({<%s,[Ano_Agendamento]={">=%d"}>} codigo_solicitacao)' % (R, ano_det)]],
     ], layout=True)
 
 
@@ -60,18 +87,31 @@ def ident(p):
 
 
 def _valido(p):
-    return p not in ("-", "")
+    return p not in ("-", "", None)
 
 
-def metas_ref():
+def referencias():
     try:
-        return json.loads((PAINEL / "referencias.json").read_text(encoding="utf-8")).get("metas", {})
+        return json.loads((PAINEL / "referencias.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {}
 
 
-def montar(b, hoje, metas=None):
-    metas = metas or {}
+def nivel(u, niveis):
+    for padrao, n, _ in niveis:
+        if fnmatchcase(u, padrao):
+            return n
+    return "OUTROS"
+
+
+def _curto(st):
+    """'SOLICITAÇÃO / PENDENTE / REGULADOR' -> 'PENDENTE / REGULADOR'"""
+    return st.split(" / ", 1)[1] if " / " in st else st
+
+
+def montar(b, hoje, ref=None):
+    ref = ref or {}
+    metas = ref.get("metas", {})
     fim = (hoje.year, hoje.month - 1) if hoje.month > 1 else (hoje.year - 1, 12)
     meses, a, mm = [], hoje.year - ANOS_SERIE, 1
     while (a, mm) <= fim:
@@ -81,14 +121,15 @@ def montar(b, hoje, metas=None):
     n = len(meses)
 
     procs = defaultdict(lambda: {"in": [0] * n, "out": [0] * n, "cores": {}, "fila": 0, "devolvidas": 0,
-                                 "futuros": 0, "tipo": "", "cid": {}, "dev_un": {}, "unidades": set()})
+                                 "futuros": 0, "tipo": "", "cid": {}, "dev_un": {}, "unidades": set(),
+                                 "ult_ag": None})
     for p, st, risco, q, antiga in b["fila"]["rows"]:
         if not _valido(p):
             continue
         d, q = procs[p], int(q)
-        if "DEVOLVIDA" in st:
+        if st == DEVOL:
             d["devolvidas"] += q
-        elif "PENDENTE" in st or "REENVIADA" in st:
+        elif st in (PEND, REENV):
             d["fila"] += q
             c = d["cores"].setdefault(CORES.get(risco, "sem risco"), {"n": 0, "antiga": None})
             c["n"] += q
@@ -104,6 +145,9 @@ def montar(b, hoje, metas=None):
                 procs[p][campo][idx[k]] += int(q)
             elif campo == "out" and k > fim:
                 procs[p]["futuros"] += int(q)
+    for p, ult in b["ult_ag"]["rows"]:
+        if _valido(p) and _valido(ult):
+            procs[p]["ult_ag"] = _br(ult)
     for p, cid, q in b["cid"]["rows"]:
         if _valido(p):
             procs[p]["cid"][cid if _valido(cid) else "SEM CID"] = int(q)
@@ -141,34 +185,124 @@ def montar(b, hoje, metas=None):
                     cor.capitalize(), f"{c['dias']:,}".replace(",", "."), lim))
         if d["fila"] >= 20 and sum(sai[-3:]) == 0 and d["futuros"] == 0:
             alertas.append("Fila parada: ninguém agendado nos últimos 3 meses nem marcado à frente")
+        ult = d["ult_ag"]
+        if d["fila"] > 0:
+            if ult is None:
+                alertas.append("Sem saída há mais de 1 ano: nenhum agendamento registrado no Mapa Social")
+            elif (hoje - ult).days > SEM_SAIDA_DIAS:
+                alertas.append("Sem saída há mais de 1 ano: último agendamento em %s" % ult.strftime("%d/%m/%Y"))
         esperas = [c["dias"] for c in cores.values() if c["dias"] is not None]
         i = ident(p)
         resumo.append({"id": i, "p": p, "tipo": d["tipo"], "fila": d["fila"], "cores": cores,
                        "devolvidas": d["devolvidas"], "in": ent, "out": sai, "saldo12": sum(u12),
-                       "futuros": d["futuros"], "espera_max": max(esperas) if esperas else None, "alertas": alertas})
+                       "futuros": d["futuros"], "ult_ag": ult.isoformat() if ult else None,
+                       "espera_max": max(esperas) if esperas else None, "alertas": alertas})
         detalhes[i] = {"p": p, "tipo": d["tipo"], "meses": rot, "in": d["in"], "out": d["out"], "cores": cores,
                        "cid": d["cid"], "devolvidas_unidade": d["dev_un"], "unidades": sorted(d["unidades"])}
     resumo.sort(key=lambda x: -x["fila"])
     meta = {"gerado_em": datetime.now().strftime("%d/%m/%Y %H:%M"), "data": hoje.isoformat(),
             "solicitacoes_ate": b["ultima"]["rows"][0][0], "recarga_painel": b.get("_reload", "")}
-    return dict(meta, meses=rot[-N_PAINEL:], filas=resumo), detalhes, meta
+
+    # Devolvidas por fila × unidade solicitante (abas de devolvidas)
+    niveis, esf = ref.get("niveis", []), ref.get("esf", {})
+    nomes = sorted({u for d in procs.values() for u in d["dev_un"]})
+    pos_u = {u: k for k, u in enumerate(nomes)}
+    devolvidas = dict(meta, unidades=[[u, nivel(u, niveis), esf.get(u)] for u in nomes],
+                      filas={ident(p): sorted(([pos_u[u], q] for u, q in d["dev_un"].items()), key=lambda x: -x[1])
+                             for p, d in procs.items() if d["dev_un"]})
+    return dict(meta, meses=rot[-N_PAINEL:], filas=resumo), detalhes, devolvidas, meta
+
+
+def montar_detalhe(b, hoje):
+    """Linhas de cada fila: solicitações (pendentes, reenviadas, devolvidas) e agendamentos dos últimos 24 meses."""
+    corte = _mes_inicial_painel(hoje)
+    det = defaultdict(lambda: {"s": [], "a": []})
+    vistos = set()
+    for p, cod, dt, st, risco, cid, u, ddev, _ in b["det_sol"]["rows"]:
+        if not _valido(p) or (p, cod) in vistos:   # uma linha por solicitação, como no programa local
+            continue
+        vistos.add((p, cod))
+        det[ident(p)]["p"] = p
+        det[ident(p)]["s"].append([cod, dt, _curto(st), CORES.get(risco, ""), cid if _valido(cid) else "",
+                                   u if _valido(u) else "", ddev if _valido(ddev) else ""])
+    vistos = set()
+    for p, cod, dsol, dag, st, risco, u, _ in b["det_ag"]["rows"]:
+        if not _valido(p) or not _valido(dag) or _br(dag) < corte:
+            continue
+        lin = [cod, dsol if _valido(dsol) else "", dag, _curto(st), CORES.get(risco, ""), u if _valido(u) else ""]
+        chave = (p, *lin)
+        if chave in vistos:
+            continue
+        vistos.add(chave)
+        det[ident(p)]["p"] = p
+        det[ident(p)]["a"].append(lin)
+    nomes = {i: d["p"] for i, d in det.items()}
+    lista_p = sorted({nomes[i] for i, d in det.items() if any(s[2].startswith("DEVOLVIDA") for s in d["s"])})
+    pos_p = {p: k for k, p in enumerate(lista_p)}
+    devolvidas = [[pos_p[nomes[i]]] + s[:2] + s[3:] for i, d in det.items() for s in d["s"] if s[2].startswith("DEVOLVIDA")]
+    return det, {"p": lista_p, "r": devolvidas, "agendamentos_desde": corte.isoformat()}
+
+
+def _limpar(pasta):
+    pasta.mkdir(exist_ok=True)
+    for velho in pasta.glob("*.json"):   # apaga arquivo a arquivo (rmtree falha com pasta sincronizada pelo OneDrive)
+        velho.unlink()
+
+
+def _grava(caminho, obj):
+    caminho.write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+
+
+def _saida_actions(**kv):
+    if os.environ.get("GITHUB_OUTPUT"):
+        with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+            for k, v in kv.items():
+                f.write(f"{k}={v}\n")
+
+
+def precisa_atualizar(hoje):
+    """Compara a última recarga do Mapa Social com a do painel publicado."""
+    recarga = m.consultar([], layout=True).get("_reload", "")
+    try:
+        with urllib.request.urlopen(PUBLICADO + "dados.json", timeout=60) as r:
+            pub = json.loads(r.read().decode("utf-8"))
+    except Exception as e:  # sem painel publicado legível: atualiza
+        print("Painel publicado ilegível (%s); atualizando." % e)
+        return True
+    if pub.get("data") != hoje.isoformat():
+        print("Dados publicados são de %s; atualizando." % pub.get("data"))
+        return True
+    if pub.get("recarga_painel") != recarga:
+        print("Mapa Social recarregou (%s → %s); atualizando." % (pub.get("recarga_painel"), recarga))
+        return True
+    print("Sem novidade: Mapa Social não recarregou desde a última publicação (%s)." % recarga)
+    return False
 
 
 def main():
     hoje = date.today()
-    dados, detalhes, meta = montar(coletar(hoje), hoje, metas_ref())
+    if "--se-mudou" in sys.argv and not precisa_atualizar(hoje):
+        _saida_actions(publicar="nao")
+        return
+    b = coletar(hoje)
+    dados, detalhes, devolvidas, meta = montar(b, hoje, referencias())
     if len(dados["filas"]) < MIN_FILAS or not dados["solicitacoes_ate"] or dados["solicitacoes_ate"] == "-":
         print(f"ERRO: coleta incompleta ({len(dados['filas'])} filas, solicitações até {dados['solicitacoes_ate']!r}); nada foi gravado.")
         sys.exit(1)
-    (PAINEL / "dados.json").write_text(json.dumps(dados, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-    pasta = PAINEL / "analises"
-    pasta.mkdir(exist_ok=True)
-    for velho in pasta.glob("*.json"):   # apaga arquivo a arquivo (rmtree falha com pasta sincronizada pelo OneDrive)
-        velho.unlink()
+    det, dev_det = montar_detalhe(b, hoje)
+    _grava(PAINEL / "dados.json", dados)
+    _grava(PAINEL / "devolvidas.json", devolvidas)
+    _limpar(PAINEL / "analises")
     for i, d in detalhes.items():
-        (pasta / f"{i}.json").write_text(json.dumps(dict(meta, **d), ensure_ascii=False, separators=(",", ":")),
-                                         encoding="utf-8")
-    print(f"{dados['gerado_em']}: {len(dados['filas'])} filas, solicitações até {dados['solicitacoes_ate']}")
+        _grava(PAINEL / "analises" / f"{i}.json", dict(meta, **d))
+    _limpar(PAINEL / "detalhe")
+    for i, d in det.items():
+        _grava(PAINEL / "detalhe" / f"{i}.json", dict(meta, agendamentos_desde=dev_det["agendamentos_desde"], **d))
+    _grava(PAINEL / "detalhe" / "devolvidas.json", dict(meta, **dev_det))
+    _saida_actions(publicar="sim")
+    print(f"{dados['gerado_em']}: {len(dados['filas'])} filas, solicitações até {dados['solicitacoes_ate']}, "
+          f"{sum(len(d['s']) for d in det.values())} solicitações e {sum(len(d['a']) for d in det.values())} "
+          f"agendamentos no detalhe")
 
 
 if __name__ == "__main__":
