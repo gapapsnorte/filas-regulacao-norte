@@ -235,7 +235,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 <script>
 const fmt = (n, c=0) => n == null ? "–" : Number(n).toLocaleString("pt-BR",{minimumFractionDigits:c,maximumFractionDigits:c});
 const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const norm = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase();
+const norm = s => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase();
 const dd = s => s ? s.split("-").reverse().join("/") : "–";
 const COR = ["vermelho","amarelo","verde","azul","sem risco"];
 const TIPO_ALERTA = {crescendo:/^Fila crescendo/, esperando:/esperando há/, parada:/^Fila parada/, semsaida:/^Sem saída há mais de 1 ano/};
@@ -328,7 +328,7 @@ function simHtml(f){
     <div><label>Oferta adicional: <b class="v-delta">0</b> agendamentos/mês <span class="v-pct"></span></label>
       <input type="range" class="s-delta" min="0" max="${maxD}" step="${passo}" value="0"></div>
     <div><label>Tempo de espera estimado<span class="v-foco"></span>: <b class="v-esp">–</b></label>
-      <input type="range" class="s-esp" min="7" max="${eMax}" step="1" value="${b.espera?Math.min(eMax,Math.round(b.espera)):eMax}" ${b.espera?"":"disabled"}></div>
+      <input type="range" class="s-esp" min="1" max="${eMax}" step="1" value="${b.espera?Math.min(eMax,Math.round(b.espera)):eMax}" ${b.espera?"":"disabled"}></div>
    </div>
    <div class="sim-res"></div><div class="sim-cor"></div><div class="sim-graf"></div>
    <small class="nota">Premissas: saída = agendamentos do Mapa Social (inclui cancelados e faltas, o que pode superestimar a capacidade real); a estimativa não separa prioridades — vermelhos são agendados antes e esperam menos, azuis esperam mais; não é o “tempo médio” do Mapa Social (que usa os agendamentos dos últimos 15 dias). Não considera custo, vagas físicas nem mudança na demanda.</small></div>`;
@@ -356,12 +356,13 @@ function atualizarSim(box,origem){
     cel("fila em 12 meses",fmt(p1[12])+(p0[12]!==p1[12]?` (sem oferta: ${fmt(p0[12])})`:""))+
     cel("meses para zerar a fila",zero!=null?fmt(zero)+(zero0&&zero0!==zero?` (sem oferta: ${fmt(zero0)})`:zero0?"":" (sem oferta: não zera)"):(b.fila?"não zera":"–"),zero!=null?"bom":b.fila?"ruim":"");
   // efeito em cada cor: a oferta vai toda para a cor escolhida, ou é repartida na proporção da saída atual de cada cor
-  const cores=COR.filter(c=>f.cores[c]), bs=cores.map(c=>baseCor(f,c)), somaS=bs.reduce((t,x)=>t+x.sai,0)||1;
-  const linhasC=cores.map((c,i)=>{ const bc=bs[i], dc=cor?(c===cor?delta:0):delta*(bc.sai/somaS), sc=bc.sai+dc, e0=bc.espera, e1=sc>0?bc.fila/sc*DIAS_MES:null;
+  const cores=COR.filter(c=>f.cores[c]), bs=cores.map(c=>baseCor(f,c)), somaS=bs.reduce((t,x)=>t+x.sai,0), somaF=bs.reduce((t,x)=>t+x.fila,0)||1;
+  const parte=bc=>somaS>0?bc.sai/somaS:bc.fila/somaF;   // sem saída em nenhuma cor, reparte pela fila
+  const linhasC=cores.map((c,i)=>{ const bc=bs[i], dc=cor?(c===cor?delta:0):delta*parte(bc), sc=bc.sai+dc, e0=bc.espera, e1=sc>0?bc.fila/sc*DIAS_MES:null;
     const pr=projSim(bc,dc), z=sc>bc.ent&&bc.fila>0?Math.ceil(bc.fila/(sc-bc.ent)):null;
     return `<tr><td>${c}</td><td>${fmt(bc.fila)}</td><td>${fmt(bc.ent,1)}</td><td>${fmt(bc.sai,1)}</td><td>${dc?"+"+fmt(dc,1):"–"}</td><td>${dias10(e0)}</td><td><b>${dias10(e1)}</b></td><td>${fmt(pr[12])}</td><td>${z!=null?fmt(z)+" m":(bc.fila?"não zera":"–")}</td></tr>`; }).join("");
   box.querySelector(".sim-cor").innerHTML=`<div class="rolagem"><table class="cores"><tr><th>Cor</th><th>Na fila</th><th>Entrada/mês</th><th>Saída/mês</th><th>Oferta</th><th>Espera estimada hoje (dias)</th><th>Com a oferta (dias)</th><th>Fila em 12 meses</th><th>Zera em</th></tr>${linhasC}</table></div>
-    <small class="nota">Entrada e saída por cor = médias dos últimos 12 meses completos, medidas nas solicitações e nos agendamentos de cada cor. “Sem saída” = nenhum atendimento dessa cor no período.</small>`;
+    <small class="nota">Entrada e saída por cor = médias dos últimos 12 meses completos, medidas nas solicitações e nos agendamentos de cada cor. “Sem saída” = nenhum atendimento dessa cor no período. Com “todas as cores”, a oferta é repartida na proporção da saída atual de cada cor (ou da fila, se nenhuma cor tiver saída).</small>`;
   const W=560,H=150,pl=44,pr=8,pt=8,pb=20, mx=Math.max(1,...p0,...p1), X=i=>pl+i/24*(W-pl-pr), Y=v=>pt+(1-v/mx)*(H-pt-pb);
   const li=(a,c,d)=>`<polyline fill="none" stroke="${c}" stroke-width="2" ${d?'stroke-dasharray="5 4"':""} points="${a.map((v,i)=>X(i)+","+Y(v)).join(" ")}"/>`;
   box.querySelector(".sim-graf").innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Projeção da fila em 24 meses">
@@ -616,7 +617,7 @@ fetch("dados.json",{cache:"no-store"}).then(r=>{if(!r.ok) throw new Error(r.stat
 ["pr-busca","pr-tipo","pr-nivel","pr-ordem"].forEach(id=>$(id).addEventListener("input",()=>{visPr=60;DV&&renderPr();}));
 $("mais").onclick=()=>{vis+=60;render();};
 $("pr-mais").onclick=()=>{visPr+=60;renderPr();};
-$("baixar").onclick=()=>baixarLista().catch(e=>alert("Não foi possível gerar a planilha: "+e.message));
+$("baixar").onclick=()=>baixarLista().catch(e=>{ $("cont").textContent="Não foi possível gerar a planilha: "+e.message; });
 $("un-baixar").onclick=()=>comStatus($("un-status"),async()=>{await baixarResumoUn();});
 $("un-baixar-det").onclick=()=>comStatus($("un-status"),()=>window.baixarDevolvidas({unidades:filtrarUn().map(x=>x.u),titulo:"Devolvidas detalhadas - unidades filtradas"},porId));
 $("pr-baixar").onclick=()=>comStatus($("pr-status"),async()=>{await baixarResumoPr();});
@@ -675,7 +676,7 @@ $("lista").addEventListener("click",async e=>{
   if(e.target.closest(".det")) return;
   const c=e.target.closest(".fila"); if(c){ if(c.classList.contains("aberta")) c.classList.remove("aberta"); else abrir(c); }
 });
-$("lista").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.target.closest(".gerar")){const c=e.target.closest(".fila"); if(c){ if(c.classList.contains("aberta")) c.classList.remove("aberta"); else abrir(c); }}});
+$("lista").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.classList.contains("fila")){const c=e.target.closest(".fila"); if(c){ if(c.classList.contains("aberta")) c.classList.remove("aberta"); else abrir(c); }}});
 </script>
 </body>
 </html>

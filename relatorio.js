@@ -187,6 +187,7 @@
     const [m0, a0] = s.meses[0].split("/"), [m1, a1] = s.meses[n - 1].split("/");
     const n2 = [FONTE, `Nota: Dados extraídos em ${e}. Considera as solicitações pendentes e reenviadas; o tempo de espera vai da solicitação mais antiga de cada prioridade até a data da extração. O Mapa Social registra solicitações até ${r.solicAte} (${r.atraso} em relação ao SISREG), por isso os totais podem diferir do SISREG.`];
     if (r.meta) n2.push("Metas de tempo de espera do protocolo vigente (mediana): " + ["vermelho", "amarelo", "verde", "azul"].filter(c => r.meta[c]).map(c => `${c} até ${r.meta[c]} dias`).join(", ") + `. ${(r.meta.fonte || "").trim().replace(/\.$/, "")}.`);
+    if (!r.meta) n2.push("Não há meta de tempo de espera por prioridade definida em normativa da SES-DF para este procedimento (levantamento de 14/10/2026 nos protocolos de acesso e notas técnicas vigentes).");
     if (r.notas.azul) n2.push("*" + r.notas.azul);
     let nt = `Nota: Percentuais calculados em relação às ${fmt(r.totAps)} solicitações devolvidas provenientes da Atenção Primária.`;
     if (r.notas.ausentes.length) nt += " O Mapa Social não apresenta solicitações deste procedimento da(s) " + r.notas.ausentes.join(", ") + ".";

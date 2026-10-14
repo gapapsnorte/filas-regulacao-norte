@@ -241,7 +241,7 @@ def estatisticas_cores(b, hoje):
             acc[p][cor]["fila"].append((hoje - d).days)
         if ini <= d < lim_fim and st in (PEND, REENV):
             acc[p][cor]["ent"] += 1
-    vistos = set()
+    vistos, entradas = set(), set()
     for p, cod, dsol, dag, st, risco, *_ in b["det_ag"]["rows"]:
         if not _valido(p) or not _valido(dag) or (p, cod, dag) in vistos:
             continue
@@ -249,11 +249,12 @@ def estatisticas_cores(b, hoje):
         cor = CORES.get(risco, "sem risco")
         da = _br(dag)
         if ini <= da < lim_fim:
-            acc[p][cor]["sai"] += 1
+            acc[p][cor]["sai"] += 1           # saída = cada agendamento, como no OUTPUT da série
         if _valido(dsol):
             ds = _br(dsol)
-            if ini <= ds < lim_fim:
-                acc[p][cor]["ent"] += 1       # solicitações do período já agendadas também são entrada
+            if ini <= ds < lim_fim and (p, cod) not in entradas:
+                entradas.add((p, cod))        # entrada = cada solicitação uma vez, mesmo remarcada
+                acc[p][cor]["ent"] += 1
             if corte_at <= da <= hoje and da >= ds:
                 acc[p][cor]["atend"].append((da - ds).days)
     saida = {}
@@ -348,7 +349,8 @@ def historico_atraso(meta, hoje):
 def precisa_atualizar(hoje):
     """Compara a última recarga do Mapa Social com a do painel publicado."""
     r = m.consultar([["ultima", [], ["Date(Max(data_solicitacao))"]]], layout=True)
-    recarga, ultima = r.get("_reload", ""), r["ultima"]["rows"][0][0]
+    linhas = r.get("ultima", {}).get("rows") or [["-"]]
+    recarga, ultima = r.get("_reload", ""), linhas[0][0]
     try:
         with urllib.request.urlopen(PUBLICADO + "dados.json", timeout=60) as r:
             pub = json.loads(r.read().decode("utf-8"))
