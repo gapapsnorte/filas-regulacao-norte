@@ -320,7 +320,7 @@ function projSim(b,delta,meses=24){
 }
 function simHtml(f){
   const b=baseSim(f), maxD=Math.max(20,Math.ceil(Math.max(b.sai,b.ent)*1.5/10)*10), passo=Math.max(1,Math.round(maxD/300));
-  const eMax=b.espera?Math.max(30,Math.ceil(b.espera/10)*10):180;
+  const eMax=b.espera?Math.min(3650,Math.max(30,Math.ceil(b.espera/10)*10)):180;
   return `<div class="sim" data-id="${f.id}"><h4>Simulador de oferta × tempo de espera</h4>
    <p class="nota">Estimativa para a fila inteira do procedimento, com a entrada e a saída médias dos últimos 12 meses mantidas. Mova uma barra e a outra acompanha.</p>
    <div class="sim-grid">
@@ -338,20 +338,20 @@ function atualizarSim(box,origem){
   box.querySelector(".v-foco").textContent=cor?` (${cor})`:" (fila toda)";
   if(origem==="cor"){ sd.value=0; se.disabled=!(b.sai>0);
     const mx=Math.max(20,Math.ceil(Math.max(b.sai,b.ent,baseSim(f).sai*0.5)*1.5/10)*10); sd.max=mx; sd.step=Math.max(1,Math.round(mx/300));
-    se.max=b.espera?Math.max(30,Math.ceil(b.espera/10)*10):180; se.value=b.espera?Math.min(+se.max,Math.round(b.espera)):se.max; origem="delta"; }
+    se.max=b.espera?Math.min(3650,Math.max(30,Math.ceil(b.espera/10)*10)):180; se.value=b.espera?Math.min(+se.max,Math.round(b.espera)):se.max; origem="delta"; }
   let delta=+sd.value;
   if(origem==="esp"){ const alvo=+se.value; delta=Math.max(0,b.fila*DIAS_MES/alvo-b.sai); if(delta>+sd.max) delta=+sd.max; sd.value=delta; }
   const sai=b.sai+delta, esp=sai>0?b.fila/sai*DIAS_MES:null;
   if(origem!=="esp"&&esp!=null&&!se.disabled) se.value=Math.min(+se.max,Math.max(+se.min,Math.round(esp)));
   box.querySelector(".v-delta").textContent=fmt(delta);
-  box.querySelector(".v-pct").textContent=b.sai>0?`(${delta>=0?"+":""}${fmt(delta/b.sai*100)}% da saída atual de ${fmt(b.sai)}/mês)`:"(sem saídas nos últimos 12 meses)";
-  box.querySelector(".v-esp").textContent=esp!=null?`${fmt(esp)} dias (${fmt(esp/DIAS_MES,1)} meses)`:"–";
+  box.querySelector(".v-pct").textContent=b.sai>=5?`(${delta>=0?"+":""}${fmt(delta/b.sai*100)}% da saída atual de ${fmt(b.sai)}/mês)`:`(saída atual: ${fmt(b.sai,1)}/mês)`;
+  box.querySelector(".v-esp").textContent=esp!=null?(esp>3650?"mais de 10 anos":`${fmt(esp)} dias (${fmt(esp/DIAS_MES,1)} meses)`):"–";
   const p0=projSim(b,0), p1=projSim(b,delta), liq=sai-b.ent;
   const zero=liq>0&&b.fila>0?Math.ceil(b.fila/liq):null, zero0=(b.sai-b.ent)>0&&b.fila>0?Math.ceil(b.fila/(b.sai-b.ent)):null;
   const cel=(t,v,c="")=>`<div class="${c}"><b>${v}</b><span>${t}</span></div>`;
   box.querySelector(".sim-res").innerHTML=
-    cel("espera estimada hoje",b.espera!=null?fmt(b.espera)+" dias":"–")+
-    cel("espera estimada com a oferta",esp!=null?fmt(esp)+" dias":"–",esp!=null&&b.espera!=null&&esp<b.espera?"bom":"")+
+    cel("espera estimada hoje",b.espera!=null?dias10(b.espera)+(b.espera>3650?"":" dias"):"–")+
+    cel("espera estimada com a oferta",esp!=null?dias10(esp)+(esp>3650?"":" dias"):"–",esp!=null&&b.espera!=null&&esp<b.espera?"bom":"")+
     cel("saldo mensal com a oferta",(liq>=0?"−":"+")+fmt(Math.abs(liq))+" /mês",liq>0?"bom":liq<0?"ruim":"")+
     cel("fila em 12 meses",fmt(p1[12])+(p0[12]!==p1[12]?` (sem oferta: ${fmt(p0[12])})`:""))+
     cel("meses para zerar a fila",zero!=null?fmt(zero)+(zero0&&zero0!==zero?` (sem oferta: ${fmt(zero0)})`:zero0?"":" (sem oferta: não zera)"):(b.fila?"não zera":"–"),zero!=null?"bom":b.fila?"ruim":"");
