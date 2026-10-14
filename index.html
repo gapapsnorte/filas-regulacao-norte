@@ -80,14 +80,26 @@ table.tab td:nth-child(2),table.tab th:nth-child(2){text-align:left}
 .gerar .status,.dv-acoes .status{flex-basis:100%;color:var(--muted);font-size:.85rem}
 .dv-acoes{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
 .dv-acoes button{padding:7px 12px;border-radius:7px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-weight:600;cursor:pointer}
-.top5{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px;margin-bottom:14px}
-.top5 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
-.top5 h3{margin:0 0 6px;font-size:.95rem}
-.top5 ol{margin:0;padding-left:20px;font-size:.88rem}
-.top5 li{padding:2px 0}
-.top5 li span{float:right;font-variant-numeric:tabular-nums;font-weight:600}
-.top5 a{color:var(--txt);text-decoration:none;cursor:pointer}
-.top5 a:hover{color:var(--accent);text-decoration:underline}
+.visao{display:flex;gap:6px;align-items:center;margin-bottom:12px;font-size:.88rem;color:var(--muted)}
+.visao button{padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--txt);font-size:.88rem;cursor:pointer}
+.visao button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.rank-wrap{overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:10px}
+table.rank{width:100%;min-width:820px;margin:0;font-size:.88rem}
+table.rank th{color:var(--muted);font-weight:600;white-space:nowrap;vertical-align:bottom;background:var(--card)}
+table.rank th[data-ord]{cursor:pointer}
+table.rank th[data-ord]:hover,table.rank th[aria-sort]{color:var(--accent)}
+table.rank th[aria-sort]::after{content:" ▾"}
+table.rank thead tr:first-child th{text-align:center;border-bottom:none;padding-bottom:0}
+table.rank thead tr:first-child th[rowspan]{text-align:right;vertical-align:bottom;border-bottom:1px solid var(--line)}
+table.rank thead tr:first-child th[data-ord="nome"]{text-align:left}
+table.rank tr.u{cursor:pointer}
+table.rank tr.u:hover td,table.rank tr.u:focus-visible td{background:var(--bg)}
+table.rank tr.u.aberta td{border-bottom:none}
+table.rank td{font-variant-numeric:tabular-nums}
+table.rank td small{display:block;color:var(--muted);font-size:.75rem}
+table.rank td.sep,table.rank th.sep{border-left:1px solid var(--line)}
+table.rank tr.sub td{background:var(--bg);text-align:left;padding:8px 14px 12px}
+table.rank tr.sub table.tab{background:var(--card)}
 a.irfila{color:var(--accent)}
 .nota{color:var(--muted);font-size:.83rem;margin:0 0 10px}
 footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid var(--line);padding-top:12px}
@@ -112,8 +124,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 
 <nav class="abas" role="tablist">
   <button role="tab" data-aba="filas" aria-selected="true">Filas</button>
-  <button role="tab" data-aba="un" aria-selected="false">Devolvidas por unidade solicitante</button>
-  <button role="tab" data-aba="proc" aria-selected="false">Devolvidas por procedimento</button>
+  <button role="tab" data-aba="dev" aria-selected="false">Devolvidas</button>
 </nav>
 
 <section id="aba-filas">
@@ -144,32 +155,36 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 <button class="mais" id="mais" hidden>Mostrar mais</button>
 </section>
 
-<section id="aba-un" hidden>
-<p class="nota">Solicitações devolvidas pelo regulador, por unidade que solicitou, somando todos os procedimentos (ou só os do tipo escolhido). Por eSF = devolvidas ÷ número de equipes de Saúde da Família da UBS.</p>
-<div class="top5" id="top5"></div>
+<section id="aba-dev" hidden>
+<div class="visao" role="group" aria-label="Ver por">
+  <span>Ver por:</span>
+  <button data-visao="un" aria-pressed="true">Unidade solicitante</button>
+  <button data-visao="pr" aria-pressed="false">Procedimento</button>
+</div>
+
+<div id="dv-un">
+<p class="nota">Solicitações devolvidas pelo regulador, por unidade que solicitou: total e separado em consultas e exames. <i>Por eSF</i> = devolvidas ÷ número de equipes de Saúde da Família da UBS (só para a APS). Clique no cabeçalho para ordenar e na unidade para ver os procedimentos que ela mais devolve.</p>
 <div class="ctrl">
-  <input type="search" id="un-busca" placeholder="Buscar unidade (ex.: UBS 2, HRS, policlínica)">
-  <select id="un-nivel"><option value="">Todos os níveis</option></select>
-  <select id="un-tipo"><option value="">Todos os tipos de procedimento</option></select>
-  <select id="un-top">
-    <option value="">Todas as unidades</option>
-    <option value="abs">Top 5 APS – mais devolvidas</option>
-    <option value="esf">Top 5 APS – mais devolvidas por eSF</option>
-  </select>
+  <input type="search" id="un-busca" placeholder="Buscar unidade (ex.: UBS 2, PSR, policlínica)">
+  <select id="un-nivel"><option value="APS">APS (UBS e PSR)</option><option value="">Todos os níveis</option></select>
   <select id="un-ordem">
     <option value="n">Mais devolvidas</option>
-    <option value="esf">Mais devolvidas por eSF</option>
+    <option value="taxa">Mais devolvidas por eSF</option>
+    <option value="c">Mais consultas devolvidas</option>
+    <option value="taxaC">Mais consultas por eSF</option>
+    <option value="e">Mais exames devolvidos</option>
+    <option value="taxaE">Mais exames por eSF</option>
     <option value="nome">Nome (A–Z)</option>
   </select>
-  <button id="un-baixar" title="Resumo das unidades filtradas, com os procedimentos de cada uma">Baixar resumo (Excel)</button>
+  <button id="un-baixar" title="Ranking das unidades filtradas, com os procedimentos de cada uma">Baixar ranking (Excel)</button>
   <button id="un-baixar-det" title="Uma linha por solicitação devolvida das unidades filtradas, com o código SISREG">Baixar devolvidas detalhadas (Excel)</button>
   <span class="cont" id="un-cont"></span>
 </div>
 <div class="dv-acoes"><small class="status" id="un-status"></small></div>
-<div class="lista" id="un-lista"></div>
-</section>
+<div class="rank-wrap" id="un-lista"></div>
+</div>
 
-<section id="aba-proc" hidden>
+<div id="dv-pr" hidden>
 <p class="nota">Solicitações devolvidas pelo regulador, por procedimento (consulta ou exame), com as unidades que mais devolvem em cada um.</p>
 <div class="ctrl">
   <input type="search" id="pr-busca" placeholder="Buscar procedimento">
@@ -185,6 +200,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 <div class="dv-acoes"><small class="status" id="pr-status"></small></div>
 <div class="lista" id="pr-lista"></div>
 <button class="mais" id="pr-mais" hidden>Mostrar mais</button>
+</div>
 </section>
 
 <footer>
@@ -323,7 +339,7 @@ function lerHash(){
   if(!D) return;
   const h=location.hash||"";
   if(h.startsWith("#f-")) irParaFila(h.slice(3));
-  else if(h==="#aba-un"||h==="#aba-proc") mostrarAba(h.slice(5));
+  else if(h==="#aba-un"||h==="#aba-proc"||h==="#aba-dev") mostrarAba("dev",h==="#aba-proc"?"pr":h==="#aba-un"?"un":undefined);
 }
 async function baixarLista(){
   await xlsx();
@@ -345,55 +361,49 @@ async function carregarDV(){
   const ref=await fetch("referencias.json",{cache:"no-store"}).then(x=>x.json()).catch(()=>({esf:{}}));
   ESF=ref.esf||{};
   NIVEIS.filter(n=>DV.unidades.some(u=>u[1]===n)).forEach(n=>{
-    $("un-nivel").insertAdjacentHTML("beforeend",`<option value="${n}">${n==="OUTROS"?"Outras":n}</option>`);
+    if(n!=="APS") $("un-nivel").insertAdjacentHTML("beforeend",`<option value="${n}">${n==="OUTROS"?"Outras":n}</option>`);
     $("pr-nivel").insertAdjacentHTML("beforeend",`<option value="${n}">Só devolvidas da ${n==="OUTROS"?"outras unidades":n}</option>`);
   });
   return DV;
 }
-// Agrega por unidade, respeitando o tipo de procedimento escolhido
-function porUnidade(tipo){
-  const U=DV.unidades.map(([u,nivel,esf])=>({u,nivel,esf:esf??null,n:0,procs:[]}));
+// Agrega por unidade: total, consultas e exames, e a lista de procedimentos de cada uma
+function porUnidade(){
+  const U=DV.unidades.map(([u,nivel,esf])=>({u,nivel,esf:esf??null,n:0,c:0,e:0,procs:[]}));
   for(const [id,pares] of Object.entries(DV.filas)){
-    const f=porId[id]; if(tipo && (!f || f.tipo!==tipo)) continue;
-    for(const [ui,n] of pares){ U[ui].n+=n; U[ui].procs.push([id,n]); }
+    const t=porId[id]?porId[id].tipo:"";
+    for(const [ui,n] of pares){ const x=U[ui]; x.n+=n; if(t==="Consulta") x.c+=n; else if(t==="Exame") x.e+=n; x.procs.push([id,n]); }
   }
   const tot=U.reduce((s,x)=>s+x.n,0)||1;
-  U.forEach(x=>{ x.taxa=x.esf?x.n/x.esf:null; x.pct=x.n/tot*100; x.procs.sort((a,b)=>b[1]-a[1]); });
+  U.forEach(x=>{ const r=k=>x.esf?x[k]/x.esf:null; x.taxa=r("n"); x.taxaC=r("c"); x.taxaE=r("e"); x.pct=x.n/tot*100; x.procs.sort((a,b)=>b[1]-a[1]); });
   return U.filter(x=>x.n>0);
 }
-function top5(U){
-  const aps=U.filter(x=>x.nivel==="APS");
-  return {abs:[...aps].sort((a,b)=>b.n-a.n).slice(0,5), esf:aps.filter(x=>x.taxa!=null).sort((a,b)=>b.taxa-a.taxa||b.n-a.n).slice(0,5)};
-}
+const ORD_UN={n:x=>x.n,taxa:x=>x.taxa??-1,c:x=>x.c,taxaC:x=>x.taxaC??-1,e:x=>x.e,taxaE:x=>x.taxaE??-1};
+let UN_ATUAL={};
 function filtrarUn(){
-  const U=porUnidade($("un-tipo").value), T=top5(U), q=norm($("un-busca").value.trim()), nv=$("un-nivel").value, tp=$("un-top").value, o=$("un-ordem").value;
-  let L=tp ? [...T[tp]] : U.filter(x=>(!q||norm(x.u).includes(q))&&(!nv||x.nivel===nv));
-  if(!tp) L.sort(o==="nome"?(a,b)=>a.u.localeCompare(b.u,"pt",{numeric:true}):o==="esf"?(a,b)=>(b.taxa??-1)-(a.taxa??-1)||b.n-a.n:(a,b)=>b.n-a.n);
-  return {U,T,L};
+  const q=norm($("un-busca").value.trim()), nv=$("un-nivel").value, o=$("un-ordem").value;
+  const L=porUnidade().filter(x=>(!q||norm(x.u).includes(q))&&(!nv||x.nivel===nv));
+  L.sort(o==="nome"?(a,b)=>a.u.localeCompare(b.u,"pt",{numeric:true}):(a,b)=>ORD_UN[o](b)-ORD_UN[o](a)||b.n-a.n);
+  return L;
 }
-function itemUn(x,pos){
-  const procs=x.procs.map(([id,n])=>{const f=porId[id]; return `<tr><td>${f?`<a class="irfila" href="#f-${id}">${esc(f.p)}</a>`:id}</td><td>${esc(f?f.tipo:"")}</td><td>${fmt(n)}</td><td>${fmt(n/x.n*100,1)}%</td></tr>`;}).join("");
-  return `<div class="fila" tabindex="0" data-u="${esc(x.u)}">
-    <div class="lin dv">
-      <div class="nome">${pos?pos+"º · ":""}${esc(x.u)}<small>${x.nivel==="OUTROS"?"Outras":x.nivel}${x.esf?` · ${x.esf} eSF`:""}</small></div>
-      <div class="num"><b>${fmt(x.n)}</b><small>devolvidas</small></div>
-      <div class="num"><b>${x.taxa!=null?fmt(x.taxa,1):"–"}</b><small>por eSF</small></div>
-      <div class="num"><b>${fmt(x.pct,1)}%</b><small>do total</small></div>
-      <div class="num"><b>${fmt(x.procs.length)}</b><small>procedimentos</small></div>
-    </div>
-    <div class="det"><div class="rolagem"><table class="tab"><tr><th>Procedimento</th><th>Tipo</th><th>Devolvidas</th><th>% da unidade</th></tr>${procs}</table></div>
-      <div class="dv-acoes"><button data-dev-un="${esc(x.u)}">Baixar devolvidas desta unidade (Excel)</button><small class="status"></small></div></div>
-  </div>`;
+function linhaUn(x,pos){
+  const t=v=>v!=null?fmt(v,1):"–";
+  return `<tr class="u" data-u="${esc(x.u)}" tabindex="0" title="Clique para ver os procedimentos"><td>${pos||""}</td><td>${esc(x.u)}<small>${x.nivel==="OUTROS"?"Outras":x.nivel}</small></td><td>${x.esf??"–"}</td>
+    <td class="sep"><b>${fmt(x.n)}</b></td><td>${t(x.taxa)}</td><td class="sep">${fmt(x.c)}</td><td>${t(x.taxaC)}</td><td class="sep">${fmt(x.e)}</td><td>${t(x.taxaE)}</td><td class="sep">${fmt(x.procs.length)}</td></tr>`;
 }
+function detalheUn(x){
+  const procs=x.procs.map(([id,n])=>{const f=porId[id]; return `<tr><td>${f?`<a class="irfila" href="#f-${id}">${esc(f.p)}</a>`:id}</td><td>${esc(f?f.tipo:"")}</td><td>${fmt(n)}</td><td>${fmt(n/x.n*100,1)}%</td><td>${x.esf?fmt(n/x.esf,1):"–"}</td></tr>`;}).join("");
+  return `<tr class="sub"><td colspan="10"><div class="rolagem"><table class="tab"><tr><th>Procedimento</th><th>Tipo</th><th>Devolvidas</th><th>% da unidade</th><th>Por eSF</th></tr>${procs}</table></div>
+    <div class="dv-acoes"><button data-dev-un="${esc(x.u)}">Baixar devolvidas desta unidade (Excel)</button><small class="status"></small></div></td></tr>`;
+}
+const CAB_UN=[["n","Devolvidas"],["taxa","por eSF"],["c","Devolvidas"],["taxaC","por eSF"],["e","Devolvidos"],["taxaE","por eSF"]];
 function renderUn(){
-  const {U,T,L}=filtrarUn(), tipo=$("un-tipo").value;
-  const li=(x,v)=>`<li><a data-ir-un="${esc(x.u)}">${esc(x.u)}</a> <span>${v}</span></li>`;
-  $("top5").innerHTML=`<div class="card"><h3>Top 5 APS – mais devolvidas</h3><ol>${T.abs.map(x=>li(x,fmt(x.n))).join("")}</ol></div>
-    <div class="card"><h3>Top 5 APS – mais devolvidas por eSF</h3><ol>${T.esf.map(x=>li(x,fmt(x.taxa,1)+" por eSF")).join("")}</ol></div>`;
-  const rank=$("un-top").value || $("un-ordem").value!=="nome";
-  $("un-lista").innerHTML=L.map((x,i)=>itemUn(x,rank?i+1:0)).join("")||"<p>Nenhuma unidade encontrada.</p>";
-  const tot=L.reduce((s,x)=>s+x.n,0);
-  $("un-cont").textContent=`${fmt(L.length)} unidades · ${fmt(tot)} devolvidas${tipo?" ("+tipo.toLowerCase()+")":""}`;
+  const L=filtrarUn(), o=$("un-ordem").value, rank=o!=="nome";
+  const th=(k,t,extra="")=>`<th data-ord="${k}"${o===k?' aria-sort="descending"':""}${k==="c"||k==="e"?' class="sep"':""} ${extra}>${t}</th>`;
+  $("un-lista").innerHTML=L.length?`<table class="tab rank"><thead>
+    <tr><th rowspan="2">#</th>${th("nome","Unidade solicitante",'rowspan="2"')}<th rowspan="2">eSF</th><th colspan="2" class="sep">Total</th><th colspan="2" class="sep">Consultas</th><th colspan="2" class="sep">Exames</th><th rowspan="2" class="sep">Procedi-<br>mentos</th></tr>
+    <tr>${CAB_UN.map(([k,t])=>th(k,t)).join("")}</tr></thead><tbody>${L.map((x,i)=>linhaUn(x,rank?i+1:0)).join("")}</tbody></table>`:'<p style="padding:12px">Nenhuma unidade encontrada.</p>';
+  UN_ATUAL=Object.fromEntries(L.map(x=>[x.u,x]));
+  $("un-cont").textContent=`${fmt(L.length)} unidades · ${fmt(L.reduce((s,x)=>s+x.n,0))} devolvidas (${fmt(L.reduce((s,x)=>s+x.c,0))} consultas, ${fmt(L.reduce((s,x)=>s+x.e,0))} exames)`;
 }
 function porProcedimento(nivel){
   const L=[];
@@ -432,15 +442,15 @@ function renderPr(){
   $("pr-cont").textContent=`${fmt(L.length)} procedimentos · ${fmt(L.reduce((s,x)=>s+x.n,0))} devolvidas`;
 }
 async function baixarResumoUn(){
-  await xlsx(); const {L}=filtrarUn();
-  const wb=XLSX.utils.book_new();
-  const ws=XLSX.utils.aoa_to_sheet([["Posição","Unidade solicitante","Nível","eSF","Devolvidas","Devolvidas por eSF","% do total"],...L.map((x,i)=>[i+1,x.u,x.nivel,x.esf??"",x.n,x.taxa!=null?Math.round(x.taxa*10)/10:"",Math.round(x.pct*10)/10])]);
-  ws["!cols"]=[{wch:8},{wch:40},{wch:10},{wch:6},{wch:11},{wch:17},{wch:10}];
-  XLSX.utils.book_append_sheet(wb,ws,"Unidades");
-  const linhas=[]; L.forEach(x=>x.procs.forEach(([id,n])=>linhas.push([x.u,x.nivel,porId[id]?porId[id].p:id,porId[id]?porId[id].tipo:"",n])));
-  const w2=XLSX.utils.aoa_to_sheet([["Unidade solicitante","Nível","Procedimento","Tipo","Devolvidas"],...linhas]); w2["!cols"]=[{wch:40},{wch:10},{wch:55},{wch:12},{wch:11}];
+  await xlsx(); const L=filtrarUn(), wb=XLSX.utils.book_new(), r1=v=>v!=null?Math.round(v*10)/10:"";
+  const ws=XLSX.utils.aoa_to_sheet([["Posição","Unidade solicitante","Nível","eSF","Devolvidas","Devolvidas por eSF","Consultas devolvidas","Consultas por eSF","Exames devolvidos","Exames por eSF","Procedimentos","% do total da região"],
+    ...L.map((x,i)=>[i+1,x.u,x.nivel,x.esf??"",x.n,r1(x.taxa),x.c,r1(x.taxaC),x.e,r1(x.taxaE),x.procs.length,r1(x.pct)])]);
+  ws["!cols"]=[8,40,10,6,11,18,20,18,18,16,14,20].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb,ws,"Ranking");
+  const linhas=[]; L.forEach(x=>x.procs.forEach(([id,n])=>linhas.push([x.u,x.nivel,porId[id]?porId[id].p:id,porId[id]?porId[id].tipo:"",n,r1(x.n?n/x.n*100:0),x.esf?r1(n/x.esf):""])));
+  const w2=XLSX.utils.aoa_to_sheet([["Unidade solicitante","Nível","Procedimento","Tipo","Devolvidas","% da unidade","Por eSF"],...linhas]); w2["!cols"]=[40,10,55,12,11,13,9].map(w=>({wch:w}));
   XLSX.utils.book_append_sheet(wb,w2,"Unidade x procedimento");
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Filtro",`${$("un-top").options[$("un-top").selectedIndex].text} · ${$("un-nivel").value||"todos os níveis"} · ${$("un-tipo").value||"todos os tipos"} · busca: ${$("un-busca").value||"(nenhuma)"}`]])),"Leia-me");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Filtro",`${$("un-nivel").options[$("un-nivel").selectedIndex].text} · ordem: ${$("un-ordem").options[$("un-ordem").selectedIndex].text} · busca: ${$("un-busca").value||"(nenhuma)"}`],["Por eSF","devolvidas ÷ número de eSF da UBS (referência RH APS Norte 06/2026); só para a APS"]])),"Leia-me");
   XLSX.writeFile(wb,`Devolvidas por unidade - Região Norte (${D.data.split("-").reverse().join("-")}).xlsx`);
 }
 async function baixarResumoPr(){
@@ -460,15 +470,22 @@ async function comStatus(st, fn){
   catch(err){ st.textContent="Não foi possível gerar: "+err.message; }
 }
 
-let abaAtual="filas";
-async function mostrarAba(a){
+let abaAtual="filas", visao="un";
+function mostrarVisao(v){
+  visao=v;
+  document.querySelectorAll(".visao button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.visao===v));
+  $("dv-un").hidden=v!=="un"; $("dv-pr").hidden=v!=="pr";
+  history.replaceState(null,"",v==="un"?"#aba-un":"#aba-proc");
+  if(DV) v==="un"?renderUn():renderPr();
+}
+async function mostrarAba(a,v){
   abaAtual=a;
   document.querySelectorAll(".abas button").forEach(b=>b.setAttribute("aria-selected",b.dataset.aba===a));
-  ["filas","un","proc"].forEach(x=>$("aba-"+x).hidden=x!==a);
+  ["filas","dev"].forEach(x=>$("aba-"+x).hidden=x!==a);
   if(a==="filas") return;
-  if(!DV){ $(a==="un"?"un-lista":"pr-lista").innerHTML="<p>Carregando devolvidas…</p>";
-    try{ await carregarDV(); }catch(err){ $(a==="un"?"un-lista":"pr-lista").innerHTML=`<p>Não foi possível carregar as devolvidas (${esc(err.message)}).</p>`; return; } }
-  a==="un"?renderUn():renderPr();
+  if(!DV){ $("un-lista").innerHTML='<p style="padding:12px">Carregando devolvidas…</p>';
+    try{ await carregarDV(); }catch(err){ $("un-lista").innerHTML=`<p style="padding:12px">Não foi possível carregar as devolvidas (${esc(err.message)}).</p>`; return; } }
+  mostrarVisao(v||visao);
 }
 
 // ---------------------------------------------------------------- carga
@@ -488,41 +505,51 @@ fetch("dados.json",{cache:"no-store"}).then(r=>{if(!r.ok) throw new Error(r.stat
     [fmt(d.filas.reduce((s,f)=>s+f.devolvidas,0)),"solicitações devolvidas"]
   ].map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join("");
   const tipos=[...new Set(d.filas.map(f=>f.tipo).filter(Boolean))].sort();
-  ["tipo","un-tipo","pr-tipo"].forEach(id=>tipos.forEach(t=>$(id).insertAdjacentHTML("beforeend",`<option>${esc(t)}</option>`)));
+  ["tipo","pr-tipo"].forEach(id=>tipos.forEach(t=>$(id).insertAdjacentHTML("beforeend",`<option>${esc(t)}</option>`)));
   render(); lerHash();
 }).catch(err=>{
   $("info").textContent="não foi possível carregar os dados";
   $("aviso").hidden=false; $("aviso").textContent="Erro ao carregar dados.json ("+err.message+"). Tente recarregar a página; se persistir, a atualização automática falhou.";
 });
 ["busca","tipo","alerta","ordem"].forEach(id=>$(id).addEventListener("input",()=>{vis=60;render();}));
-["un-busca","un-nivel","un-tipo","un-top","un-ordem"].forEach(id=>$(id).addEventListener("input",()=>DV&&renderUn()));
+["un-busca","un-nivel","un-ordem"].forEach(id=>$(id).addEventListener("input",()=>DV&&renderUn()));
 ["pr-busca","pr-tipo","pr-nivel","pr-ordem"].forEach(id=>$(id).addEventListener("input",()=>{visPr=60;DV&&renderPr();}));
 $("mais").onclick=()=>{vis+=60;render();};
 $("pr-mais").onclick=()=>{visPr+=60;renderPr();};
 $("baixar").onclick=()=>baixarLista().catch(e=>alert("Não foi possível gerar a planilha: "+e.message));
 $("un-baixar").onclick=()=>comStatus($("un-status"),async()=>{await baixarResumoUn();});
-$("un-baixar-det").onclick=()=>comStatus($("un-status"),()=>window.baixarDevolvidas({unidades:filtrarUn().L.map(x=>x.u),tipo:$("un-tipo").value,titulo:"Devolvidas detalhadas - unidades filtradas"},porId));
+$("un-baixar-det").onclick=()=>comStatus($("un-status"),()=>window.baixarDevolvidas({unidades:filtrarUn().map(x=>x.u),titulo:"Devolvidas detalhadas - unidades filtradas"},porId));
 $("pr-baixar").onclick=()=>comStatus($("pr-status"),async()=>{await baixarResumoPr();});
-document.querySelectorAll(".abas button").forEach(b=>b.onclick=()=>{ history.replaceState(null,"",b.dataset.aba==="filas"?location.pathname:"#aba-"+b.dataset.aba); mostrarAba(b.dataset.aba); });
+document.querySelectorAll(".abas button").forEach(b=>b.onclick=()=>{ if(b.dataset.aba==="filas") history.replaceState(null,"",location.pathname); mostrarAba(b.dataset.aba); });
+document.querySelectorAll(".visao button").forEach(b=>b.onclick=()=>mostrarVisao(b.dataset.visao));
 window.addEventListener("hashchange",lerHash);
 $("lista").addEventListener("pointermove",hover);
 $("lista").addEventListener("pointerout",sairHover);
-$("top5").addEventListener("click",e=>{const a=e.target.closest("[data-ir-un]"); if(!a) return;
-  $("un-top").value=""; $("un-nivel").value=""; $("un-busca").value=a.dataset.irUn; renderUn();
-  const c=[...$("un-lista").querySelectorAll(".fila")].find(x=>x.dataset.u===a.dataset.irUn); if(c){ c.classList.add("aberta","destaque"); c.scrollIntoView({block:"start",behavior:"smooth"}); }});
+function alternarUn(tr){
+  const nx=tr.nextElementSibling;
+  if(nx&&nx.classList.contains("sub")){ nx.remove(); tr.classList.remove("aberta"); }
+  else { tr.insertAdjacentHTML("afterend",detalheUn(UN_ATUAL[tr.dataset.u])); tr.classList.add("aberta"); }
+}
+$("un-lista").addEventListener("click",e=>{
+  if(e.target.closest("a")) return;
+  const h=e.target.closest("th[data-ord]"); if(h){ $("un-ordem").value=h.dataset.ord; renderUn(); return; }
+  const b=e.target.closest("button[data-dev-un]");
+  if(b){ comStatus(b.parentElement.querySelector(".status"),()=>window.baixarDevolvidas({unidades:[b.dataset.devUn],titulo:"Devolvidas - "+b.dataset.devUn},porId)); return; }
+  if(e.target.closest("tr.sub")) return;
+  const tr=e.target.closest("tr.u"); if(tr) alternarUn(tr);
+});
+$("un-lista").addEventListener("keydown",e=>{ if(e.key==="Enter"){ const tr=e.target.closest("tr.u"); if(tr) alternarUn(tr); } });
 function alternar(e,lista){
   if(e.target.closest("a")) return;
   const b=e.target.closest("button");
   if(b){
     const st=b.parentElement.querySelector(".status");
-    if(b.dataset.devUn) comStatus(st,()=>window.baixarDevolvidas({unidades:[b.dataset.devUn],tipo:$("un-tipo").value,titulo:"Devolvidas - "+b.dataset.devUn},porId));
     if(b.dataset.devP) comStatus(st,()=>window.baixarDevolvidas({procs:[porId[b.dataset.devP].p],nivel:$("pr-nivel").value,titulo:"Devolvidas - "+window._analiseNomeCurto(porId[b.dataset.devP].p)},porId));
     return;
   }
   if(e.target.closest(".det")) return;
   const c=e.target.closest(".fila"); if(c) c.classList.toggle("aberta");
 }
-$("un-lista").addEventListener("click",e=>alternar(e));
 $("pr-lista").addEventListener("click",e=>alternar(e));
 $("lista").addEventListener("click",async e=>{
   const g=e.target.closest(".gerar");
