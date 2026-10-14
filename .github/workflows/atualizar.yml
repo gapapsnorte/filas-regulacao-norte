@@ -18,7 +18,7 @@ concurrency:
 jobs:
   atualizar:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -45,6 +45,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout --orphan gh-pages
           git rm -r -q --cached .
-          git add -A -f -- index.html relatorio.js referencias.json dados.json devolvidas.json analises detalhe README.md
+          git add -A -f -- index.html relatorio.js referencias.json dados.json devolvidas.json atraso.json analises detalhe README.md
           git commit -q -m "Painel – dados de $(TZ=America/Sao_Paulo date '+%F %H:%M')"
           git push -f origin gh-pages

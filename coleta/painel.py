@@ -10,11 +10,14 @@ Gera:
   analises/<id>.json        detalhes agregados de cada fila, usados pelo botão "Gerar análise"
   detalhe/<id>.json         linhas do Mapa Social de cada fila (código SISREG, datas, status, risco, CID, unidade)
   detalhe/devolvidas.json   todas as devolvidas da região, linha a linha
+  atraso.json               histórico do atraso do Mapa Social (uma linha por recarga), acumulado entre publicações
 """
 import hashlib
 import json
 import os
 import sys
+import time
+import urllib.error
 import urllib.request
 from collections import defaultdict
 from datetime import date, datetime, timedelta
@@ -260,6 +263,44 @@ def _saida_actions(**kv):
                 f.write(f"{k}={v}\n")
 
 
+# Medições feitas antes de o histórico ir para o GitHub (programa local, 09/10; coleta de 13/10)
+ATRASO_INICIAL = [
+    {"medido_em": "09/10/2026 19:54", "recarga_painel": "2026-10-09T22:32:41.057Z", "solicitacoes_ate": "02/10/2026", "atraso_dias": 7},
+    {"medido_em": "13/10/2026 21:10", "recarga_painel": "2026-10-13T22:33:05.260Z", "solicitacoes_ate": "07/10/2026", "atraso_dias": 6},
+]
+DIAS = ["seg", "ter", "qua", "qui", "sex", "sáb", "dom"]
+
+
+def historico_atraso(meta, hoje):
+    """Acrescenta a medição desta recarga ao histórico publicado (o gh-pages é recriado a cada publicação)."""
+    hist = None
+    for _ in range(3):
+        try:
+            with urllib.request.urlopen(PUBLICADO + "atraso.json", timeout=60) as r:
+                hist = json.loads(r.read().decode("utf-8"))["medicoes"]
+            break
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                hist = list(ATRASO_INICIAL)
+                break
+            print("atraso.json publicado ilegível (%s); tentando de novo." % e)
+        except Exception as e:
+            print("atraso.json publicado ilegível (%s); tentando de novo." % e)
+        time.sleep(20)
+    if hist is None:
+        print("AVISO: histórico do atraso não pôde ser lido; recomeçando das medições iniciais.")
+        hist = list(ATRASO_INICIAL)
+    ultima = _br(meta["solicitacoes_ate"])
+    if not any(h["recarga_painel"] == meta["recarga_painel"] for h in hist):
+        hist.append({"medido_em": meta["gerado_em"], "recarga_painel": meta["recarga_painel"],
+                     "solicitacoes_ate": meta["solicitacoes_ate"], "atraso_dias": (hoje - ultima).days})
+    for h in hist:
+        h["dia_semana"] = DIAS[_br(h["medido_em"][:10]).weekday()]
+    print("Atraso do Mapa Social: " + "; ".join("%s (%s) %d d" % (h["medido_em"][:5], h["dia_semana"], h["atraso_dias"])
+                                                 for h in hist[-7:]))
+    return {"medicoes": hist}
+
+
 def precisa_atualizar(hoje):
     """Compara a última recarga do Mapa Social com a do painel publicado."""
     recarga = m.consultar([], layout=True).get("_reload", "")
@@ -281,15 +322,21 @@ def precisa_atualizar(hoje):
 
 def main():
     hoje = date.today()
+    t = time.monotonic()
     if "--se-mudou" in sys.argv and not precisa_atualizar(hoje):
         _saida_actions(publicar="nao")
         return
     b = coletar(hoje)
+    print("[tempo] coleta: %.0f s" % (time.monotonic() - t), flush=True)
+    t = time.monotonic()
     dados, detalhes, devolvidas, meta = montar(b, hoje, referencias())
     if len(dados["filas"]) < MIN_FILAS or not dados["solicitacoes_ate"] or dados["solicitacoes_ate"] == "-":
         print(f"ERRO: coleta incompleta ({len(dados['filas'])} filas, solicitações até {dados['solicitacoes_ate']!r}); nada foi gravado.")
         sys.exit(1)
     det, dev_det = montar_detalhe(b, hoje)
+    print("[tempo] montagem: %.0f s" % (time.monotonic() - t), flush=True)
+    t = time.monotonic()
+    _grava(PAINEL / "atraso.json", historico_atraso(meta, hoje))
     _grava(PAINEL / "dados.json", dados)
     _grava(PAINEL / "devolvidas.json", devolvidas)
     _limpar(PAINEL / "analises")
@@ -299,6 +346,7 @@ def main():
     for i, d in det.items():
         _grava(PAINEL / "detalhe" / f"{i}.json", dict(meta, agendamentos_desde=dev_det["agendamentos_desde"], **d))
     _grava(PAINEL / "detalhe" / "devolvidas.json", dict(meta, **dev_det))
+    print("[tempo] gravação: %.0f s" % (time.monotonic() - t), flush=True)
     _saida_actions(publicar="sim")
     print(f"{dados['gerado_em']}: {len(dados['filas'])} filas, solicitações até {dados['solicitacoes_ate']}, "
           f"{sum(len(d['s']) for d in det.values())} solicitações e {sum(len(d['a']) for d in det.values())} "
