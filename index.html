@@ -175,11 +175,11 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 <section id="aba-dev" hidden>
 <div class="visao" role="group" aria-label="Ver por">
   <span>Ver por:</span>
-  <button data-visao="pr" aria-pressed="false">Procedimento</button>
-  <button data-visao="un" aria-pressed="true">Unidade solicitante</button>
+  <button data-visao="pr" aria-pressed="true">Procedimento</button>
+  <button data-visao="un" aria-pressed="false">Unidade solicitante</button>
 </div>
 
-<div id="dv-un">
+<div id="dv-un" hidden>
 <p class="nota">Solicitações devolvidas pelo regulador, por unidade que solicitou: total e separado em consultas e exames. <i>Por eSF</i> = devolvidas ÷ número de equipes de Saúde da Família da UBS (só para a APS). Clique no cabeçalho para ordenar e na unidade para ver os procedimentos que ela mais devolve.</p>
 <div class="ctrl">
   <input type="search" id="un-busca" placeholder="Buscar unidade (ex.: UBS 2, PSR, policlínica)">
@@ -201,7 +201,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 <div class="rank-wrap" id="un-lista"></div>
 </div>
 
-<div id="dv-pr" hidden>
+<div id="dv-pr">
 <p class="nota">Solicitações devolvidas pelo regulador, por procedimento (consulta ou exame), com as unidades que mais devolvem em cada um.</p>
 <div class="ctrl">
   <input type="search" id="pr-busca" placeholder="Buscar procedimento">
@@ -549,7 +549,7 @@ async function comStatus(st, fn){
   catch(err){ st.textContent="Não foi possível gerar: "+err.message; }
 }
 
-let abaAtual="filas", visao="un";
+let abaAtual="filas", visao="pr";
 function mostrarVisao(v){
   visao=v;
   document.querySelectorAll(".visao button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.visao===v));
