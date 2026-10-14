@@ -189,7 +189,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 
 <footer>
   <p><b>Fonte:</b> Mapa Social do Distrito Federal (MPDFT), painel público de regulação. Sem dados de identificação de usuários; o download detalhado traz o código SISREG da solicitação, que já é público no Mapa Social.</p>
-  <p><b>Atraso dos dados:</b> o Mapa Social tem atraso fixo de 6 a 7 dias em relação ao SISREG: as solicitações mais recentes ainda não aparecem, por isso os totais podem diferir do SISREG.</p>
+  <p id="atraso"><b>Atraso dos dados:</b> o Mapa Social fica alguns dias atrás do SISREG: as solicitações mais recentes ainda não aparecem, por isso os totais podem diferir do SISREG.</p>
   <p><b>Como ler:</b> <i>Fila</i> = solicitações elegíveis para regulação: pendentes + reenviadas ao regulador da Região Norte (não inclui devolvidas nem as em fila de espera). Cores: Prioridade 1 = vermelho, 2 = amarelo, 3 = verde, 4 = azul; o número de dias é a espera da solicitação mais antiga de cada cor.
   <i>Entrada</i> = solicitações pela data da solicitação (pendentes, reenviadas e agendadas); <i>saída</i> = agendamentos pela data do atendimento; <i>saldo</i> = entrada − saída, em meses completos. Passe o cursor sobre o gráfico para ver os valores de cada mês.</p>
   <p><b>Alertas:</b> <i>fila crescendo</i> = saldo positivo em 9 ou mais dos últimos 12 meses; <i>espera acima da meta</i> = solicitação mais antiga de uma cor com espera maior que a meta do protocolo do procedimento (quando o protocolo não tem meta cadastrada, usa-se 30 dias para o vermelho como referência geral); <i>fila parada</i> = 20+ solicitações aguardando, ninguém agendado nos últimos 3 meses nem marcado à frente; <i>sem saída há mais de 1 ano</i> = há solicitações aguardando e o último agendamento registrado tem mais de 365 dias (ou não há nenhum).</p>
@@ -209,10 +209,11 @@ const NIVEIS = ["APS","DIRASE","HRS","HRPL","UPA","OUTROS"];
 let D, DV = null, vis = 60, visPr = 60, ultimaLista = [], ESF = {};
 const $ = id => document.getElementById(id);
 const porId = {};
+const atrasoTxt = () => D.atraso_dias != null ? `atraso de ${D.atraso_dias} dias` : "atraso de 6 a 7 dias";
 const diasSemSaida = f => f.fila > 0 ? (f.ult_ag ? Math.floor((new Date(D.data) - new Date(f.ult_ag)) / 864e5) : 1e6) : -1;
 
 function xlsx(){ return window.XLSX ? Promise.resolve() : new Promise((ok,er)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";s.onload=ok;s.onerror=()=>er(new Error("falha ao carregar a biblioteca do Excel"));document.head.appendChild(s);}); }
-function leiaMe(extra){ return [["Fonte","Mapa Social do Distrito Federal (MPDFT)"],["Atualizado em",D.gerado_em],["Solicitações registradas até",D.solicitacoes_ate+" (atraso fixo de 6 a 7 dias em relação ao SISREG)"],...extra,["Painel",location.href.split("#")[0]]]; }
+function leiaMe(extra){ return [["Fonte","Mapa Social do Distrito Federal (MPDFT)"],["Atualizado em",D.gerado_em],["Solicitações registradas até",D.solicitacoes_ate+" ("+atrasoTxt()+" em relação ao SISREG)"],...extra,["Painel",location.href.split("#")[0]]]; }
 
 // ---------------------------------------------------------------- gráficos
 function spark(f, w=120, h=34){
@@ -474,7 +475,8 @@ async function mostrarAba(a){
 fetch("dados.json",{cache:"no-store"}).then(r=>{if(!r.ok) throw new Error(r.status); return r.json();}).then(d=>{
   D=d; d.filas.forEach(f=>porId[f.id]=f);
   const rec=d.recarga_painel?new Date(d.recarga_painel):null;
-  $("info").textContent=`atualizado em ${d.gerado_em}${rec&&!isNaN(rec)?" · Mapa Social recarregado em "+rec.toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}):""} · solicitações registradas até ${d.solicitacoes_ate} (atraso de 6 a 7 dias)`;
+  $("info").textContent=`atualizado em ${d.gerado_em}${rec&&!isNaN(rec)?" · Mapa Social recarregado em "+rec.toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}):""} · solicitações registradas até ${d.solicitacoes_ate} (${atrasoTxt()})`;
+  if(d.atraso_dias!=null){ const u=d.atraso_ultimos||[]; $("atraso").innerHTML=`<b>Atraso dos dados:</b> o Mapa Social está ${d.atraso_dias} dias atrás do SISREG (última solicitação registrada: ${d.solicitacoes_ate}). As solicitações mais recentes ainda não aparecem, por isso os totais podem diferir do SISREG.${u.length>1?` Atraso medido nas últimas recargas: ${u.join(", ")} dias.`:""}`; }
   const idade=(Date.now()-new Date(d.data+"T12:00:00"))/864e5;
   if(idade>2){ $("aviso").hidden=false; $("aviso").textContent=`Atenção: os dados são de ${d.data.split("-").reverse().join("/")} (${Math.floor(idade)} dias). A atualização automática pode ter falhado.`; }
   const ativos=d.filas.filter(f=>f.fila>0);

@@ -14,13 +14,16 @@ REGIAO = "Região Norte"
 # No PC usa o Chrome instalado; no GitHub Actions (CANAL vazio) usa o Chromium do Playwright
 CANAL = os.environ.get("MAPA_CHROME_CANAL", "chrome")
 PARALELO = int(os.environ.get("MAPA_PARALELO", "6"))   # páginas do Qlik pedidas ao mesmo tempo
+LIMITE_CUBO = int(os.environ.get("MAPA_LIMITE_CUBO", "900"))   # segundos por consulta; estourou, falha e a tentativa seguinte recomeça
 
 _JS = """async ([specs, layout]) => {
   const qlik = await new Promise(r => require(['js/qlik'], r));
   const app = qlik.openApp('%s', {host: location.hostname, prefix: '/', port: location.port, isSecure: true});
   const out = {};
   if (layout) out._reload = (await new Promise(r => app.getAppLayout(r))).qLastReloadTime;
-  for (const [name, dims, meas] of specs) {
+  const limite = (name, p) => Promise.race([p, new Promise((_, falha) =>
+    setTimeout(() => falha(new Error('consulta ' + name + ' passou de %d s')), %d * 1000))]);
+  for (const [name, dims, meas] of specs) out[name] = await limite(name, (async () => {
     const w = dims.length + meas.length;
     const t0 = Date.now();
     const model = await app.createCube({
@@ -39,12 +42,13 @@ _JS = """async ([specs, layout]) => {
     const rows = [];
     paginas.forEach(pg => pg[0].qMatrix.forEach(r => rows.push(r.map(c => c.qText))));
     await app.destroySessionObject(lay.qInfo.qId);
+    if (rows.length !== n) throw new Error('consulta ' + name + ': esperava ' + n + ' linhas, veio ' + rows.length);
     console.log('[tempo] ' + name + ': ' + n + ' linhas, ' + tops.length + ' páginas; cálculo ' +
                 ((t1 - t0) / 1000).toFixed(1) + ' s, leitura ' + ((Date.now() - t1) / 1000).toFixed(1) + ' s');
-    out[name] = {cols: dims.concat(meas), rows};
-  }
+    return {cols: dims.concat(meas), rows};
+  })());
   return out;
-}""" % (APP, PARALELO, PARALELO)
+}""" % (APP, LIMITE_CUBO, LIMITE_CUBO, PARALELO, PARALELO)
 
 
 async def _consultar(specs, layout=False):
@@ -52,6 +56,7 @@ async def _consultar(specs, layout=False):
         nav = await p.chromium.launch(channel=CANAL or None, headless=True)
         pg = await nav.new_page()
         pg.on("console", lambda msg: msg.text.startswith("[tempo]") and print(msg.text, flush=True))
+        resp = None
         # Às vezes a página abre sem a biblioteca do Qlik (ex.: durante a recarga do Mapa Social): espera e recarrega
         for tentativa in range(4):
             try:

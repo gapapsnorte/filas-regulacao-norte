@@ -21,6 +21,7 @@
   const dataBr = d => `${d.getDate()} ${MESES[d.getMonth()]}. ${d.getFullYear()}`;
   const dd = s => s ? s.split("-").reverse().join("/") : "";
   const cmp = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+  const atrasoTxt = d => d.atraso_dias != null ? `atraso de ${d.atraso_dias} dias` : "atraso de 6 a 7 dias";
 
   function lib(url) {
     if (!carregadas[url]) carregadas[url] = new Promise((ok, erro) => {
@@ -58,6 +59,7 @@
     const r = {p: d.p, nome: nomeEscolhido || notaRef.nome || nomeCurto(d.p), avisos: [], notas: {}};
     r.extracao = new Date(d.data + "T12:00:00");
     r.solicAte = d.solicitacoes_ate;
+    r.atraso = atrasoTxt(d);
     const saldo = d.in.map((v, i) => v - d.out[i]);
     r.serie = {meses: d.meses, in: d.in, out: d.out, saldo};
 
@@ -183,7 +185,7 @@
   function notas(r) {
     const e = dataBr(r.extracao), s = r.serie, n = s.meses.length;
     const [m0, a0] = s.meses[0].split("/"), [m1, a1] = s.meses[n - 1].split("/");
-    const n2 = [FONTE, `Nota: Dados extraídos em ${e}. Considera as solicitações pendentes e reenviadas; o tempo de espera vai da solicitação mais antiga de cada prioridade até a data da extração. O Mapa Social registra solicitações até ${r.solicAte} (atraso fixo de 6 a 7 dias em relação ao SISREG), por isso os totais podem diferir do SISREG.`];
+    const n2 = [FONTE, `Nota: Dados extraídos em ${e}. Considera as solicitações pendentes e reenviadas; o tempo de espera vai da solicitação mais antiga de cada prioridade até a data da extração. O Mapa Social registra solicitações até ${r.solicAte} (${r.atraso} em relação ao SISREG), por isso os totais podem diferir do SISREG.`];
     if (r.meta) n2.push("Metas de tempo de espera do protocolo vigente (mediana): " + ["vermelho", "amarelo", "verde", "azul"].filter(c => r.meta[c]).map(c => `${c} até ${r.meta[c]} dias`).join(", ") + `. ${(r.meta.fonte || "").trim().replace(/\.$/, "")}.`);
     if (r.notas.azul) n2.push("*" + r.notas.azul);
     let nt = `Nota: Percentuais calculados em relação às ${fmt(r.totAps)} solicitações devolvidas provenientes da Atenção Primária.`;
@@ -468,7 +470,7 @@
   function leiaMe(d, extra) {
     return [["Informação", "Valor"], ["Fonte", "Mapa Social do Distrito Federal (MPDFT) – painel público de regulação"],
       ["Região", "Região Norte (unidade solicitante)"], ["Data da extração", dd(d.data)],
-      ["Solicitações registradas até", `${d.solicitacoes_ate} (atraso fixo de 6 a 7 dias em relação ao SISREG)`],
+      ["Solicitações registradas até", `${d.solicitacoes_ate} (${atrasoTxt(d)} em relação ao SISREG)`],
       ...extra, ["Identificação", "Sem nome, telefone ou CNS. O código da solicitação é o código SISREG, público no Mapa Social."],
       ["Gerado pelo painel", location.href.split("#")[0]]];
   }

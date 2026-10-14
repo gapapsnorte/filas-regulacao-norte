@@ -10,14 +10,13 @@ Gera:
   analises/<id>.json        detalhes agregados de cada fila, usados pelo botão "Gerar análise"
   detalhe/<id>.json         linhas do Mapa Social de cada fila (código SISREG, datas, status, risco, CID, unidade)
   detalhe/devolvidas.json   todas as devolvidas da região, linha a linha
-  atraso.json               histórico do atraso do Mapa Social (uma linha por recarga), acumulado entre publicações
+  atraso.json               histórico do atraso do Mapa Social (uma medição por dia); fica no branch main, versionado
 """
 import hashlib
 import json
 import os
 import sys
 import time
-import urllib.error
 import urllib.request
 from collections import defaultdict
 from datetime import date, datetime, timedelta
@@ -203,8 +202,10 @@ def montar(b, hoje, ref=None):
         detalhes[i] = {"p": p, "tipo": d["tipo"], "meses": rot, "in": d["in"], "out": d["out"], "cores": cores,
                        "cid": d["cid"], "devolvidas_unidade": d["dev_un"], "unidades": sorted(d["unidades"])}
     resumo.sort(key=lambda x: -x["fila"])
+    ultima = b["ultima"]["rows"][0][0]
     meta = {"gerado_em": datetime.now().strftime("%d/%m/%Y %H:%M"), "data": hoje.isoformat(),
-            "solicitacoes_ate": b["ultima"]["rows"][0][0], "recarga_painel": b.get("_reload", "")}
+            "solicitacoes_ate": ultima, "recarga_painel": b.get("_reload", ""),
+            "atraso_dias": (hoje - _br(ultima)).days if _valido(ultima) else None}
 
     # Devolvidas por fila × unidade solicitante (abas de devolvidas)
     niveis, esf = ref.get("niveis", []), ref.get("esf", {})
@@ -272,31 +273,18 @@ DIAS = ["seg", "ter", "qua", "qui", "sex", "sáb", "dom"]
 
 
 def historico_atraso(meta, hoje):
-    """Acrescenta a medição desta recarga ao histórico publicado (o gh-pages é recriado a cada publicação)."""
-    hist = None
-    for _ in range(3):
-        try:
-            with urllib.request.urlopen(PUBLICADO + "atraso.json", timeout=60) as r:
-                hist = json.loads(r.read().decode("utf-8"))["medicoes"]
-            break
-        except urllib.error.HTTPError as e:
-            if e.code == 404:
-                hist = list(ATRASO_INICIAL)
-                break
-            print("atraso.json publicado ilegível (%s); tentando de novo." % e)
-        except Exception as e:
-            print("atraso.json publicado ilegível (%s); tentando de novo." % e)
-        time.sleep(20)
-    if hist is None:
-        print("AVISO: histórico do atraso não pôde ser lido; recomeçando das medições iniciais.")
+    """Acrescenta a medição desta recarga a atraso.json (arquivo versionado em main; o workflow faz o commit).
+    Uma medição por dia: recargas repetidas na mesma noite, sem solicitações novas, não entram."""
+    arq = PAINEL / "atraso.json"
+    try:
+        hist = json.loads(arq.read_text(encoding="utf-8"))["medicoes"]
+    except (OSError, ValueError, KeyError) as e:
+        print("atraso.json ausente ou ilegível (%s); começando das medições iniciais." % e)
         hist = list(ATRASO_INICIAL)
-    ultima = _br(meta["solicitacoes_ate"])
-    # o Mapa Social às vezes recarrega mais de uma vez na mesma noite sem dados novos: uma medição por dia e data
-    hist = [h for h in hist if h["recarga_painel"] == meta["recarga_painel"] or
-            (h["medido_em"][:10], h["solicitacoes_ate"]) != (meta["gerado_em"][:10], meta["solicitacoes_ate"])]
-    if not any(h["recarga_painel"] == meta["recarga_painel"] for h in hist):
+    dia = meta["gerado_em"][:10]
+    if not any(h["medido_em"][:10] == dia and h["solicitacoes_ate"] == meta["solicitacoes_ate"] for h in hist):
         hist.append({"medido_em": meta["gerado_em"], "recarga_painel": meta["recarga_painel"],
-                     "solicitacoes_ate": meta["solicitacoes_ate"], "atraso_dias": (hoje - ultima).days})
+                     "solicitacoes_ate": meta["solicitacoes_ate"], "atraso_dias": meta["atraso_dias"]})
     for h in hist:
         h["dia_semana"] = DIAS[_br(h["medido_em"][:10]).weekday()]
     print("Atraso do Mapa Social: " + "; ".join("%s (%s) %d d" % (h["medido_em"][:5], h["dia_semana"], h["atraso_dias"])
@@ -306,7 +294,8 @@ def historico_atraso(meta, hoje):
 
 def precisa_atualizar(hoje):
     """Compara a última recarga do Mapa Social com a do painel publicado."""
-    recarga = m.consultar([], layout=True).get("_reload", "")
+    r = m.consultar([["ultima", [], ["Date(Max(data_solicitacao))"]]], layout=True)
+    recarga, ultima = r.get("_reload", ""), r["ultima"]["rows"][0][0]
     try:
         with urllib.request.urlopen(PUBLICADO + "dados.json", timeout=60) as r:
             pub = json.loads(r.read().decode("utf-8"))
@@ -316,11 +305,16 @@ def precisa_atualizar(hoje):
     if pub.get("data") != hoje.isoformat():
         print("Dados publicados são de %s; atualizando." % pub.get("data"))
         return True
-    if pub.get("recarga_painel") != recarga:
-        print("Mapa Social recarregou (%s → %s); atualizando." % (pub.get("recarga_painel"), recarga))
-        return True
-    print("Sem novidade: Mapa Social não recarregou desde a última publicação (%s)." % recarga)
-    return False
+    if pub.get("recarga_painel") == recarga:
+        print("Sem novidade: Mapa Social não recarregou desde a última publicação (%s)." % recarga)
+        return False
+    # Premissa: toda carga com solicitações novas avança a data da última solicitação (~3,5 mil por dia útil)
+    if pub.get("solicitacoes_ate") == ultima:
+        print("Mapa Social recarregou (%s → %s), mas sem solicitações novas (última: %s); nada a fazer." % (
+            pub.get("recarga_painel"), recarga, ultima))
+        return False
+    print("Mapa Social recarregou (%s → %s) com solicitações até %s; atualizando." % (pub.get("recarga_painel"), recarga, ultima))
+    return True
 
 
 def main():
@@ -339,7 +333,11 @@ def main():
     det, dev_det = montar_detalhe(b, hoje)
     print("[tempo] montagem: %.0f s" % (time.monotonic() - t), flush=True)
     t = time.monotonic()
-    _grava(PAINEL / "atraso.json", historico_atraso(meta, hoje))
+    hist = historico_atraso(meta, hoje)
+    _grava(PAINEL / "atraso.json", hist)
+    ultimos = [h["atraso_dias"] for h in hist["medicoes"][-7:]]
+    for d in (meta, dados, devolvidas):
+        d["atraso_ultimos"] = ultimos
     _grava(PAINEL / "dados.json", dados)
     _grava(PAINEL / "devolvidas.json", devolvidas)
     _limpar(PAINEL / "analises")
