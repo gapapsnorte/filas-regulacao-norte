@@ -291,6 +291,9 @@ def historico_atraso(meta, hoje):
         print("AVISO: histórico do atraso não pôde ser lido; recomeçando das medições iniciais.")
         hist = list(ATRASO_INICIAL)
     ultima = _br(meta["solicitacoes_ate"])
+    # o Mapa Social às vezes recarrega mais de uma vez na mesma noite sem dados novos: uma medição por dia e data
+    hist = [h for h in hist if h["recarga_painel"] == meta["recarga_painel"] or
+            (h["medido_em"][:10], h["solicitacoes_ate"]) != (meta["gerado_em"][:10], meta["solicitacoes_ate"])]
     if not any(h["recarga_painel"] == meta["recarga_painel"] for h in hist):
         hist.append({"medido_em": meta["gerado_em"], "recarga_painel": meta["recarga_painel"],
                      "solicitacoes_ate": meta["solicitacoes_ate"], "atraso_dias": (hoje - ultima).days})
