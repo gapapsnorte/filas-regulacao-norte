@@ -238,7 +238,14 @@
    "amarelo": 120,
    "verde": 180,
    "azul": 210,
-   "fonte": "Protocolo de Regulação para Acesso a Consultas em Cirurgia Geral e em Pequena Cirurgia (Portaria SES-DF 79/2026) — meta anual de tempo de espera (mediana) por prioridade"
+   "fonte": "Protocolo de Regulação para Acesso à Consulta em Cirurgia Geral e em Pequena Cirurgia (Portaria SES-DF 79/2026, seção 9.2) — meta anual de tempo de espera (mediana) por prioridade"
+  },
+  "CONSULTA EM PEQUENA CIRURGIA": {
+   "vermelho": 30,
+   "amarelo": 120,
+   "verde": 180,
+   "azul": 210,
+   "fonte": "Protocolo de Regulação para Acesso à Consulta em Cirurgia Geral e em Pequena Cirurgia (Portaria SES-DF 79/2026, seção 9.2) — meta anual de tempo de espera (mediana) por prioridade"
   }
  }
 }

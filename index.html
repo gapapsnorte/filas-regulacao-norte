@@ -53,6 +53,8 @@ header p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
 .chip.vermelho{background:var(--vermelho);color:#fff}.chip.amarelo{background:var(--amarelo)}.chip.verde{background:var(--verde)}
 .chip.azul{background:var(--azul)}.chip.semrisco{background:var(--semrisco)}
 .alertas{margin-top:6px;display:flex;flex-wrap:wrap;gap:5px}
+.tag{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:0 7px;font-size:.7rem;color:var(--muted);white-space:nowrap}
+.tag.ok{border-color:var(--out);color:var(--out)}
 .alerta{background:var(--alerta-bg);color:var(--alerta-txt);border-radius:6px;padding:2px 8px;font-size:.78rem}
 .det{display:none;margin-top:10px;border-top:1px solid var(--line);padding-top:10px;cursor:default}
 .fila.aberta .det{display:block}
@@ -135,6 +137,8 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
     <option value="">Com ou sem alerta</option>
     <option value="qualquer">Só com alertas</option>
     <option value="nenhum">Só sem alertas</option>
+    <option value="sem-meta">Sem meta normativa</option>
+    <option value="com-meta">Com meta normativa</option>
     <option value="crescendo">Fila crescendo</option>
     <option value="esperando">Espera acima da meta</option>
     <option value="parada">Fila parada</option>
@@ -208,7 +212,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
   <p id="atraso"><b>Atraso dos dados:</b> o Mapa Social fica alguns dias atrás do SISREG: as solicitações mais recentes ainda não aparecem, por isso os totais podem diferir do SISREG.</p>
   <p><b>Como ler:</b> <i>Fila</i> = solicitações elegíveis para regulação: pendentes + reenviadas ao regulador da Região Norte (não inclui devolvidas nem as em fila de espera). Cores: Prioridade 1 = vermelho, 2 = amarelo, 3 = verde, 4 = azul; o número de dias é a espera da solicitação mais antiga de cada cor.
   <i>Entrada</i> = solicitações pela data da solicitação (pendentes, reenviadas e agendadas); <i>saída</i> = agendamentos pela data do atendimento; <i>saldo</i> = entrada − saída, em meses completos. Passe o cursor sobre o gráfico para ver os valores de cada mês.</p>
-  <p><b>Alertas:</b> <i>fila crescendo</i> = saldo positivo em 9 ou mais dos últimos 12 meses; <i>espera acima da meta</i> = solicitação mais antiga de uma cor com espera maior que a meta do protocolo do procedimento (quando o protocolo não tem meta cadastrada, usa-se 30 dias para o vermelho como referência geral); <i>fila parada</i> = 20+ solicitações aguardando, ninguém agendado nos últimos 3 meses nem marcado à frente; <i>sem saída há mais de 1 ano</i> = há solicitações aguardando e o último agendamento registrado tem mais de 365 dias (ou não há nenhum).</p>
+  <p><b>Alertas:</b> <i>fila crescendo</i> = saldo positivo em 9 ou mais dos últimos 12 meses; <i>espera acima da meta</i> = solicitação mais antiga de uma cor com espera maior que a meta do protocolo do procedimento (só existe quando uma normativa da SES-DF define meta de espera por prioridade para o procedimento; hoje, apenas Consulta em Cirurgia Geral e em Pequena Cirurgia, conforme a Portaria SES-DF 79/2026 – demais filas ficam marcadas como <i>sem meta normativa</i> e não geram esse alerta); <i>fila parada</i> = 20+ solicitações aguardando, ninguém agendado nos últimos 3 meses nem marcado à frente; <i>sem saída há mais de 1 ano</i> = há solicitações aguardando e o último agendamento registrado tem mais de 365 dias (ou não há nenhum).</p>
   <p><b>Gerar análise completa:</b> abra uma fila e escolha PDF, Word ou Excel (tabelas). O documento segue a metodologia padronizada (Figuras 1 a 4 e Tabela 1, com as UBS ordenadas de quem mais devolve por eSF); os parágrafos de interpretação saem em amarelo, como rascunho para revisão. <i>Dados detalhados</i> baixa as linhas da fila: solicitações pendentes, reenviadas e devolvidas, e agendamentos dos últimos 24 meses.</p>
   <p id="rodape-atualizacao">Versão piloto. O painel confere o Mapa Social a cada 2 horas e se atualiza sozinho assim que ele recarrega (uma vez por dia, normalmente à noite).</p>
 </footer>
@@ -285,12 +289,13 @@ function chips(f){
     return `<span class="chip ${c.replace(" ","")}" title="${c}: ${fmt(k.n)} solicitações; mais antiga de ${dd(k.antiga)}">${fmt(k.n)}${k.dias!=null?" · "+fmt(k.dias)+" d":""}</span>`}).join("") || `<span style="color:var(--muted);font-size:.8rem">sem fila</span>`;
 }
 function item(f){
-  const meta = (window._analiseMeta && window._analiseMeta(f.p)) || {vermelho:30};
+  const meta = (window._analiseMeta && window._analiseMeta(f.p)) || {};
   const linhas = COR.filter(c=>f.cores[c]).map(c=>{const k=f.cores[c], m=meta[c];
     return `<tr><td>${c}</td><td>${fmt(k.n)}</td><td>${dd(k.antiga)}</td><td class="${m&&k.dias>m?"acima":""}">${fmt(k.dias)}</td><td>${m?fmt(m):"–"}</td></tr>`}).join("");
+  const semMeta=!f.meta_normativa;
   return `<div class="fila" tabindex="0" id="f-${f.id}" data-id="${f.id}">
    <div class="lin">
-     <div class="nome">${esc(f.p)}<small>${esc(f.tipo||"")}</small></div>
+     <div class="nome">${esc(f.p)}<small>${esc(f.tipo||"")}${semMeta?` · <span class="tag" title="Nenhuma normativa da SES-DF define meta de tempo de espera por prioridade para este procedimento">sem meta normativa</span>`:` · <span class="tag ok" title="Meta de espera definida em protocolo da SES-DF">meta normativa</span>`}</small></div>
      <div class="num f"><b>${fmt(f.fila)}</b><small>na fila</small></div>
      <div class="c chips">${chips(f)}</div>
      <div class="num s"><b style="color:${f.saldo12>0?"var(--saldo)":"var(--out)"}">${f.saldo12>0?"+":""}${fmt(f.saldo12)}</b><small>saldo 12 meses</small></div>
@@ -301,7 +306,7 @@ function item(f){
      <div class="leg"><span><i style="background:var(--in)"></i>Entrada</span><span><i style="background:var(--out)"></i>Saída</span><span><i style="background:var(--saldo)"></i>Saldo</span></div>
      ${grafico(f)}
      <table class="cores"><tr><th>Prioridade</th><th>Solicitações</th><th>Mais antiga</th><th>Dias de espera</th><th>Meta (dias)</th></tr>${linhas}</table>
-     <p style="font-size:.85rem;color:var(--muted)">Devolvidas: ${fmt(f.devolvidas)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Meta: referência geral (protocolo sem meta cadastrada)"}</p>
+     <p style="font-size:.85rem;color:var(--muted)">Devolvidas: ${fmt(f.devolvidas)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Sem meta de tempo de espera definida em normativa da SES-DF para este procedimento"}</p>
      <div class="gerar" data-id="${f.id}" data-p="${esc(f.p)}">
        <b>Gerar análise completa</b>
        <label>Nome nos títulos <input class="nome-curto" placeholder="ex.: Cirurgia Geral"></label>
@@ -313,7 +318,7 @@ function item(f){
 function filtrar(){
   const q=norm($("busca").value.trim()), t=$("tipo").value, al=$("alerta").value, o=$("ordem").value;
   let L=D.filas.filter(f=>(!q||norm(f.p).includes(q))&&(!t||f.tipo===t)&&
-    (!al || (al==="qualquer" ? f.alertas.length : al==="nenhum" ? !f.alertas.length : f.alertas.some(a=>TIPO_ALERTA[al].test(a)))));
+    (!al || (al==="qualquer" ? f.alertas.length : al==="nenhum" ? !f.alertas.length : al==="sem-meta" ? !f.meta_normativa : al==="com-meta" ? f.meta_normativa : f.alertas.some(a=>TIPO_ALERTA[al].test(a)))));
   const k={fila:f=>-f.fila,espera:f=>-(f.espera_max||0),saldo:f=>-f.saldo12,devolvidas:f=>-f.devolvidas,semsaida:f=>-diasSemSaida(f)};
   L.sort(o==="nome"?(a,b)=>a.p.localeCompare(b.p,"pt"):(a,b)=>k[o](a)-k[o](b)||b.fila-a.fila);
   return L;

@@ -39,7 +39,6 @@ MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "
 CORES = {"Prioridade 1": "vermelho", "Prioridade 2": "amarelo", "Prioridade 3": "verde", "Prioridade 4": "azul"}
 N_PAINEL = 24          # meses mostrados no painel (e janela dos agendamentos no detalhe)
 MIN_FILAS = 500        # abaixo disso a coleta é considerada falha (não publica)
-META_PADRAO = {"vermelho": 30}   # referência geral quando o protocolo não tem meta cadastrada
 ANOS_SERIE = 5         # série da análise: de janeiro de (ano - 5) até o mês anterior
 SEM_SAIDA_DIAS = 365   # alerta "sem saída há mais de 1 ano"
 
@@ -179,7 +178,7 @@ def montar(b, hoje, ref=None):
         alertas = []
         if pos >= 9:
             alertas.append("Fila crescendo: saldo positivo em %d dos últimos 12 meses" % pos)
-        meta = metas.get(p) or META_PADRAO
+        meta = metas.get(p) or {}   # só há meta quando uma norma a define (aba Metas_espera); sem norma, sem alerta de meta
         for cor in ("vermelho", "amarelo", "verde", "azul"):
             c, lim = cores.get(cor), meta.get(cor)
             if c and lim and c["dias"] is not None and c["dias"] > lim:
@@ -195,7 +194,7 @@ def montar(b, hoje, ref=None):
                 alertas.append("Sem saída há mais de 1 ano: último agendamento em %s" % ult.strftime("%d/%m/%Y"))
         esperas = [c["dias"] for c in cores.values() if c["dias"] is not None]
         i = ident(p)
-        resumo.append({"id": i, "p": p, "tipo": d["tipo"], "fila": d["fila"], "cores": cores,
+        resumo.append({"id": i, "p": p, "meta_normativa": bool(metas.get(p)), "tipo": d["tipo"], "fila": d["fila"], "cores": cores,
                        "devolvidas": d["devolvidas"], "in": ent, "out": sai, "saldo12": sum(u12),
                        "futuros": d["futuros"], "ult_ag": ult.isoformat() if ult else None,
                        "espera_max": max(esperas) if esperas else None, "alertas": alertas})
