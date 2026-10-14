@@ -55,6 +55,19 @@ header p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
 .alertas{margin-top:6px;display:flex;flex-wrap:wrap;gap:5px}
 .tag{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:0 7px;font-size:.7rem;color:var(--muted);white-space:nowrap}
 .tag.ok{border-color:var(--out);color:var(--out)}
+.sim{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);cursor:default}
+.sim h4{margin:0 0 4px;font-size:.95rem}
+.sim .nota{margin:0 0 10px}
+.sim-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.sim label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:2px}
+.sim label b{color:var(--txt);font-variant-numeric:tabular-nums}
+.sim input[type=range]{width:100%;accent-color:var(--accent)}
+.sim-res{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
+.sim-res div{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.sim-res b{display:block;font-size:1.15rem;font-variant-numeric:tabular-nums}
+.sim-res span{color:var(--muted);font-size:.78rem}
+.sim-res .bom b{color:var(--out)}.sim-res .ruim b{color:var(--saldo)}
+.sim svg{max-width:560px;display:block}
 .alerta{background:var(--alerta-bg);color:var(--alerta-txt);border-radius:6px;padding:2px 8px;font-size:.78rem}
 .det{display:none;margin-top:10px;border-top:1px solid var(--line);padding-top:10px;cursor:default}
 .fila.aberta .det{display:block}
@@ -213,6 +226,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
   <p><b>Como ler:</b> <i>Fila</i> = solicitações elegíveis para regulação: pendentes + reenviadas ao regulador da Região Norte (não inclui devolvidas nem as em fila de espera). Cores: Prioridade 1 = vermelho, 2 = amarelo, 3 = verde, 4 = azul; o número de dias é a espera da solicitação mais antiga de cada cor.
   <i>Entrada</i> = solicitações pela data da solicitação (pendentes, reenviadas e agendadas); <i>saída</i> = agendamentos pela data do atendimento; <i>saldo</i> = entrada − saída, em meses completos. Passe o cursor sobre o gráfico para ver os valores de cada mês.</p>
   <p><b>Alertas:</b> <i>fila crescendo</i> = saldo positivo em 9 ou mais dos últimos 12 meses; <i>espera acima da meta</i> = solicitação mais antiga de uma cor com espera maior que a meta do protocolo do procedimento (só existe quando uma normativa da SES-DF define meta de espera por prioridade para o procedimento; hoje, apenas Consulta em Cirurgia Geral e em Pequena Cirurgia, conforme a Portaria SES-DF 79/2026 – demais filas ficam marcadas como <i>sem meta normativa</i> e não geram esse alerta); <i>fila parada</i> = 20+ solicitações aguardando, ninguém agendado nos últimos 3 meses nem marcado à frente; <i>sem saída há mais de 1 ano</i> = há solicitações aguardando e o último agendamento registrado tem mais de 365 dias (ou não há nenhum).</p>
+  <p><b>Espera estimada e simulador:</b> a espera estimada (~N d no cartão) é a fila dividida pela saída mensal média dos últimos 12 meses, isto é, quanto tempo a fila levaria para ser agendada no ritmo atual. No detalhe de cada fila, o simulador mostra o efeito de uma oferta adicional de agendamentos por mês na espera estimada e na projeção da fila em 24 meses; é uma estimativa para a fila toda, sem separar prioridades.</p>
   <p><b>Gerar análise completa:</b> abra uma fila e escolha PDF, Word ou Excel (tabelas). O documento segue a metodologia padronizada (Figuras 1 a 4 e Tabela 1, com as UBS ordenadas de quem mais devolve por eSF); os parágrafos de interpretação saem em amarelo, como rascunho para revisão. <i>Dados detalhados</i> baixa as linhas da fila: solicitações pendentes, reenviadas e devolvidas, e agendamentos dos últimos 24 meses.</p>
   <p id="rodape-atualizacao">Versão piloto. O painel confere o Mapa Social a cada 2 horas e se atualiza sozinho assim que ele recarrega (uma vez por dia, normalmente à noite).</p>
 </footer>
@@ -283,6 +297,64 @@ function sairHover(e){
   g.querySelector(".tip").hidden=true; g.querySelector(".cur").setAttribute("visibility","hidden"); g.querySelector(".pts").setAttribute("visibility","hidden");
 }
 
+// ---------------------------------------------------------------- simulador de oferta
+// Premissas: entrada e saída mensais = média dos últimos 12 meses completos, mantidas constantes;
+// espera estimada = fila ÷ saída mensal (lei de Little, em dias de 30,4); acréscimo = agendamentos a mais por mês.
+const DIAS_MES=30.4;
+function baseSim(f){
+  const m=a=>a.slice(-12).reduce((s,x)=>s+x,0)/Math.max(1,Math.min(12,a.length));
+  const ent=m(f.in), sai=m(f.out);
+  return {ent,sai,fila:f.fila,espera:sai>0?f.fila/sai*DIAS_MES:null};
+}
+function projSim(b,delta,meses=24){
+  const pts=[b.fila]; let L=b.fila;
+  for(let i=0;i<meses;i++){ L=Math.max(0,L+b.ent-(b.sai+delta)); pts.push(L); }
+  return pts;
+}
+function simHtml(f){
+  const b=baseSim(f), maxD=Math.max(20,Math.ceil(Math.max(b.sai,b.ent)*1.5/10)*10), passo=Math.max(1,Math.round(maxD/300));
+  const eMax=b.espera?Math.max(30,Math.ceil(b.espera/10)*10):180;
+  return `<div class="sim" data-id="${f.id}"><h4>Simulador de oferta × tempo de espera</h4>
+   <p class="nota">Estimativa para a fila inteira do procedimento, com a entrada e a saída médias dos últimos 12 meses mantidas. Mova uma barra e a outra acompanha.</p>
+   <div class="sim-grid">
+    <div><label>Oferta adicional: <b class="v-delta">0</b> agendamentos/mês <span class="v-pct"></span></label>
+      <input type="range" class="s-delta" min="0" max="${maxD}" step="${passo}" value="0"></div>
+    <div><label>Tempo de espera estimado: <b class="v-esp">–</b></label>
+      <input type="range" class="s-esp" min="7" max="${eMax}" step="1" value="${b.espera?Math.min(eMax,Math.round(b.espera)):eMax}" ${b.espera?"":"disabled"}></div>
+   </div>
+   <div class="sim-res"></div><div class="sim-graf"></div>
+   <small class="nota">Premissas: saída = agendamentos do Mapa Social (inclui cancelados e faltas, o que pode superestimar a capacidade real); a estimativa não separa prioridades — vermelhos são agendados antes e esperam menos, azuis esperam mais; não é o “tempo médio” do Mapa Social (que usa os agendamentos dos últimos 15 dias). Não considera custo, vagas físicas nem mudança na demanda.</small></div>`;
+}
+function atualizarSim(box,origem){
+  const f=porId[box.dataset.id], b=baseSim(f), sd=box.querySelector(".s-delta"), se=box.querySelector(".s-esp");
+  let delta=+sd.value;
+  if(origem==="esp"){ const alvo=+se.value; delta=Math.max(0,b.fila*DIAS_MES/alvo-b.sai); if(delta>+sd.max) delta=+sd.max; sd.value=delta; }
+  const sai=b.sai+delta, esp=sai>0?b.fila/sai*DIAS_MES:null;
+  if(origem!=="esp"&&esp!=null&&!se.disabled) se.value=Math.min(+se.max,Math.max(+se.min,Math.round(esp)));
+  box.querySelector(".v-delta").textContent=fmt(delta);
+  box.querySelector(".v-pct").textContent=b.sai>0?`(${delta>=0?"+":""}${fmt(delta/b.sai*100)}% da saída atual de ${fmt(b.sai)}/mês)`:"(sem saídas nos últimos 12 meses)";
+  box.querySelector(".v-esp").textContent=esp!=null?`${fmt(esp)} dias (${fmt(esp/DIAS_MES,1)} meses)`:"–";
+  const p0=projSim(b,0), p1=projSim(b,delta), liq=sai-b.ent;
+  const zero=liq>0&&b.fila>0?Math.ceil(b.fila/liq):null, zero0=(b.sai-b.ent)>0&&b.fila>0?Math.ceil(b.fila/(b.sai-b.ent)):null;
+  const cel=(t,v,c="")=>`<div class="${c}"><b>${v}</b><span>${t}</span></div>`;
+  box.querySelector(".sim-res").innerHTML=
+    cel("espera estimada hoje",b.espera!=null?fmt(b.espera)+" dias":"–")+
+    cel("espera estimada com a oferta",esp!=null?fmt(esp)+" dias":"–",esp!=null&&b.espera!=null&&esp<b.espera?"bom":"")+
+    cel("saldo mensal com a oferta",(liq>=0?"−":"+")+fmt(Math.abs(liq))+" /mês",liq>0?"bom":liq<0?"ruim":"")+
+    cel("fila em 12 meses",fmt(p1[12])+(p0[12]!==p1[12]?` (sem oferta: ${fmt(p0[12])})`:""))+
+    cel("meses para zerar a fila",zero!=null?fmt(zero)+(zero0&&zero0!==zero?` (sem oferta: ${fmt(zero0)})`:zero0?"":" (sem oferta: não zera)"):(b.fila?"não zera":"–"),zero!=null?"bom":b.fila?"ruim":"");
+  const W=560,H=150,pl=44,pr=8,pt=8,pb=20, mx=Math.max(1,...p0,...p1), X=i=>pl+i/24*(W-pl-pr), Y=v=>pt+(1-v/mx)*(H-pt-pb);
+  const li=(a,c,d)=>`<polyline fill="none" stroke="${c}" stroke-width="2" ${d?'stroke-dasharray="5 4"':""} points="${a.map((v,i)=>X(i)+","+Y(v)).join(" ")}"/>`;
+  box.querySelector(".sim-graf").innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Projeção da fila em 24 meses">
+    <line x1="${pl}" x2="${W-pr}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--line)"/><text x="${pl-6}" y="${Y(0)+3}" font-size="10" text-anchor="end" fill="var(--muted)">0</text>
+    <text x="${pl-6}" y="${Y(mx)+10}" font-size="10" text-anchor="end" fill="var(--muted)">${fmt(mx)}</text>
+    ${[0,6,12,18,24].map(i=>`<text x="${X(i)}" y="${H-5}" font-size="10" text-anchor="middle" fill="var(--muted)">${i===0?"hoje":"+"+i+" m"}</text>`).join("")}
+    ${li(p0,"var(--muted)",true)}${li(p1,"var(--accent)",false)}</svg>
+    <div class="leg"><span><i style="background:var(--muted)"></i>Sem oferta adicional</span><span><i style="background:var(--accent)"></i>Com a oferta simulada · fila de solicitações projetada</span></div>`;
+}
+document.addEventListener("input",e=>{ const box=e.target.closest&&e.target.closest(".sim"); if(!box) return;
+  atualizarSim(box,e.target.classList.contains("s-esp")?"esp":"delta"); });
+
 // ---------------------------------------------------------------- aba Filas
 function chips(f){
   return COR.filter(c=>f.cores[c]).map(c=>{const k=f.cores[c];
@@ -296,7 +368,7 @@ function item(f){
   return `<div class="fila" tabindex="0" id="f-${f.id}" data-id="${f.id}">
    <div class="lin">
      <div class="nome">${esc(f.p)}<small>${esc(f.tipo||"")}${semMeta?` · <span class="tag" title="Nenhuma normativa da SES-DF define meta de tempo de espera por prioridade para este procedimento">sem meta normativa</span>`:` · <span class="tag ok" title="Meta de espera definida em protocolo da SES-DF">meta normativa</span>`}</small></div>
-     <div class="num f"><b>${fmt(f.fila)}</b><small>na fila</small></div>
+     <div class="num f"><b>${fmt(f.fila)}</b><small>na fila${f.fila>0&&baseSim(f).espera!=null?` · ~${fmt(baseSim(f).espera)} d`:""}</small></div>
      <div class="c chips">${chips(f)}</div>
      <div class="num s"><b style="color:${f.saldo12>0?"var(--saldo)":"var(--out)"}">${f.saldo12>0?"+":""}${fmt(f.saldo12)}</b><small>saldo 12 meses</small></div>
      <div class="sp">${spark(f)}</div>
@@ -307,6 +379,7 @@ function item(f){
      ${grafico(f)}
      <table class="cores"><tr><th>Prioridade</th><th>Solicitações</th><th>Mais antiga</th><th>Dias de espera</th><th>Meta (dias)</th></tr>${linhas}</table>
      <p style="font-size:.85rem;color:var(--muted)">Devolvidas: ${fmt(f.devolvidas)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Sem meta de tempo de espera definida em normativa da SES-DF para este procedimento"}</p>
+     ${f.fila>0?simHtml(f):""}
      <div class="gerar" data-id="${f.id}" data-p="${esc(f.p)}">
        <b>Gerar análise completa</b>
        <label>Nome nos títulos <input class="nome-curto" placeholder="ex.: Cirurgia Geral"></label>
@@ -332,6 +405,7 @@ function render(){
 }
 function abrir(c){
   c.classList.add("aberta");
+  const sm=c.querySelector(".sim"); if(sm&&!sm.dataset.ok){ sm.dataset.ok=1; atualizarSim(sm,"delta"); }
   const inp=c.querySelector(".nome-curto"); if(inp&&!inp.value&&window._analiseNomeCurto) inp.value=window._analiseNomeCurto(c.querySelector(".gerar").dataset.p);
 }
 function irParaFila(id){
@@ -348,11 +422,11 @@ function lerHash(){
 }
 async function baixarLista(){
   await xlsx();
-  const L=filtrar(), cab=["Procedimento","Tipo","Na fila","Vermelho","Vermelho – dias","Amarelo","Amarelo – dias","Verde","Verde – dias","Azul","Azul – dias","Sem risco","Devolvidas","Saldo 12 meses","Agendados à frente","Último agendamento","Alertas"];
+  const L=filtrar(), cab=["Procedimento","Tipo","Na fila","Vermelho","Vermelho – dias","Amarelo","Amarelo – dias","Verde","Verde – dias","Azul","Azul – dias","Sem risco","Devolvidas","Saldo 12 meses","Espera estimada (dias)","Agendados à frente","Último agendamento","Alertas"];
   const g=(f,c,k)=>f.cores[c]?f.cores[c][k]:"";
-  const linhas=L.map(f=>[f.p,f.tipo,f.fila,g(f,"vermelho","n"),g(f,"vermelho","dias"),g(f,"amarelo","n"),g(f,"amarelo","dias"),g(f,"verde","n"),g(f,"verde","dias"),g(f,"azul","n"),g(f,"azul","dias"),g(f,"sem risco","n"),f.devolvidas,f.saldo12,f.futuros,dd(f.ult_ag),f.alertas.join(" | ")]);
+  const linhas=L.map(f=>[f.p,f.tipo,f.fila,g(f,"vermelho","n"),g(f,"vermelho","dias"),g(f,"amarelo","n"),g(f,"amarelo","dias"),g(f,"verde","n"),g(f,"verde","dias"),g(f,"azul","n"),g(f,"azul","dias"),g(f,"sem risco","n"),f.devolvidas,f.saldo12,baseSim(f).espera!=null&&f.fila>0?Math.round(baseSim(f).espera):"",f.futuros,dd(f.ult_ag),f.alertas.join(" | ")]);
   const wb=XLSX.utils.book_new(), ws=XLSX.utils.aoa_to_sheet([cab,...linhas]);
-  ws["!cols"]=[{wch:50},{wch:10},{wch:9},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:11},{wch:13},{wch:14},{wch:16},{wch:80}];
+  ws["!cols"]=[{wch:50},{wch:10},{wch:9},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:11},{wch:13},{wch:16},{wch:14},{wch:16},{wch:80}];
   XLSX.utils.book_append_sheet(wb,ws,"Filas");
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Filtro",`${$("busca").value||"(todos)"} · ${$("tipo").value||"todos os tipos"} · ${$("alerta").options[$("alerta").selectedIndex].text}`]])),"Leia-me");
   XLSX.writeFile(wb,`Filas Região Norte (${D.data.split("-").reverse().join("-")}).xlsx`);
