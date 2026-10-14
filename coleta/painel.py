@@ -15,6 +15,7 @@ Gera:
 import hashlib
 import json
 import os
+import statistics
 import sys
 import time
 import urllib.request
@@ -216,6 +217,59 @@ def montar(b, hoje, ref=None):
     return dict(meta, meses=rot[-N_PAINEL:], filas=resumo), detalhes, devolvidas, meta
 
 
+ATEND_DIAS = 90   # janela dos atendimentos usados no "tempo até o atendimento"
+
+
+def estatisticas_cores(b, hoje):
+    """Por procedimento e cor: espera de quem está na fila, espera até o atendimento (agendados nos últimos
+    90 dias) e entrada/saída mensais médias dos últimos 12 meses completos (base da simulação por cor)."""
+    a_, m_ = hoje.year, hoje.month - 12
+    if m_ < 1:
+        a_, m_ = a_ - 1, m_ + 12
+    ini = date(a_, m_, 1)                     # 12 meses completos: do mesmo mês do ano anterior até o mês passado
+    lim_fim = date(hoje.year, hoje.month, 1)  # primeiro dia do mês atual (exclusivo)
+    corte_at = hoje - timedelta(days=ATEND_DIAS)
+    acc = defaultdict(lambda: defaultdict(lambda: {"fila": [], "atend": [], "ent": 0, "sai": 0}))
+    vistos = set()
+    for p, cod, dt, st, risco, *_ in b["det_sol"]["rows"]:
+        if not _valido(p) or (p, cod) in vistos or not _valido(dt):
+            continue
+        vistos.add((p, cod))
+        cor = CORES.get(risco, "sem risco")
+        d = _br(dt)
+        if st in (PEND, REENV):
+            acc[p][cor]["fila"].append((hoje - d).days)
+        if ini <= d < lim_fim and st in (PEND, REENV):
+            acc[p][cor]["ent"] += 1
+    vistos = set()
+    for p, cod, dsol, dag, st, risco, *_ in b["det_ag"]["rows"]:
+        if not _valido(p) or not _valido(dag) or (p, cod, dag) in vistos:
+            continue
+        vistos.add((p, cod, dag))
+        cor = CORES.get(risco, "sem risco")
+        da = _br(dag)
+        if ini <= da < lim_fim:
+            acc[p][cor]["sai"] += 1
+        if _valido(dsol):
+            ds = _br(dsol)
+            if ini <= ds < lim_fim:
+                acc[p][cor]["ent"] += 1       # solicitações do período já agendadas também são entrada
+            if corte_at <= da <= hoje and da >= ds:
+                acc[p][cor]["atend"].append((da - ds).days)
+    saida = {}
+    for p, cores in acc.items():
+        r = {}
+        for cor, v in cores.items():
+            f, a = v["fila"], v["atend"]
+            r[cor] = {"fila_media": round(statistics.mean(f)) if f else None,
+                      "fila_mediana": round(statistics.median(f)) if f else None,
+                      "atend_media": round(statistics.mean(a)) if a else None,
+                      "atend_mediana": round(statistics.median(a)) if a else None,
+                      "atend_n": len(a), "ent": round(v["ent"] / 12, 1), "sai": round(v["sai"] / 12, 1)}
+        saida[ident(p)] = r
+    return saida
+
+
 def montar_detalhe(b, hoje):
     """Linhas de cada fila: solicitações (pendentes, reenviadas, devolvidas) e agendamentos dos últimos 24 meses."""
     corte = _mes_inicial_painel(hoje)
@@ -326,6 +380,10 @@ def main():
     print("[tempo] coleta: %.0f s" % (time.monotonic() - t), flush=True)
     t = time.monotonic()
     dados, detalhes, devolvidas, meta = montar(b, hoje, referencias())
+    est = estatisticas_cores(b, hoje)
+    for f in dados["filas"]:
+        f["cor_stats"] = est.get(f["id"], {})
+    dados["atend_dias"] = ATEND_DIAS
     if len(dados["filas"]) < MIN_FILAS or not dados["solicitacoes_ate"] or dados["solicitacoes_ate"] == "-":
         print(f"ERRO: coleta incompleta ({len(dados['filas'])} filas, solicitações até {dados['solicitacoes_ate']!r}); nada foi gravado.")
         sys.exit(1)
