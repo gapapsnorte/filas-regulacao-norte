@@ -46,7 +46,11 @@ jobs:
           if ! git diff --quiet -- atraso.json; then
             git add atraso.json
             git commit -q -m "Atraso do Mapa Social – medição de $(TZ=America/Sao_Paulo date '+%d/%m/%Y')"
-            git pull -q --rebase origin main && git push -q origin HEAD:main || echo "::warning::não foi possível gravar atraso.json em main"
+            if ! { git pull -q --rebase origin main && git push -q origin HEAD:main; }; then
+              echo "::warning::não foi possível gravar atraso.json em main; a publicação segue sem esse commit"
+              git rebase --abort 2>/dev/null || true
+              git reset -q HEAD~1   # desfaz o commit local e mantém o arquivo, para o git ficar limpo no passo seguinte
+            fi
           fi
       - name: Publicar no branch gh-pages (código fica em main, com histórico; dados são substituídos a cada atualização)
         if: steps.coleta.outputs.publicar == 'sim'
