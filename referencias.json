@@ -1,0 +1,251 @@
+{
+ "esf": {
+  "UBS 1 - Fercal": 3,
+  "UBS 1 - Planaltina": 3,
+  "UBS 1 - Sobradinho": 7,
+  "UBS 1 - Sobradinho II": 4,
+  "UBS 10 - Planaltina": 1,
+  "UBS 11 - Planaltina": 1,
+  "UBS 12 - Planaltina": 1,
+  "UBS 13 - Planaltina": 1,
+  "UBS 14 - Planaltina": 1,
+  "UBS 15 - Planaltina": 1,
+  "UBS 16 - Planaltina": 1,
+  "UBS 17 - Planaltina": 2,
+  "UBS 18 - Planaltina": 2,
+  "UBS 19 - Planaltina": 1,
+  "UBS 2 - Fercal": 1,
+  "UBS 2 - Planaltina": 4,
+  "UBS 2 - Sobradinho": 8,
+  "UBS 2 - Sobradinho II": 7,
+  "UBS 20 - Planaltina": 6,
+  "UBS 3 - Fercal": 1,
+  "UBS 3 - Planaltina": 1,
+  "UBS 3 - Sobradinho": 6,
+  "UBS 3 - Sobradinho II": 1,
+  "UBS 4 - Planaltina": 10,
+  "UBS 4 - Sobradinho": 1,
+  "UBS 4 - Sobradinho II": 1,
+  "UBS 5 - Planaltina": 9,
+  "UBS 5 - Sobradinho": 1,
+  "UBS 5 - Sobradinho II": 2,
+  "UBS 6 - Planaltina": 3,
+  "UBS 6 - Sobradinho": 1,
+  "UBS 6 - Sobradinho II": 2,
+  "UBS 7 - Planaltina": 4,
+  "UBS 7 - Sobradinho II": 4,
+  "UBS 8 - Planaltina": 3,
+  "UBS 9 - Planaltina": 2
+ },
+ "niveis": [
+  [
+   "UBS*",
+   "APS",
+   false
+  ],
+  [
+   "PSR*",
+   "APS",
+   false
+  ],
+  [
+   "Policlínica*",
+   "DIRASE",
+   false
+  ],
+  [
+   "CEO*",
+   "DIRASE",
+   true
+  ],
+  [
+   "NUFIRF*",
+   "DIRASE",
+   true
+  ],
+  [
+   "CAPS*",
+   "DIRASE",
+   true
+  ],
+  [
+   "HRS",
+   "HRS",
+   false
+  ],
+  [
+   "HRPl",
+   "HRPL",
+   false
+  ],
+  [
+   "UPA*",
+   "UPA",
+   false
+  ]
+ ],
+ "grupos_cid": {
+  "CONSULTA EM CIRURGIA GERAL": [
+   [
+    "K4",
+    "K4 - HÉRNIAS"
+   ],
+   [
+    "K8",
+    "K8 - VESÍCULA E VIAS BILIARES"
+   ],
+   [
+    "D17",
+    "D17 - LIPOMAS"
+   ]
+  ],
+  "CONSULTA EM NEUROLOGIA - ADULTO": [
+   [
+    "G40",
+    "EPILEPSIA E CONVULSÕES"
+   ],
+   [
+    "G41",
+    "EPILEPSIA E CONVULSÕES"
+   ],
+   [
+    "R56",
+    "EPILEPSIA E CONVULSÕES"
+   ],
+   [
+    "R51",
+    "CEFALEIAS"
+   ],
+   [
+    "G43",
+    "CEFALEIAS"
+   ],
+   [
+    "G44",
+    "CEFALEIAS"
+   ],
+   [
+    "I6",
+    "DOENÇA CEREBROVASCULAR"
+   ],
+   [
+    "G45",
+    "DOENÇA CEREBROVASCULAR"
+   ],
+   [
+    "G46",
+    "DOENÇA CEREBROVASCULAR"
+   ],
+   [
+    "F00",
+    "DEMÊNCIA E DÉFICIT COGNITIVO"
+   ],
+   [
+    "F01",
+    "DEMÊNCIA E DÉFICIT COGNITIVO"
+   ],
+   [
+    "F02",
+    "DEMÊNCIA E DÉFICIT COGNITIVO"
+   ],
+   [
+    "F03",
+    "DEMÊNCIA E DÉFICIT COGNITIVO"
+   ],
+   [
+    "G30",
+    "DEMÊNCIA E DÉFICIT COGNITIVO"
+   ],
+   [
+    "G31",
+    "DEMÊNCIA E DÉFICIT COGNITIVO"
+   ],
+   [
+    "R41",
+    "DEMÊNCIA E DÉFICIT COGNITIVO"
+   ],
+   [
+    "G20",
+    "PARKINSON E TRANSTORNOS DO MOVIMENTO"
+   ],
+   [
+    "G21",
+    "PARKINSON E TRANSTORNOS DO MOVIMENTO"
+   ],
+   [
+    "G22",
+    "PARKINSON E TRANSTORNOS DO MOVIMENTO"
+   ],
+   [
+    "G23",
+    "PARKINSON E TRANSTORNOS DO MOVIMENTO"
+   ],
+   [
+    "G24",
+    "PARKINSON E TRANSTORNOS DO MOVIMENTO"
+   ],
+   [
+    "G25",
+    "PARKINSON E TRANSTORNOS DO MOVIMENTO"
+   ],
+   [
+    "G26",
+    "PARKINSON E TRANSTORNOS DO MOVIMENTO"
+   ],
+   [
+    "R25",
+    "PARKINSON E TRANSTORNOS DO MOVIMENTO"
+   ],
+   [
+    "R42",
+    "TONTURA E SÍNCOPE"
+   ],
+   [
+    "R55",
+    "TONTURA E SÍNCOPE"
+   ],
+   [
+    "H81",
+    "TONTURA E SÍNCOPE"
+   ],
+   [
+    "F7",
+    "NEURODESENVOLVIMENTO"
+   ],
+   [
+    "F84",
+    "NEURODESENVOLVIMENTO"
+   ],
+   [
+    "F90",
+    "NEURODESENVOLVIMENTO"
+   ],
+   [
+    "G80",
+    "NEURODESENVOLVIMENTO"
+   ]
+  ]
+ },
+ "notas": {
+  "CONSULTA EM CIRURGIA GERAL": {
+   "nome": "Cirurgia Geral",
+   "azul": "Não há classificação de risco AZUL no Protocolo de Regulação para Acesso a Consultas em Cirurgia Geral e em Pequena Cirurgia, aprovado pela Portaria SES-DF Nº 79 de 02 de fevereiro de 2026, publicada no DODF Nº 29 de 12/02/2026."
+  }
+ },
+ "metas": {
+  "CONSULTA EM CIRURGIA GERAL": {
+   "vermelho": 30,
+   "amarelo": 120,
+   "verde": 180,
+   "azul": 210,
+   "fonte": "Protocolo de Regulação para Acesso à Consulta em Cirurgia Geral e em Pequena Cirurgia (Portaria SES-DF 79/2026, seção 9.2) — meta anual de tempo de espera (mediana) por prioridade"
+  },
+  "CONSULTA EM PEQUENA CIRURGIA": {
+   "vermelho": 30,
+   "amarelo": 120,
+   "verde": 180,
+   "azul": 210,
+   "fonte": "Protocolo de Regulação para Acesso à Consulta em Cirurgia Geral e em Pequena Cirurgia (Portaria SES-DF 79/2026, seção 9.2) — meta anual de tempo de espera (mediana) por prioridade"
+  }
+ }
+}
