@@ -6,7 +6,7 @@ Uso local: python coleta/painel.py             (coleta e grava, sem publicar)
 
 Gera:
   dados.json                resumo de todas as filas (painel)
-  devolvidas.json           devolvidas por fila × unidade solicitante (abas de devolvidas)
+  devolvidas.json           devolvidas por fila × unidade solicitante e série mensal pela data da devolução (aba Devolvidas)
   analises/<id>.json        detalhes agregados de cada fila, usados pelo botão "Gerar análise"
   detalhe/<id>.json         linhas do Mapa Social de cada fila (código SISREG, datas, status, risco, CID, unidade)
   detalhe/devolvidas.json   todas as devolvidas da região, linha a linha
@@ -211,10 +211,37 @@ def montar(b, hoje, ref=None):
     niveis, esf = ref.get("niveis", []), ref.get("esf", {})
     nomes = sorted({u for d in procs.values() for u in d["dev_un"]})
     pos_u = {u: k for k, u in enumerate(nomes)}
+    ids_serie, celulas = serie_devolvidas(b, meses[-N_PAINEL:], pos_u, nomes)
     devolvidas = dict(meta, unidades=[[u, nivel(u, niveis), esf.get(u)] for u in nomes],
                       filas={ident(p): sorted(([pos_u[u], q] for u, q in d["dev_un"].items()), key=lambda x: -x[1])
-                             for p, d in procs.items() if d["dev_un"]})
+                             for p, d in procs.items() if d["dev_un"]},
+                      meses=rot[-N_PAINEL:], serie_ids=ids_serie, serie=celulas)
     return dict(meta, meses=rot[-N_PAINEL:], filas=resumo), detalhes, devolvidas, meta
+
+
+def serie_devolvidas(b, janela, pos_u, nomes):
+    """Devolvidas de hoje contadas pela data da devolução, nos meses da janela do painel, por fila × unidade.
+    Saída esparsa: [índice da fila em ids, índice da unidade, índice do mês, quantidade]. Uma solicitação conta
+    uma vez, na sua devolução mais recente (o Mapa Social guarda, para algumas, mais de uma data)."""
+    idx = {k: i for i, k in enumerate(janela)}
+    ult = {}
+    for p, cod, dt, st, risco, cid, u, ddev, _ in b["det_sol"]["rows"]:
+        if not _valido(p) or st != DEVOL or not _valido(ddev) or not _valido(u):
+            continue
+        d = _br(ddev)
+        if (p, cod) not in ult or d > ult[(p, cod)][0]:
+            ult[(p, cod)] = (d, u)
+    cel, ids = defaultdict(int), {}
+    for (p, cod), (d, u) in ult.items():
+        k = (d.year, d.month)
+        if k not in idx:
+            continue
+        if u not in pos_u:
+            pos_u[u] = len(nomes)
+            nomes.append(u)
+        fi = ids.setdefault(ident(p), len(ids))
+        cel[(fi, pos_u[u], idx[k])] += 1
+    return list(ids), sorted([list(k) + [n] for k, n in cel.items()])
 
 
 ATEND_DIAS = 90   # janela dos atendimentos usados no "tempo até o atendimento"

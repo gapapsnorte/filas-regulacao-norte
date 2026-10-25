@@ -74,6 +74,17 @@ header p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
 .leg{display:flex;gap:14px;font-size:.8rem;color:var(--muted);margin:4px 0}
 .leg i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:4px}
 .graf{position:relative;max-width:760px}
+.barras{position:relative;max-width:760px}
+.barras svg{display:block}
+.mini{max-width:560px;margin-top:10px}
+.mini h5{margin:0 0 2px;font-size:.82rem;color:var(--muted);font-weight:600}
+.serie-dv{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px}
+.serie-dv h3{margin:0 0 8px;font-size:1rem}
+.serie-dv .ctrl{margin-bottom:8px}
+.serie-dv .ctrl select{max-width:100%}
+#sv-proc{max-width:min(380px,100%)}
+.serie-dv .nota{margin:6px 0 0;font-size:.82rem;color:var(--muted)}
+.periodo-nota{font-size:.78rem;color:var(--muted);margin:2px 0 0}
 .graf svg{display:block;touch-action:pan-y}
 .tip{position:absolute;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:7px;padding:6px 9px;font-size:.8rem;box-shadow:0 2px 8px rgba(0,0,0,.15);white-space:nowrap;font-variant-numeric:tabular-nums}
 .tip b{display:block;margin-bottom:2px}
@@ -165,6 +176,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
     <option value="semsaida">Mais tempo sem saída</option>
     <option value="nome">Nome (A–Z)</option>
   </select>
+  <select id="periodo" class="periodo" title="Agrupamento dos gráficos de entrada, saída e saldo"><option value="m">Gráficos por mês</option><option value="q">Gráficos por quadrimestre</option></select>
   <button id="baixar" title="Baixa a lista filtrada em Excel">Baixar lista (Excel)</button>
   <span class="cont" id="cont"></span>
 </div>
@@ -173,6 +185,20 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 </section>
 
 <section id="aba-dev" hidden>
+<div class="serie-dv" id="dv-serie">
+<h3>Devolvidas ao longo do tempo</h3>
+<div class="ctrl">
+  <select id="sv-nivel"><option value="">Todas as unidades</option></select>
+  <select id="sv-un"><option value="">Todas as unidades do nível</option></select>
+  <select id="sv-tipo"><option value="">Consultas e exames</option></select>
+  <select id="sv-proc"><option value="">Todos os procedimentos</option></select>
+  <select id="sv-medida"><option value="n">Número de devolvidas</option><option value="esf">Devolvidas por eSF (só APS)</option></select>
+  <select id="dv-periodo" class="periodo"><option value="m">Por mês</option><option value="q">Por quadrimestre</option></select>
+  <span class="cont" id="sv-cont"></span>
+</div>
+<div id="sv-graf"></div>
+<p class="nota">Solicitações devolvidas hoje, contadas pela data em que o regulador as devolveu, nos últimos 24 meses completos (o mês corrente fica de fora). Devoluções que depois foram reenviadas e agendadas não aparecem, porque o Mapa Social só mostra a situação atual de cada solicitação; por isso os meses mais antigos tendem a ficar um pouco abaixo do que de fato ocorreu. <i>Por eSF</i> = devolvidas ÷ soma das equipes de Saúde da Família das UBS selecionadas.</p>
+</div>
 <div class="visao" role="group" aria-label="Ver por">
   <span>Ver por:</span>
   <button data-visao="pr" aria-pressed="true">Procedimento</button>
@@ -224,11 +250,11 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
   <p><b>Fonte:</b> Mapa Social do Distrito Federal (MPDFT), painel público de regulação. Sem dados de identificação de usuários; o download detalhado traz o código SISREG da solicitação, que já é público no Mapa Social.</p>
   <p id="atraso"><b>Atraso dos dados:</b> o Mapa Social fica alguns dias atrás do SISREG: as solicitações mais recentes ainda não aparecem, por isso os totais podem diferir do SISREG.</p>
   <p><b>Como ler:</b> <i>Fila</i> = solicitações elegíveis para regulação: pendentes + reenviadas ao regulador da Região Norte (não inclui devolvidas nem as em fila de espera). Cores: Prioridade 1 = vermelho, 2 = amarelo, 3 = verde, 4 = azul; o número de dias é a espera da solicitação mais antiga de cada cor.
-  <i>Entrada</i> = solicitações pela data da solicitação (pendentes, reenviadas e agendadas); <i>saída</i> = agendamentos pela data do atendimento; <i>saldo</i> = entrada − saída, em meses completos. Passe o cursor sobre o gráfico para ver os valores de cada mês.</p>
+  <i>Entrada</i> = solicitações pela data da solicitação (pendentes, reenviadas e agendadas); <i>saída</i> = agendamentos pela data do atendimento; <i>saldo</i> = entrada − saída, em meses completos. Passe o cursor sobre o gráfico para ver os valores de cada mês. O seletor <i>Gráficos por quadrimestre</i> soma os meses de cada quadrimestre (jan–abr, mai–ago, set–dez); quadrimestres incompletos na janela de 24 meses ficam marcados com asterisco e ponto vazado.</p>
   <p><b>Alertas:</b> <i>fila crescendo</i> = saldo positivo em 9 ou mais dos últimos 12 meses; <i>espera acima da meta</i> = solicitação mais antiga de uma cor com espera maior que a meta do protocolo do procedimento (só existe quando uma normativa da SES-DF define meta de espera por prioridade para o procedimento; hoje, apenas Consulta em Cirurgia Geral e em Pequena Cirurgia, conforme a Portaria SES-DF 79/2026 – demais filas ficam marcadas como <i>sem meta normativa</i> e não geram esse alerta); <i>fila parada</i> = 20+ solicitações aguardando, ninguém agendado nos últimos 3 meses nem marcado à frente; <i>sem saída há mais de 1 ano</i> = há solicitações aguardando e o último agendamento registrado tem mais de 365 dias (ou não há nenhum).</p>
   <p><b>Espera estimada e simulador:</b> a espera estimada (~N d no cartão) é a fila dividida pela saída mensal média dos últimos 12 meses, isto é, quanto tempo a fila levaria para ser agendada no ritmo atual. No detalhe de cada fila, o simulador mostra o efeito de uma oferta adicional de agendamentos por mês na espera estimada e na projeção da fila em 24 meses; é uma estimativa para a fila toda, sem separar prioridades.</p>
   <p><b>Gerar análise completa:</b> abra uma fila e escolha PDF, Word ou Excel (tabelas). O documento segue a metodologia padronizada (Figuras 1 a 4 e Tabela 1, com as UBS ordenadas de quem mais devolve por eSF); os parágrafos de interpretação saem em amarelo, como rascunho para revisão. <i>Dados detalhados</i> baixa as linhas da fila: solicitações pendentes, reenviadas e devolvidas, e agendamentos dos últimos 24 meses.</p>
-  <p id="rodape-atualizacao">Versão piloto. O painel confere o Mapa Social a cada 2 horas e se atualiza sozinho assim que ele recarrega (uma vez por dia, normalmente à noite).</p>
+  <p id="rodape-atualizacao">Versão piloto. O painel confere o Mapa Social a cada 2 horas e se atualiza sozinho assim que ele recarrega com solicitações novas (normalmente uma ou duas vezes por dia).</p>
 </footer>
 </div>
 <script src="relatorio.js"></script>
@@ -243,51 +269,98 @@ const NIVEIS = ["APS","DIRASE","HRS","HRPL","UPA","OUTROS"];
 let D, DV = null, vis = 60, visPr = 60, ultimaLista = [], ESF = {};
 const $ = id => document.getElementById(id);
 const porId = {};
-const atrasoTxt = () => D.atraso_dias != null ? `atraso de ${D.atraso_dias} dias` : "atraso de 6 a 7 dias";
+const atrasoTxt = () => D.atraso_dias == null ? "atraso de 6 a 7 dias" : D.atraso_dias === 0 ? "sem atraso" : D.atraso_dias === 1 ? "atraso de 1 dia" : `atraso de ${D.atraso_dias} dias`;
 const diasSemSaida = f => f.fila > 0 ? (f.ult_ag ? Math.floor((new Date(D.data) - new Date(f.ult_ag)) / 864e5) : 1e6) : -1;
+
+// ---------------------------------------------------------------- período dos gráficos (mês ou quadrimestre)
+const MESES_ROT=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+let PER="m", _per={};
+function periodos(rot){
+  rot=rot||D.meses; const chave=PER+"|"+rot.join(",");
+  if(_per.chave===chave) return _per.P;
+  let P;
+  if(PER==="m") P=rot.map((r,i)=>({rot:r,titulo:r,idx:[i],parcial:false}));
+  else{
+    P=[];
+    rot.forEach((r,i)=>{ const [m,a]=r.split("/"), q=Math.floor(MESES_ROT.indexOf(m)/4)+1, k=`${q}º quad/${a}`;
+      let p=P[P.length-1]; if(!p||p.k!==k){ p={k,rot:k,titulo:`${q}º quadrimestre de 20${a}`,idx:[]}; P.push(p); } p.idx.push(i); });
+    P.forEach(p=>{ p.parcial=p.idx.length<4; if(p.parcial){ p.rot+="*"; p.titulo+=` (${p.idx.length} de 4 meses)`; } });
+  }
+  _per={chave,P}; return P;
+}
+const agreg=(a,P)=>P.map(p=>p.idx.reduce((s,i)=>s+(a[i]||0),0));
+function serieF(f){ const P=periodos(); return {P,in:agreg(f.in,P),out:agreg(f.out,P)}; }
+const notaParcial=P=>P.some(p=>p.parcial)?`<p class="periodo-nota">* quadrimestre incompleto na janela de 24 meses (soma só dos meses disponíveis; trecho tracejado e ponto vazado).</p>`:"";
+function mudarPeriodo(v){
+  PER=v; document.querySelectorAll("select.periodo").forEach(s=>s.value=v);
+  if(D) render();
+  if(DV){ renderSerie(); visao==="un"?renderUn():renderPr(); }
+}
 
 function xlsx(){ return window.XLSX ? Promise.resolve() : new Promise((ok,er)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";s.onload=ok;s.onerror=()=>er(new Error("falha ao carregar a biblioteca do Excel"));document.head.appendChild(s);}); }
 function leiaMe(extra){ return [["Fonte","Mapa Social do Distrito Federal (MPDFT)"],["Atualizado em",D.gerado_em],["Solicitações registradas até",D.solicitacoes_ate+" ("+atrasoTxt()+" em relação ao SISREG)"],...extra,["Painel",location.href.split("#")[0]]]; }
 
 // ---------------------------------------------------------------- gráficos
+function abFila(f){ return f._ab||(f._ab=window._aberrantes(f.in,f.out)); }
 function spark(f, w=120, h=34){
-  const max = Math.max(1, ...f.in, ...f.out), n = f.in.length;
-  const pts = a => a.map((v,i)=>`${(i/(n-1)*w).toFixed(1)},${(h-2-(v/max)*(h-4)).toFixed(1)}`).join(" ");
+  const s=serieF(f), n = Math.max(2,s.in.length), ab=PER==="m"?abFila(f):null;
+  const ok=(a,fl)=>a.filter((_,i)=>!(fl&&fl[i-ab.ini]));
+  const max = Math.max(1, ...(ab?[...ok(s.in,ab.in.flag),...ok(s.out,ab.out.flag)]:[...s.in,...s.out]));
+  const pts = a => a.map((v,i)=>`${(i/(n-1)*w).toFixed(1)},${(h-2-(Math.min(v,max)/max)*(h-4)).toFixed(1)}`).join(" ");
   return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-label="Entrada e saída, 24 meses">
-    <polyline fill="none" stroke="var(--in)" stroke-width="1.4" points="${pts(f.in)}"/>
-    <polyline fill="none" stroke="var(--out)" stroke-width="1.4" points="${pts(f.out)}"/></svg>`;
+    <polyline fill="none" stroke="var(--in)" stroke-width="1.4" points="${pts(s.in)}"/>
+    <polyline fill="none" stroke="var(--out)" stroke-width="1.4" points="${pts(s.out)}"/></svg>`;
 }
 function passo(f){ const p=10**Math.floor(Math.log10(f||1)), m=f/p; return Math.max(1,(m<=1?1:m<=2?2:m<=5?5:10)*p); }
-const G = {w:760,h:240,pl:52,pr:12,pt:10,pb:26};
-function escala(f){
-  const n=f.in.length, saldo=f.in.map((v,i)=>v-f.out[i]), all=[...f.in,...f.out,...saldo];
+const G = {w:760,h:240,pl:52,pr:112,pt:22,pb:26};
+// aberrantes só na visão mensal: ficam de fora da escala (desenhados no limite) e da reta de tendência
+function escala(s,ab){
+  const n=s.in.length, saldo=s.in.map((v,i)=>v-s.out[i]);
+  const cur=[[s.in,ab&&ab.in],[s.out,ab&&ab.out],[saldo,ab&&ab.saldo]];
+  const all=[]; cur.forEach(([a,t])=>{ a.forEach((v,i)=>{ if(!(t&&t.flag[i-ab.ini])) all.push(v); }); if(t) all.push(t.b,t.a*(n-1-ab.ini)+t.b); });
   const st=passo((Math.max(1,...all)-Math.min(0,...all))/5);
   const mn=Math.floor(Math.min(0,...all)/st)*st, mx=Math.ceil(Math.max(1,...all)/st)*st;
-  return {n,saldo,st,mn,mx,X:i=>G.pl+i/(n-1)*(G.w-G.pl-G.pr),Y:v=>G.pt+(mx-v)/(mx-mn)*(G.h-G.pb-G.pt)};
+  const Y=v=>G.pt+(mx-v)/(mx-mn)*(G.h-G.pb-G.pt);
+  return {n,saldo,st,mn,mx,X:i=>G.pl+i/Math.max(1,n-1)*(G.w-G.pl-G.pr),Y,Yc:v=>Y(Math.min(mx,Math.max(mn,v)))};
 }
+// quadrimestre contém mês aberrante? devolve [{rot, v}] por curva
+function abQuad(f,ab,P,i,c){ const t=ab[c]; return P[i].idx.filter(m=>t.flag[m-ab.ini]).map(m=>({rot:D.meses[m],v:c==="saldo"?f.in[m]-f.out[m]:f[c][m]})); }
 function grafico(f){
-  const {n,saldo,st,mn,mx,X,Y}=escala(f);
-  const line=(a,c)=>`<polyline fill="none" stroke="${c}" stroke-width="2" points="${a.map((v,i)=>X(i)+","+Y(v)).join(" ")}"/>`;
+  const M=PER==="m", ab=abFila(f), s=serieF(f), {n,saldo,st,mn,mx,X,Y,Yc}=escala(s,M?ab:null), P=s.P, passoX=M?3:1;
+  const curvas=[["in",s.in,"var(--in)"],["out",s.out,"var(--out)"],["saldo",saldo,"var(--saldo)"]];
+  const fl=(c,i)=>M&&ab[c].flag[i-ab.ini];
+  const line=(c,a,cor)=>{ let out=""; for(let i=1;i<n;i++) out+=`<line x1="${X(i-1)}" y1="${Yc(a[i-1])}" x2="${X(i)}" y2="${Yc(a[i])}" stroke="${cor}" stroke-width="2" ${P[i-1].parcial||P[i].parcial?'stroke-dasharray="5 4"':fl(c,i)||fl(c,i-1)?'stroke-dasharray="6 4"':""}/>`; return out; };
+  const pontos=(c,a,cor)=>a.map((v,i)=>{
+    if(fl(c,i)){ const fora=v>mx||v<mn; return `<circle cx="${X(i)}" cy="${Yc(v)}" r="4.5" fill="var(--card)" stroke="${cor}" stroke-width="1.8"/>`+(fora?`<text x="${X(i)}" y="${Yc(v)+(v>mx?16+(i%3)*11:-9-(i%3)*11)}" font-size="10" font-weight="700" text-anchor="middle" fill="${cor}">${v>mx?"▲":"▼"} ${fmt(v)}</text>`:""); }
+    if(!M){ const q=abQuad(f,ab,P,i,c).length; return `<circle cx="${X(i)}" cy="${Yc(v)}" r="3" fill="${P[i].parcial?"var(--card)":cor}" stroke="${cor}" stroke-width="1.5"/>`+(q?`<circle cx="${X(i)}" cy="${Yc(v)}" r="7" fill="none" stroke="${cor}" stroke-width="1.2" stroke-dasharray="3 2"/>`:""); }
+    return ""; }).join("");
+  const retas=M?(()=>{ const ys=[]; return curvas.map(([c,,cor])=>{ const t=ab[c], y0=t.b, y1=t.a*(n-1-ab.ini)+t.b; let ly=Y(y1)+3.5; while(ys.some(z=>Math.abs(z-ly)<11)) ly+=11; ys.push(ly);
+    return `<line x1="${X(ab.ini)}" y1="${Y(y0)}" x2="${X(n-1)}" y2="${Y(y1)}" stroke="${cor}" stroke-width="1.2" opacity=".75"/><text x="${X(n-1)+5}" y="${ly}" font-size="10" fill="${cor}">${t.a>=0?"+":""}${fmt(Math.round(t.a*10)/10+0,1)}/mês${t.r2!=null?" · R² "+fmt(t.r2,2):""}</text>`; }).join(""); })():"";
   let ticks="";
-  for(let i=0;i<n;i+=3) ticks+=`<text x="${X(i)}" y="${G.h-8}" font-size="10" text-anchor="middle" fill="var(--muted)">${D.meses[i]}</text>`;
+  for(let i=0;i<n;i+=passoX) ticks+=`<text x="${X(i)}" y="${G.h-8}" font-size="10" text-anchor="${passoX===1&&i===0?"start":passoX===1&&i===n-1?"end":"middle"}" fill="var(--muted)">${P[i].rot}</text>`;
   for(let v=mn;v<=mx+1e-9;v+=st) ticks+=`<line x1="${G.pl}" x2="${G.w-G.pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" ${v===0?'stroke-width="1.6"':""}/><text x="${G.pl-6}" y="${Y(v)+3.5}" font-size="10.5" text-anchor="end" fill="var(--muted)">${fmt(v)}</text>`;
-  return `<div class="graf" data-id="${f.id}"><svg viewBox="0 0 ${G.w} ${G.h}" width="100%" role="img" aria-label="Entrada, saída e saldo mensais">${ticks}
+  const qtd=["in","out","saldo"].reduce((t,c)=>t+(ab[c].n||0),0);
+  const nota=M?(qtd?`<p class="periodo-nota">Linha fina = tendência (mínimos quadrados) dos 24 meses, calculada <b>sem</b> os meses aberrantes, que são identificados pelo método de Theil-Sen (mais de 4× a oscilação típica acima da tendência; no saldo, acima ou abaixo, e sempre que a saída do mês for aberrante); o R² ao lado considera só os meses não aberrantes. Aberrantes continuam no gráfico, tracejados e com círculo vazio; se passam da escala, são desenhados no limite com o valor real escrito (a altura deixa de ser fiel).</p>`
+      :`<p class="periodo-nota">Linha fina = tendência (mínimos quadrados) dos 24 meses. Nenhum mês aberrante nesta fila.</p>`)
+    :(qtd?`<p class="periodo-nota">Os quadrimestres somam todos os meses, inclusive os aberrantes; o círculo tracejado marca quadrimestre que contém mês aberrante (valores no cursor). Sem linha de tendência nesta visão.</p>`:"");
+  return `<div class="graf" data-id="${f.id}"><svg viewBox="0 0 ${G.w} ${G.h}" width="100%" role="img" aria-label="Entrada, saída e saldo ${M?"mensais":"por quadrimestre"}">${ticks}
     <text x="12" y="${(G.h-G.pb)/2}" font-size="10" fill="var(--muted)" text-anchor="middle" transform="rotate(-90 12 ${(G.h-G.pb)/2})">solicitações</text>
-    ${line(f.in,"var(--in)")}${line(f.out,"var(--out)")}${line(saldo,"var(--saldo)")}
+    ${curvas.map(([c,a,cor])=>line(c,a,cor)).join("")}${retas}${curvas.map(([c,a,cor])=>pontos(c,a,cor)).join("")}
     <line class="cur" y1="${G.pt}" y2="${G.h-G.pb}" stroke="var(--muted)" stroke-dasharray="3 3" visibility="hidden"/>
     <g class="pts" visibility="hidden"><circle r="4" fill="var(--in)"/><circle r="4" fill="var(--out)"/><circle r="4" fill="var(--saldo)"/></g>
     <rect class="hit" x="${G.pl}" y="0" width="${G.w-G.pl-G.pr}" height="${G.h-G.pb}" fill="transparent"/></svg>
-    <div class="tip" hidden></div></div>`;
+    <div class="tip" hidden></div></div>${notaParcial(P)}${nota}`;
 }
 function hover(e){
   const g=e.target.closest(".graf"); if(!g) return;
   const f=porId[g.dataset.id], svg=g.querySelector("svg"), tip=g.querySelector(".tip");
   const r=svg.getBoundingClientRect(), k=G.w/r.width, x=(e.clientX-r.left)*k;
-  const {n,saldo,X,Y}=escala(f), i=Math.max(0,Math.min(n-1,Math.round((x-G.pl)/(G.w-G.pl-G.pr)*(n-1))));
+  const M=PER==="m", ab=abFila(f), s=serieF(f), {n,saldo,X,Yc}=escala(s,M?ab:null), i=Math.max(0,Math.min(n-1,Math.round((x-G.pl)/(G.w-G.pl-G.pr)*(n-1))));
   const cur=svg.querySelector(".cur"), pts=svg.querySelector(".pts"), cs=pts.querySelectorAll("circle");
   cur.setAttribute("x1",X(i)); cur.setAttribute("x2",X(i)); cur.setAttribute("visibility","visible"); pts.setAttribute("visibility","visible");
-  [f.in[i],f.out[i],saldo[i]].forEach((v,j)=>{cs[j].setAttribute("cx",X(i)); cs[j].setAttribute("cy",Y(v));});
-  tip.innerHTML=`<b>${D.meses[i]}</b><i style="background:var(--in)"></i>Entrada: ${fmt(f.in[i])}<br><i style="background:var(--out)"></i>Saída: ${fmt(f.out[i])}<br><i style="background:var(--saldo)"></i>Saldo: ${saldo[i]>0?"+":""}${fmt(saldo[i])}`;
+  [s.in[i],s.out[i],saldo[i]].forEach((v,j)=>{cs[j].setAttribute("cx",X(i)); cs[j].setAttribute("cy",Yc(v));});
+  const marca=c=>{ if(M) return ab[c].flag[i-ab.ini]?" <em>(mês aberrante)</em>":""; const q=abQuad(f,ab,s.P,i,c); return q.length?` <em>(inclui mês aberrante: ${q.map(m=>m.rot+" = "+fmt(m.v)).join(", ")})</em>`:""; };
+  tip.innerHTML=`<b>${s.P[i].titulo}</b><i style="background:var(--in)"></i>Entrada: ${fmt(s.in[i])}${marca("in")}<br><i style="background:var(--out)"></i>Saída: ${fmt(s.out[i])}${marca("out")}<br><i style="background:var(--saldo)"></i>Saldo: ${saldo[i]>0?"+":""}${fmt(saldo[i])}${marca("saldo")}`;
   tip.hidden=false;
   const px=X(i)/k, w=tip.offsetWidth;
   tip.style.left=(px+12+w>r.width? px-12-w : px+12)+"px"; tip.style.top="8px";
@@ -295,6 +368,19 @@ function hover(e){
 function sairHover(e){
   const g=e.target.closest&&e.target.closest(".graf"); if(!g || g.contains(e.relatedTarget)) return;
   g.querySelector(".tip").hidden=true; g.querySelector(".cur").setAttribute("visibility","hidden"); g.querySelector(".pts").setAttribute("visibility","hidden");
+}
+
+// Barras por período (devolvidas). vals já agregados por periodos(); dec = casas decimais
+function barras(P, vals, dec=0, h=240){
+  const n=vals.length, B={w:760,h,pl:52,pr:12,pt:16,pb:26}, mx0=Math.max(1,...vals), st=passo(mx0/4), mx=Math.ceil(mx0/st)*st;
+  const X=i=>B.pl+i/n*(B.w-B.pl-B.pr), lw=(B.w-B.pl-B.pr)/n, Y=v=>B.pt+(mx-v)/mx*(B.h-B.pb-B.pt), passoX=n>12?3:1;
+  let g="";
+  for(let v=0;v<=mx+1e-9;v+=st) g+=`<line x1="${B.pl}" x2="${B.w-B.pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${B.pl-6}" y="${Y(v)+3.5}" font-size="10.5" text-anchor="end" fill="var(--muted)">${fmt(v,dec)}</text>`;
+  vals.forEach((v,i)=>{ const p=P[i], y=Y(v);
+    g+=`<rect x="${(X(i)+lw*0.12).toFixed(1)}" y="${y.toFixed(1)}" width="${(lw*0.76).toFixed(1)}" height="${(B.h-B.pb-y).toFixed(1)}" rx="2" fill="var(--accent)" ${p.parcial?'fill-opacity=".45"':""}><title>${esc(p.titulo)}: ${fmt(v,dec)}</title></rect>`;
+    if(lw>=26||n<=8) g+=`<text x="${(X(i)+lw/2).toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${n>12?9:10.5}" text-anchor="middle" fill="var(--txt)">${fmt(v,dec)}</text>`;
+    if(i%passoX===0) g+=`<text x="${(X(i)+lw/2).toFixed(1)}" y="${B.h-8}" font-size="10" text-anchor="middle" fill="var(--muted)">${p.rot}</text>`; });
+  return `<div class="barras"><svg viewBox="0 0 ${B.w} ${B.h}" width="100%" role="img" aria-label="Devolvidas por período">${g}</svg></div>${notaParcial(P)}`;
 }
 
 // ---------------------------------------------------------------- simulador de oferta
@@ -340,7 +426,7 @@ function atualizarSim(box,origem){
     const mx=Math.max(20,Math.ceil(Math.max(b.sai,b.ent,baseSim(f).sai*0.5)*1.5/10)*10); sd.max=mx; sd.step=Math.max(1,Math.round(mx/300));
     se.max=b.espera?Math.min(3650,Math.max(30,Math.ceil(b.espera/10)*10)):180; se.value=b.espera?Math.min(+se.max,Math.round(b.espera)):se.max; origem="delta"; }
   let delta=+sd.value;
-  if(origem==="esp"){ const alvo=+se.value; delta=Math.max(0,b.fila*DIAS_MES/alvo-b.sai); if(delta>+sd.max) delta=+sd.max; sd.value=delta; }
+  if(origem==="esp"){ const alvo=+se.value; delta=Math.max(0,b.fila*DIAS_MES/alvo-b.sai); if(delta>+sd.max) delta=+sd.max; sd.value=delta; delta=+sd.value; }   // a barra arredonda ao passo; o texto segue a barra
   const sai=b.sai+delta, esp=sai>0?b.fila/sai*DIAS_MES:null;
   if(origem!=="esp"&&esp!=null&&!se.disabled) se.value=Math.min(+se.max,Math.max(+se.min,Math.round(esp)));
   box.querySelector(".v-delta").textContent=fmt(delta);
@@ -398,7 +484,7 @@ function item(f){
    <div class="det">
      <div class="leg"><span><i style="background:var(--in)"></i>Entrada</span><span><i style="background:var(--out)"></i>Saída</span><span><i style="background:var(--saldo)"></i>Saldo</span></div>
      ${grafico(f)}
-     <table class="cores"><tr><th>Prioridade</th><th>Solicitações</th><th>Mais antiga</th><th>Espera da mais antiga (dias)</th><th title="Tempo médio que quem está na fila hoje já esperou">Média na fila hoje (dias)</th><th title="Tempo médio entre a solicitação e o atendimento, nos agendamentos com atendimento nos últimos ${D.atend_dias||90} dias">Média até o atendimento (dias)</th><th>Meta (dias)</th></tr>${linhas}</table>
+     <div class="rolagem"><table class="cores"><tr><th>Prioridade</th><th>Solicitações</th><th>Mais antiga</th><th>Espera da mais antiga (dias)</th><th title="Tempo médio que quem está na fila hoje já esperou">Média na fila hoje (dias)</th><th title="Tempo médio entre a solicitação e o atendimento, nos agendamentos com atendimento nos últimos ${D.atend_dias||90} dias">Média até o atendimento (dias)</th><th>Meta (dias)</th></tr>${linhas}</table></div>
      <p class="nota" style="margin:4px 0 0">“Média na fila hoje” = há quanto tempo, em média, esperam as solicitações que ainda estão na fila. “Média até o atendimento” = tempo entre a solicitação e o atendimento nos agendados com atendimento nos últimos ${D.atend_dias||90} dias (n = quantos; passe o cursor para ver a mediana).</p>
      <p style="font-size:.85rem;color:var(--muted)">Devolvidas: ${fmt(f.devolvidas)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Sem meta de tempo de espera definida em normativa da SES-DF para este procedimento"}</p>
      ${f.fila>0?simHtml(f):""}
@@ -420,7 +506,9 @@ function filtrar(){
 }
 function render(){
   const L = ultimaLista = filtrar();
+  const abertos=[...document.querySelectorAll("#lista .fila.aberta")].map(c=>c.dataset.id);   // cartões abertos continuam abertos
   $("lista").innerHTML=L.slice(0,vis).map(item).join("")||"<p>Nenhuma fila encontrada.</p>";
+  abertos.forEach(id=>{ const c=$("f-"+id); if(c) abrir(c); });
   $("mais").hidden=L.length<=vis;
   $("mais").textContent=`Mostrar mais (${fmt(L.length-vis)} restantes)`;
   $("cont").textContent=`${fmt(L.length)} de ${fmt(D.filas.length)} filas`;
@@ -457,6 +545,7 @@ async function baixarLista(){
 // ---------------------------------------------------------------- abas de devolvidas
 async function carregarDV(){
   if(DV) return DV;
+  await PRONTO; if(!D) throw new Error("dados.json não carregou");   // a aba depende das filas (tipos, nomes)
   const r=await fetch("devolvidas.json",{cache:"no-store"}); if(!r.ok) throw new Error("devolvidas.json: "+r.status);
   DV=await r.json();
   const ref=await fetch("referencias.json",{cache:"no-store"}).then(x=>x.json()).catch(()=>({esf:{}}));
@@ -465,8 +554,52 @@ async function carregarDV(){
     if(n!=="APS") $("un-nivel").insertAdjacentHTML("beforeend",`<option value="${n}">${n==="OUTROS"?"Outras":n}</option>`);
     $("pr-nivel").insertAdjacentHTML("beforeend",`<option value="${n}">Só devolvidas da ${n==="OUTROS"?"outras unidades":n}</option>`);
   });
+  prepararSerie(); renderSerie();
   return DV;
 }
+// ---------------------------------------------------------------- devolvidas ao longo do tempo
+// DV.serie = [índice da fila em DV.serie_ids, índice da unidade, índice do mês, n]; soma por período com filtros opcionais
+function serieDV({ids=null,uis=null}={}){
+  const P=periodos(DV.meses), v=new Array(DV.meses.length).fill(0);
+  for(const [fi,ui,mi,q] of DV.serie){ if(ids&&!ids.has(DV.serie_ids[fi])) continue; if(uis&&!uis.has(ui)) continue; v[mi]+=q; }
+  return {P,vals:agreg(v,P)};
+}
+function unidadesDo(nivel){ return DV.unidades.map((u,i)=>[u,i]).filter(([u])=>!nivel||u[1]===nivel); }
+function prepararSerie(){
+  const sel=(id,ops)=>{ const s=$(id), v=s.value; s.options.length=1; ops.forEach(([val,txt])=>s.insertAdjacentHTML("beforeend",`<option value="${esc(val)}">${esc(txt)}</option>`)); if([...s.options].some(o=>o.value===v)) s.value=v; };
+  sel("sv-nivel",NIVEIS.filter(n=>DV.unidades.some(u=>u[1]===n)).map(n=>[n,n==="APS"?"APS (UBS e PSR)":n==="OUTROS"?"Outras unidades":n]));
+  sel("sv-tipo",[...new Set(D.filas.map(f=>f.tipo).filter(Boolean))].sort().map(t=>[t,t]));
+  const procs=DV.serie_ids.map(id=>porId[id]).filter(Boolean).sort((a,b)=>a.p.localeCompare(b.p,"pt"));
+  sel("sv-proc",procs.map(f=>[f.id,f.p]));
+  atualizarUnSerie();
+}
+function atualizarUnSerie(){
+  const s=$("sv-un"), v=s.value; s.options.length=1;
+  unidadesDo($("sv-nivel").value).sort((a,b)=>a[0][0].localeCompare(b[0][0],"pt",{numeric:true})).forEach(([u,i])=>s.insertAdjacentHTML("beforeend",`<option value="${i}">${esc(u[0])}</option>`));
+  if([...s.options].some(o=>o.value===v)) s.value=v;
+}
+function renderSerie(){
+  if(!DV||!DV.serie) { $("dv-serie").hidden=true; return; }
+  $("dv-serie").hidden=false;
+  const nivel=$("sv-nivel").value, un=$("sv-un").value, tipo=$("sv-tipo").value, proc=$("sv-proc").value, medida=$("sv-medida").value;
+  let uis=null, ids=null;
+  if(un!=="") uis=new Set([+un]); else if(nivel) uis=new Set(unidadesDo(nivel).map(([,i])=>i));
+  if(proc) ids=new Set([proc]); else if(tipo) ids=new Set(D.filas.filter(f=>f.tipo===tipo).map(f=>f.id));
+  let esf=null;
+  if(medida==="esf"){ // só UBS com eSF cadastrada (APS)
+    const base=uis?[...uis]:DV.unidades.map((_,i)=>i), com=base.filter(i=>DV.unidades[i][2]);
+    uis=new Set(com); esf=com.reduce((s,i)=>s+DV.unidades[i][2],0)||null;
+  }
+  const {P,vals}=serieDV({ids,uis}), total=vals.reduce((s,v)=>s+v,0);
+  const v2=esf?vals.map(v=>v/esf):vals;
+  $("sv-graf").innerHTML=esf||total?barras(P,v2,esf?1:0):'<p style="padding:12px">Nenhuma devolvida com os filtros escolhidos.</p>';
+  $("sv-cont").textContent=esf?`${fmt(total)} devolvidas em ${fmt(esf)} eSF (${fmt(total/esf,1)} por eSF em ${P.length} ${PER==="m"?"meses":"quadrimestres"})`:`${fmt(total)} devolvidas em ${P.length} ${PER==="m"?"meses":"quadrimestres"}`;
+}
+function miniSerie(titulo,opts){
+  const {P,vals}=serieDV(opts); if(!vals.some(v=>v)) return "";
+  return `<div class="mini"><h5>${esc(titulo)} · ${PER==="m"?"por mês":"por quadrimestre"} (24 meses)</h5>${barras(P,vals,0,170)}</div>`;
+}
+
 // Agrega por unidade: total, consultas e exames, e a lista de procedimentos de cada uma
 function porUnidade(){
   const U=DV.unidades.map(([u,nivel,esf])=>({u,nivel,esf:esf??null,n:0,c:0,e:0,procs:[]}));
@@ -493,17 +626,20 @@ function linhaUn(x,pos){
 }
 function detalheUn(x){
   const procs=x.procs.map(([id,n])=>{const f=porId[id]; return `<tr><td>${f?`<a class="irfila" href="#f-${id}">${esc(f.p)}</a>`:id}</td><td>${esc(f?f.tipo:"")}</td><td>${fmt(n)}</td><td>${fmt(n/x.n*100,1)}%</td><td>${x.esf?fmt(n/x.esf,1):"–"}</td></tr>`;}).join("");
-  return `<tr class="sub"><td colspan="10"><div class="rolagem"><table class="tab"><tr><th>Procedimento</th><th>Tipo</th><th>Devolvidas</th><th>% da unidade</th><th>Por eSF</th></tr>${procs}</table></div>
+  const ui=DV.unidades.findIndex(u=>u[0]===x.u);
+  return `<tr class="sub"><td colspan="10">${DV.serie?miniSerie("Devolvidas da unidade",{uis:new Set([ui])}):""}<div class="rolagem"><table class="tab"><tr><th>Procedimento</th><th>Tipo</th><th>Devolvidas</th><th>% da unidade</th><th>Por eSF</th></tr>${procs}</table></div>
     <div class="dv-acoes"><button data-dev-un="${esc(x.u)}">Baixar devolvidas desta unidade (Excel)</button><small class="status"></small></div></td></tr>`;
 }
 const CAB_UN=[["n","Devolvidas"],["taxa","por eSF"],["c","Devolvidas"],["taxaC","por eSF"],["e","Devolvidos"],["taxaE","por eSF"]];
 function renderUn(){
   const L=filtrarUn(), o=$("un-ordem").value, rank=o!=="nome";
+  const abertas=[...document.querySelectorAll("#un-lista tr.u.aberta")].map(tr=>tr.dataset.u);   // linhas abertas continuam abertas
   const th=(k,t,extra="")=>`<th data-ord="${k}"${o===k?' aria-sort="descending"':""}${k==="c"||k==="e"?' class="sep"':""} ${extra}>${t}</th>`;
   $("un-lista").innerHTML=L.length?`<table class="tab rank"><thead>
     <tr><th rowspan="2">#</th>${th("nome","Unidade solicitante",'rowspan="2"')}<th rowspan="2">eSF</th><th colspan="2" class="sep">Total</th><th colspan="2" class="sep">Consultas</th><th colspan="2" class="sep">Exames</th><th rowspan="2" class="sep">Procedi-<br>mentos</th></tr>
     <tr>${CAB_UN.map(([k,t])=>th(k,t)).join("")}</tr></thead><tbody>${L.map((x,i)=>linhaUn(x,rank?i+1:0)).join("")}</tbody></table>`:'<p style="padding:12px">Nenhuma unidade encontrada.</p>';
   UN_ATUAL=Object.fromEntries(L.map(x=>[x.u,x]));
+  abertas.forEach(u=>{ const tr=document.querySelector(`#un-lista tr.u[data-u="${CSS.escape(u)}"]`); if(tr) alternarUn(tr); });
   $("un-cont").textContent=`${fmt(L.length)} unidades · ${fmt(L.reduce((s,x)=>s+x.n,0))} devolvidas (${fmt(L.reduce((s,x)=>s+x.c,0))} consultas, ${fmt(L.reduce((s,x)=>s+x.e,0))} exames)`;
 }
 function porProcedimento(nivel){
@@ -523,6 +659,7 @@ function filtrarPr(){
   return L;
 }
 function itemPr(x,pos){
+  const nivelPr=$("pr-nivel").value;
   const us=x.us.map(([ui,n])=>{const [u,nv,esf]=DV.unidades[ui]; return `<tr><td>${esc(u)}</td><td>${nv==="OUTROS"?"Outras":nv}</td><td>${fmt(n)}</td><td>${esf?fmt(n/esf,1):"–"}</td><td>${fmt(n/x.n*100,1)}%</td></tr>`;}).join("");
   return `<div class="fila" tabindex="0" data-pid="${x.f.id}">
     <div class="lin dv">
@@ -532,13 +669,15 @@ function itemPr(x,pos){
       <div class="num"><b>${fmt(x.aps/x.total*100,0)}%</b><small>da APS</small></div>
       <div class="num"><b>${fmt(x.f.fila)}</b><small>na fila</small></div>
     </div>
-    <div class="det"><div class="rolagem"><table class="tab"><tr><th>Unidade solicitante</th><th>Nível</th><th>Devolvidas</th><th>Por eSF</th><th>% do procedimento</th></tr>${us}</table></div>
+    <div class="det">${DV.serie?miniSerie("Devolvidas do procedimento"+(nivelPr?" ("+nivelPr+")":""),{ids:new Set([x.f.id]),uis:nivelPr?new Set(unidadesDo(nivelPr).map(([,i])=>i)):null}):""}<div class="rolagem"><table class="tab"><tr><th>Unidade solicitante</th><th>Nível</th><th>Devolvidas</th><th>Por eSF</th><th>% do procedimento</th></tr>${us}</table></div>
       <div class="dv-acoes"><a class="irfila" href="#f-${x.f.id}">Abrir a fila no painel</a> <button data-dev-p="${x.f.id}">Baixar devolvidas deste procedimento (Excel)</button><small class="status"></small></div></div>
   </div>`;
 }
 function renderPr(){
   const L=filtrarPr(), rank=$("pr-ordem").value!=="nome";
+  const abertos=[...document.querySelectorAll("#pr-lista .fila.aberta")].map(c=>c.dataset.pid);
   $("pr-lista").innerHTML=L.slice(0,visPr).map((x,i)=>itemPr(x,rank?i+1:0)).join("")||"<p>Nenhum procedimento encontrado.</p>";
+  abertos.forEach(id=>{ const c=document.querySelector(`#pr-lista .fila[data-pid="${id}"]`); if(c) c.classList.add("aberta"); });
   $("pr-mais").hidden=L.length<=visPr; $("pr-mais").textContent=`Mostrar mais (${fmt(L.length-visPr)} restantes)`;
   $("pr-cont").textContent=`${fmt(L.length)} procedimentos · ${fmt(L.reduce((s,x)=>s+x.n,0))} devolvidas`;
 }
@@ -590,11 +729,12 @@ async function mostrarAba(a,v){
 }
 
 // ---------------------------------------------------------------- carga
-fetch("dados.json",{cache:"no-store"}).then(r=>{if(!r.ok) throw new Error(r.status); return r.json();}).then(d=>{
+const PRONTO=fetch("dados.json",{cache:"no-store"}).then(r=>{if(!r.ok) throw new Error(r.status); return r.json();}).then(d=>{
   D=d; d.filas.forEach(f=>porId[f.id]=f);
   const rec=d.recarga_painel?new Date(d.recarga_painel):null;
   $("info").textContent=`atualizado em ${d.gerado_em}${rec&&!isNaN(rec)?" · Mapa Social recarregado em "+rec.toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}):""} · solicitações registradas até ${d.solicitacoes_ate} (${atrasoTxt()})`;
-  if(d.atraso_dias!=null){ const u=d.atraso_ultimos||[]; $("atraso").innerHTML=`<b>Atraso dos dados:</b> o Mapa Social está ${d.atraso_dias} dias atrás do SISREG (última solicitação registrada: ${d.solicitacoes_ate}). As solicitações mais recentes ainda não aparecem, por isso os totais podem diferir do SISREG.${u.length>1?` Atraso medido nas últimas recargas: ${u.join(", ")} dias.`:""}`; }
+  if(d.atraso_dias!=null){ const u=d.atraso_ultimos||[], a=d.atraso_dias;
+    $("atraso").innerHTML=`<b>Atraso dos dados:</b> ${a===0?`o Mapa Social registra solicitações até ${d.solicitacoes_ate}, o mesmo dia desta coleta (sem atraso em relação ao SISREG); solicitações feitas depois da recarga ainda não aparecem`:`o Mapa Social está ${a} ${a===1?"dia":"dias"} atrás do SISREG (última solicitação registrada: ${d.solicitacoes_ate}). As solicitações mais recentes ainda não aparecem`}, por isso os totais podem diferir do SISREG.${u.length>1?` Atraso medido nas últimas recargas: ${u.join(", ")} dias.`:""}`; }
   const idade=(Date.now()-new Date(d.data+"T12:00:00"))/864e5;
   if(idade>2){ $("aviso").hidden=false; $("aviso").textContent=`Atenção: os dados são de ${d.data.split("-").reverse().join("/")} (${Math.floor(idade)} dias). A atualização automática pode ter falhado.`; }
   const ativos=d.filas.filter(f=>f.fila>0);
@@ -615,6 +755,11 @@ fetch("dados.json",{cache:"no-store"}).then(r=>{if(!r.ok) throw new Error(r.stat
 ["busca","tipo","alerta","ordem"].forEach(id=>$(id).addEventListener("input",()=>{vis=60;render();}));
 ["un-busca","un-nivel","un-ordem"].forEach(id=>$(id).addEventListener("input",()=>DV&&renderUn()));
 ["pr-busca","pr-tipo","pr-nivel","pr-ordem"].forEach(id=>$(id).addEventListener("input",()=>{visPr=60;DV&&renderPr();}));
+$("sv-nivel").addEventListener("input",()=>{atualizarUnSerie();renderSerie();});
+["sv-un","sv-medida"].forEach(id=>$(id).addEventListener("input",renderSerie));
+$("sv-tipo").addEventListener("input",()=>{ if($("sv-tipo").value) $("sv-proc").value=""; renderSerie(); });
+$("sv-proc").addEventListener("input",()=>{ if($("sv-proc").value) $("sv-tipo").value=""; renderSerie(); });
+document.querySelectorAll("select.periodo").forEach(s=>s.addEventListener("input",()=>mudarPeriodo(s.value)));
 $("mais").onclick=()=>{vis+=60;render();};
 $("pr-mais").onclick=()=>{visPr+=60;renderPr();};
 $("baixar").onclick=()=>baixarLista().catch(e=>{ $("cont").textContent="Não foi possível gerar a planilha: "+e.message; });

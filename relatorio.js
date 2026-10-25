@@ -21,7 +21,7 @@
   const dataBr = d => `${d.getDate()} ${MESES[d.getMonth()]}. ${d.getFullYear()}`;
   const dd = s => s ? s.split("-").reverse().join("/") : "";
   const cmp = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
-  const atrasoTxt = d => d.atraso_dias != null ? `atraso de ${d.atraso_dias} dias` : "atraso de 6 a 7 dias";
+  const atrasoTxt = d => d.atraso_dias == null ? "atraso de 6 a 7 dias" : d.atraso_dias === 0 ? "sem atraso" : d.atraso_dias === 1 ? "atraso de 1 dia" : `atraso de ${d.atraso_dias} dias`;
 
   function lib(url) {
     if (!carregadas[url]) carregadas[url] = new Promise((ok, erro) => {
@@ -38,15 +38,91 @@
     return t.toLowerCase().split(/\s+/).map((w, i) => (i && minus.has(w)) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
   }
 
-  function tendencia(y) {
-    const n = y.length, x = [...y.keys()], mx = (n - 1) / 2, my = y.reduce((a, b) => a + b, 0) / n;
-    let sxy = 0, sxx = 0;
-    x.forEach(i => { sxy += (i - mx) * (y[i] - my); sxx += (i - mx) ** 2; });
-    const a = sxx ? sxy / sxx : 0, b = my - a * mx;
-    let ssr = 0, sst = 0;
-    y.forEach((v, i) => { ssr += (v - (a * i + b)) ** 2; sst += (v - my) ** 2; });
-    return {a, b, r2: sst ? 1 - ssr / sst : 0};
+  // Tendência robusta (Theil-Sen): inclinação = mediana das inclinações entre todos os pares de meses;
+  // intercepto = mediana de y − a·x. Meses atípicos (picos de mutirão, suspensões) quase não puxam a reta.
+  function mediana(v) {
+    if (!v.length) return 0;
+    const s = [...v].sort((p, q) => p - q), m = s.length >> 1;
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
   }
+  function tendencia(y) {
+    const n = y.length, incl = [];
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) incl.push((y[j] - y[i]) / (j - i));
+    const a = mediana(incl), b = mediana(y.map((v, i) => v - a * i));
+    return {a, b};
+  }
+  // ---- Meses aberrantes e tendência corrigida (definido com a Rebeca em 24/10/2026) ----------------------
+  // Janela: últimos 24 meses. Theil-Sen iterativo (só para ACHAR os aberrantes): mede o afastamento de cada mês à própria reta, a escala é a
+  // oscilação típica (MAD × 1,4826, com piso de √nível por ser contagem) e um mês é aberrante se passar de k = 4
+  // escalas acima da reta (no saldo, acima ou abaixo). Os aberrantes ficam de fora do ajuste da reta (mas continuam
+  // no gráfico). Sequências de mais de 3 meses seguidos contam como mudança de patamar e não são marcadas.
+  // Filas pequenas (< 12 meses com movimento ou < 120 solicitações na janela) não são avaliadas.
+  // A reta final e o R² são de mínimos quadrados (como no Excel) calculados SEM os aberrantes (decisão de 24/10/2026).
+  // Manter em sincronia com analise.py (aberrantes / analisar_aberrantes).
+  const ABERR = {k: 4, janela: 24, minMeses: 12, minTotal: 120, maxSeq: 3};
+  function tsAjuste(y, flag) {
+    const xs = [], ys = [];
+    y.forEach((v, i) => { if (!flag[i]) { xs.push(i); ys.push(v); } });
+    const m = xs.length, incl = [];
+    if (m < 3) return {a: 0, b: mediana(y)};
+    for (let i = 0; i < m; i++) for (let j = i + 1; j < m; j++) incl.push((ys[j] - ys[i]) / (xs[j] - xs[i]));
+    const a = mediana(incl);
+    return {a, b: mediana(ys.map((v, i) => v - a * xs[i]))};
+  }
+  const elegivelAberr = y => y.filter(v => v !== 0).length >= ABERR.minMeses && y.reduce((s, v) => s + v, 0) >= ABERR.minTotal;
+  // Reta de mínimos quadrados e R² clássico sobre os meses não aberrantes
+  function mqAjuste(y, flag) {
+    const idx = y.map((_, i) => i).filter(i => !flag[i]), m = idx.length;
+    if (m < 3) return {a: 0, b: mediana(y), r2: null};
+    const mx = idx.reduce((s, i) => s + i, 0) / m, my = idx.reduce((s, i) => s + y[i], 0) / m;
+    const sxx = idx.reduce((s, i) => s + (i - mx) ** 2, 0), sxy = idx.reduce((s, i) => s + (i - mx) * (y[i] - my), 0);
+    const a = sxx ? sxy / sxx : 0, b = my - a * mx;
+    const sst = idx.reduce((s, i) => s + (y[i] - my) ** 2, 0), sse = idx.reduce((s, i) => s + (y[i] - (a * i + b)) ** 2, 0);
+    return {a, b, r2: sst ? 1 - sse / sst : null};
+  }
+  // forcar: meses já marcados à força (saldo herda os aberrantes da saída), sempre fora do ajuste
+  function aberrantes(y, {ambos = false, elegivel = true, forcar = null} = {}) {
+    const n = y.length, flag = forcar ? forcar.slice() : new Array(n).fill(false);
+    let t = tsAjuste(y, flag);
+    if (!elegivel || n < ABERR.minMeses) {
+      const q0 = mqAjuste(y, flag);
+      return {flag, a: q0.a, b: q0.b, ok: false, n: 0, r2: q0.r2};
+    }
+    for (let it = 0; it < 3; it++) {
+      const fit = y.map((_, i) => t.a * i + t.b), res = y.map((v, i) => v - fit[i]);
+      const base = res.filter((_, i) => !flag[i]);
+      if (base.length < 3) break;
+      const mb = mediana(base), mad = 1.4826 * mediana(base.map(v => Math.abs(v - mb)));
+      const nivel = fit.filter((_, i) => !flag[i]).map(v => Math.max(v, 1));
+      const esc = Math.max(mad, Math.sqrt(Math.max(nivel.reduce((s, v) => s + v, 0) / nivel.length, 1)));
+      const novo = res.map((v, i) => v > ABERR.k * esc || (ambos && v < -ABERR.k * esc) || !!(forcar && forcar[i]));
+      if (novo.every((v, i) => v === flag[i])) break;
+      novo.forEach((v, i) => { flag[i] = v; });
+      t = tsAjuste(y, flag);
+    }
+    for (let i = 0; i < n;) {
+      if (!flag[i]) { i++; continue; }
+      let j = i; while (j < n && flag[j]) j++;
+      if (j - i > ABERR.maxSeq) for (let q = i; q < j; q++) if (!(forcar && forcar[q])) flag[q] = false;
+      i = j;
+    }
+    const q = mqAjuste(y, flag);
+    return {flag, a: q.a, b: q.b, ok: true, n: flag.filter(Boolean).length, r2: q.r2};
+  }
+  // série completa (entrada e saída por mês) → resultado só para os últimos 24 meses; ini = índice do 1º mês avaliado
+  function analisarAberrantes(inn, out) {
+    const ini = Math.max(0, inn.length - ABERR.janela);
+    const i = inn.slice(ini), o = out.slice(ini), s = i.map((v, k) => v - o[k]);
+    const eI = elegivelAberr(i), eO = elegivelAberr(o);
+    const ro = aberrantes(o, {elegivel: eO});
+    // regra de 24/10/2026: mês aberrante na saída é sempre aberrante no saldo
+    return {ini, k: ABERR.k, in: aberrantes(i, {elegivel: eI}), out: ro,
+      saldo: aberrantes(s, {ambos: true, elegivel: eI || eO, forcar: ro.flag})};
+  }
+  window._aberrantes = analisarAberrantes;
+
+  // número com sinal explícito, 1 casa, sem "-0,0"
+  const sinal = v => { const r = Math.round(v * 10) / 10 + 0; return (r >= 0 ? "+" : "") + fmt(r, 1); };
 
   function casa(padrao, txt) {
     const re = new RegExp("^" + padrao.split("*").map(s => s.replace(/[.+?^${}()|[\]\\]/g, "\\$&")).join(".*") + "$");
@@ -62,6 +138,7 @@
     r.atraso = atrasoTxt(d);
     const saldo = d.in.map((v, i) => v - d.out[i]);
     r.serie = {meses: d.meses, in: d.in, out: d.out, saldo};
+    r.aberr = analisarAberrantes(d.in, d.out);
 
     r.risco = CORES.map(([k, rot]) => {
       const c = d.cores[k];
@@ -151,19 +228,16 @@
     const media = a => a.reduce((x, y) => x + y, 0) / Math.max(a.length, 1);
     const p12 = s.in.slice(0, 12), u12 = s.in.slice(-12), us = s.saldo.slice(-12);
     const v = media(p12) ? (media(u12) / media(p12) - 1) * 100 : 0;
-    const ai = tendencia(s.in).a, ao = tendencia(s.out).a;
+    const ab = r.aberr, ai = ab.in.a, ao = ab.out.a, nj = n - ab.ini;
     t.fig1 = `Entre ${s.meses[0]} e ${s.meses[n - 1]}, a média mensal de entrada (INPUT) passou de ${fmt(media(p12), 1)} solicitações nos primeiros 12 meses para ${fmt(media(u12), 1)} nos últimos 12 meses (${v >= 0 ? "+" : ""}${fmt(v, 1)}%). ` +
       `Nos últimos 12 meses, o saldo regulatório foi positivo em ${us.filter(x => x > 0).length} meses, somando ${fmt(us.reduce((a, b) => a + b, 0))} solicitações a mais do que as agendadas no período. ` +
-      `A tendência linear indica variação média de ${fmt(ai * 12, 1)} solicitações/mês por ano no INPUT e de ${fmt(ao * 12, 1)} no OUTPUT.`;
+      `Nos últimos ${nj} meses, a tendência (reta de mínimos quadrados calculada sem os meses aberrantes, identificados pelo método de Theil-Sen) indica variação média de ${fmt(ai * 12, 1)} solicitações/mês por ano no INPUT e de ${fmt(ao * 12, 1)} no OUTPUT.`;
     const ext = [];
-    for (const [k, a] of [["INPUT", s.in], ["OUTPUT", s.out]]) {
-      const m = media(a), dp = Math.sqrt(a.reduce((x, y) => x + (y - m) ** 2, 0) / Math.max(a.length - 1, 1));
-      a.forEach((y, i) => {
-        if (y > m + 2 * dp) ext.push(`${k} de ${s.meses[i]} (${y}) muito acima da média (${fmt(m)})`);
-        else if (y < m - 2 * dp) ext.push(`${k} de ${s.meses[i]} (${y}) muito abaixo da média (${fmt(m)})`);
-      });
+    for (const [k, a] of [["INPUT", s.in], ["OUTPUT", s.out], ["SALDO REGULATÓRIO", s.saldo]]) {
+      const f = ab[k === "INPUT" ? "in" : k === "OUTPUT" ? "out" : "saldo"].flag;
+      f.forEach((x, i) => { if (x) ext.push(`${k} de ${s.meses[ab.ini + i]} (${fmt(a[ab.ini + i])})`); });
     }
-    if (ext.length) t.fig1 += " Meses fora do padrão, a explicar (mutirão, suspensão de agenda etc.): " + ext.join("; ") + ".";
+    if (ext.length) t.fig1 += " Meses aberrantes (mais de 4 vezes a oscilação típica em relação à tendência; mantidos no gráfico e descontados da linha de tendência), a explicar (mutirão, suspensão de agenda etc.): " + ext.join("; ") + ".";
     const tot = r.risco.reduce((a, x) => a + x.n, 0);
     t.fig2 = `A fila tem ${fmt(tot)} solicitações pendentes ou reenviadas.` + (tot ? " Por prioridade, " + r.risco.filter(x => x.n).map(x =>
       `${x.cor.toLowerCase()}: ${fmt(x.n)} (${fmt(x.n / tot * 100, 1)}%), a mais antiga de ${x.antiga}, com ${fmt(x.dias)} dias de espera`).join("; ") + "." : "");
@@ -196,7 +270,9 @@
     return {
       titulo: `Análise da fila de ${/^CONSULTA/i.test(r.p) ? "Consulta em " : ""}${r.nome} - Região Norte`,
       f1: `Figura 1 – Comportamento da fila de ${r.nome}`,
-      n1: [FONTE, `Nota: Dados extraídos em ${e}, referentes ao período de ${MESES_EXT[MESES.indexOf(m0)]} de 20${a0} a ${MESES_EXT[MESES.indexOf(m1)]} de 20${a1}.`],
+      n1: [FONTE, `Nota: Dados extraídos em ${e}, referentes ao período de ${MESES_EXT[MESES.indexOf(m0)]} de 20${a0} a ${MESES_EXT[MESES.indexOf(m1)]} de 20${a1}. ` +
+        `As linhas de tendência (mínimos quadrados) cobrem os últimos ${n - r.aberr.ini} meses e são calculadas sem os meses aberrantes (identificados pelo método de Theil-Sen: mais de 4 vezes a oscilação típica em relação à tendência; no saldo, acima ou abaixo, e sempre que a saída do mês for aberrante); o R² ao lado de cada linha considera só os meses não aberrantes, ` +
+        "que permanecem no gráfico em tracejado e com círculo vazio. Quando o valor ultrapassa a escala, o ponto é desenhado no limite do eixo, com o valor real escrito ao lado (nesses meses a altura não é fiel). Meses anteriores à janela não foram avaliados."],
       f2: `Figura 2 – Tempo de espera por prioridade em ${r.nome}`, n2,
       f3: `Figura 3.1 – Distribuição de solicitações pendentes em ${r.nome} por Código Internacional de Doenças (CID)`,
       n3: [FONTE, `Nota: Dados extraídos em ${e}.`],
@@ -224,47 +300,80 @@
   function passo(f) { const p = 10 ** Math.floor(Math.log10(f || 1)); const m = f / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p; }
 
   function graficoSerie(r) {
-    const W = 2200, H = 920, L = 80, Rm = 150, T = 30, B = 170;
-    const [c, g] = canvas(W, H), s = r.serie, n = s.in.length;
-    const todos = [...s.in, ...s.out, ...s.saldo];
+    const W = 2200, H = 960, L = 80, Rm = 250, T = 80, B = 170;
+    const [c, g] = canvas(W, H), s = r.serie, n = s.in.length, ab = r.aberr;
+    const ser = [["INPUT", s.in, "#000000", ab.in], ["OUTPUT", s.out, "#00B050", ab.out], ["SALDO REGULATÓRIO", s.saldo, "#FF0000", ab.saldo]];
+    // aberrantes (só na janela) não entram na escala; as retas de tendência entram
+    const fl = ser.map(([, , , t]) => Array.from({length: n}, (_, i) => i >= ab.ini && t.flag[i - ab.ini]));
+    const reta = (t, i) => t.a * (i - ab.ini) + t.b;
+    const todos = [];
+    ser.forEach(([, a, , t], j) => { a.forEach((v, i) => { if (!fl[j][i]) todos.push(v); }); todos.push(reta(t, ab.ini), reta(t, n - 1)); });
     const st = passo((Math.max(...todos) - Math.min(0, ...todos)) / 6);
     const ymin = Math.floor(Math.min(0, ...todos) / st) * st, ymax = Math.ceil(Math.max(1, ...todos) / st) * st;
     const X = i => L + i * (W - L - Rm) / (n - 1), Y = v => T + (ymax - v) / (ymax - ymin) * (H - T - B);
+    const Yc = v => Y(Math.min(ymax, Math.max(ymin, v)));
     g.strokeStyle = "#D9D9D9"; g.lineWidth = 1.2; g.fillStyle = "#595959"; g.textAlign = "right";
     for (let v = ymin; v <= ymax + 1e-9; v += st) {
       g.beginPath(); g.moveTo(L, Y(v)); g.lineTo(W - Rm, Y(v)); g.stroke(); g.fillText(fmt(v), L - 12, Y(v));
     }
     g.textAlign = "right";
     for (let i = 0; i < n; i += 2) { g.save(); g.translate(X(i) + 6, H - B + 18); g.rotate(-Math.PI / 4); g.fillText(s.meses[i], 0, 0); g.restore(); }
-    const ser = [["INPUT", s.in, "#000000"], ["OUTPUT", s.out, "#00B050"], ["SALDO REGULATÓRIO", s.saldo, "#FF0000"]];
-    for (const [, a, cor] of ser) {
-      g.strokeStyle = cor; g.fillStyle = cor; g.lineWidth = 4; g.beginPath();
-      a.forEach((v, i) => i ? g.lineTo(X(i), Y(v)) : g.moveTo(X(i), Y(v))); g.stroke();
-      a.forEach((v, i) => { g.beginPath(); g.arc(X(i), Y(v), 5.5, 0, 7); g.fill(); });
-    }
+    ser.forEach(([, a, cor], j) => {
+      g.strokeStyle = cor; g.fillStyle = cor; g.lineWidth = 4;
+      for (let i = 1; i < n; i++) {
+        g.setLineDash(fl[j][i] || fl[j][i - 1] ? [12, 9] : []);
+        g.beginPath(); g.moveTo(X(i - 1), Yc(a[i - 1])); g.lineTo(X(i), Yc(a[i])); g.stroke();
+      }
+      g.setLineDash([]);
+      a.forEach((v, i) => {
+        g.beginPath(); g.arc(X(i), Yc(v), fl[j][i] ? 8 : 5.5, 0, 7);
+        if (fl[j][i]) { g.fillStyle = "#fff"; g.fill(); g.lineWidth = 3; g.stroke(); g.fillStyle = cor; g.lineWidth = 4; } else g.fill();
+        if (fl[j][i] && (v > ymax || v < ymin)) {
+          g.font = "bold 20px Calibri, Arial, sans-serif"; g.textAlign = "center"; g.fillStyle = cor;
+          g.fillText((v > ymax ? "▲ " : "▼ ") + fmt(v), X(i), Yc(v) + (v > ymax ? 30 + (i % 3) * 22 : -16 - (i % 3) * 22)); g.font = "22px Calibri, Arial, sans-serif";
+        }
+      });
+    });
     g.textAlign = "left"; g.font = "20px Calibri, Arial, sans-serif";
-    const r2y = [];
-    for (const [, a, cor] of ser) {
-      const t = tendencia(a); g.strokeStyle = cor; g.lineWidth = 1.6; g.beginPath();
-      g.moveTo(X(0), Y(t.b)); g.lineTo(X(n - 1), Y(t.a * (n - 1) + t.b)); g.stroke();
-      let y = Y(t.a * (n - 1) + t.b) - 14; while (r2y.some(z => Math.abs(z - y) < 24)) y += 24; r2y.push(y);
-      g.fillStyle = "#000"; g.fillText("R² = " + t.r2.toFixed(4).replace(".", ","), X(n - 1) + 10, y);
-    }
+    const ty = [];
+    ser.forEach(([, , cor, t]) => {
+      g.strokeStyle = cor; g.lineWidth = 1.6; g.beginPath();
+      g.moveTo(X(ab.ini), Y(reta(t, ab.ini))); g.lineTo(X(n - 1), Y(reta(t, n - 1))); g.stroke();
+      let y = Y(reta(t, n - 1)) - 14; while (ty.some(z => Math.abs(z - y) < 24)) y += 24; ty.push(y);
+      g.fillStyle = cor; g.fillText(sinal(t.a) + "/mês" + (t.r2 != null ? " · R² " + fmt(t.r2, 2) : ""), X(n - 1) + 10, y);
+    });
+    // legenda das médias mensais no alto do gráfico
+    const media = a => a.reduce((x, y) => x + y, 0) / Math.max(a.length, 1);
+    const mm = [["INPUT médio", media(s.in), "#000000"], ["OUTPUT médio", media(s.out), "#00B050"],
+      ["SALDO REGULATÓRIO médio", media(s.saldo), "#FF0000"]];
+    g.font = "bold 22px Calibri, Arial, sans-serif";
+    const tit = `Média mensal (${s.meses[0]} a ${s.meses[n - 1]}):`;
+    const partes = mm.map(([t, v]) => `${t}: ${t.startsWith("SALDO") ? sinal(v) : fmt(v, 1)}`);
+    const lt = g.measureText(tit).width + 24 + partes.reduce((a, p) => a + g.measureText(p).width + 90, 0);
+    let lx = (W - lt) / 2; const ly = 36;
+    g.fillStyle = "#404040"; g.fillText(tit, lx, ly); lx += g.measureText(tit).width + 24;
+    partes.forEach((p, i) => {
+      g.strokeStyle = mm[i][2]; g.lineWidth = 4; g.beginPath(); g.moveTo(lx, ly); g.lineTo(lx + 36, ly); g.stroke();
+      g.fillStyle = "#404040"; g.fillText(p, lx + 46, ly); lx += g.measureText(p).width + 90;
+    });
+    g.font = "20px Calibri, Arial, sans-serif";
     const leg = [["INPUT", "#000", true], ["OUTPUT", "#00B050", true], ["SALDO REGULATÓRIO", "#FF0000", true],
-      ["Linear (INPUT)", "#000", false], ["Linear (OUTPUT)", "#00B050", false], ["Linear (SALDO REGULATÓRIO)", "#FF0000", false]];
+      ["Linear (INPUT)", "#000", false], ["Linear (OUTPUT)", "#00B050", false], ["Linear (SALDO REGULATÓRIO)", "#FF0000", false],
+      ["Mês aberrante", "#7F7F7F", "ab"]];
     g.font = "20px Calibri, Arial, sans-serif";
     const larg = leg.map(([t]) => g.measureText(t).width + 70), totL = larg.reduce((a, b) => a + b, 0);
     let x = (W - totL) / 2; const y = H - 28;
     leg.forEach(([t, cor, grossa], i) => {
-      g.strokeStyle = cor; g.lineWidth = grossa ? 4 : 1.6; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 44, y); g.stroke();
-      if (grossa) { g.fillStyle = cor; g.beginPath(); g.arc(x + 22, y, 5.5, 0, 7); g.fill(); }
+      g.strokeStyle = cor; g.lineWidth = grossa ? 4 : 1.6; g.setLineDash(grossa === "ab" ? [8, 6] : []); g.beginPath(); g.moveTo(x, y); g.lineTo(x + 44, y); g.stroke(); g.setLineDash([]);
+      if (grossa === "ab") { g.fillStyle = "#fff"; g.lineWidth = 3; g.beginPath(); g.arc(x + 22, y, 8, 0, 7); g.fill(); g.stroke(); }
+      else if (grossa) { g.fillStyle = cor; g.beginPath(); g.arc(x + 22, y, 5.5, 0, 7); g.fill(); }
       g.fillStyle = "#404040"; g.fillText(t, x + 52, y); x += larg[i];
     });
     return c.toDataURL("image/png");
   }
 
   function pizza(valores, rotulos, cores, rotulo) {
-    const W = 1280, H = 920, cx = 640, cy = 410, R = 340;
+    const W = 1280, H = 920, cx = 640, cy = 470, R = 300;
     const [c, g] = canvas(W, H), tot = valores.reduce((a, b) => a + b, 0) || 1;
     let ang = -Math.PI / 2, peq = 0;
     valores.forEach((v, i) => {
@@ -272,7 +381,7 @@
       const a = v / tot * Math.PI * 2;
       g.fillStyle = cores[i]; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, R, ang, ang + a); g.closePath(); g.fill();
       g.strokeStyle = "#fff"; g.lineWidth = 4; g.stroke();
-      const m = ang + a / 2, dist = v / tot > 0.06 ? 0.72 : 1.1 + 0.12 * (peq++ % 2);
+      const m = ang + a / 2, dist = v / tot > 0.06 ? 0.72 : 1.12 + 0.15 * (peq++ % 3);  // fatias pequenas: rótulo fora, em até 3 alturas (cabe no topo da imagem)
       g.fillStyle = "#000"; g.font = "bold 26px Calibri, Arial, sans-serif"; g.textAlign = "center";
       g.fillText(rotulo(v, tot), cx + Math.cos(m) * R * dist, cy + Math.sin(m) * R * dist);
       ang += a;
@@ -314,14 +423,14 @@
       y += opt.depois ?? 1;
     };
     const novaPag = () => { doc.addPage("a4", "portrait"); W = 210; M = 25; y = 22; };
-    const imagem = (url, larg, alt) => { if (y + alt > (W > 250 ? 200 : 285)) novaPag(); doc.addImage(url, "PNG", (W - larg) / 2, y, larg, alt); y += alt + 3; };
+    const imagem = (url, larg, alt) => { if (y + alt > (W > 250 ? 200 : 285)) novaPag(); doc.addImage(url, "PNG", (W - larg) / 2, y, larg, alt, undefined, "FAST"); y += alt + 3; };   // sem "FAST" o PNG vai descomprimido (PDF de ~18 MB)
     const rodape = ls => { ls.forEach((l, i) => texto(l, 10, {depois: i === ls.length - 1 ? 5 : 0})); };
     const garantir = h => { if (y + h > (W > 250 ? 200 : 285)) novaPag(); };  // mantém título junto da figura/tabela
     const rascunho = t => texto(N.rascunho + t, 11, {realce: true, depois: 7});
 
     texto(N.titulo, 12, {negrito: true, centro: true, depois: 6});
     texto(N.f1, 12, {depois: 2});
-    imagem(graficoSerie(r), 250, 104.5);
+    imagem(graficoSerie(r), 250, 109.1);
     rodape(N.n1); rascunho(r.textos.fig1);
 
     novaPag();
@@ -408,7 +517,7 @@
     ]});
     const doc = new D.Document({sections: [
       {properties: {page: {size: {orientation: D.PageOrientation.LANDSCAPE, width: 16838, height: 11906}, margin: {top: 1000, bottom: 1000, left: 1134, right: 1134}}},
-        children: [par(N.titulo, {negrito: true, centro: true, depois: 18}), par(N.f1, {depois: 4}), img(graficoSerie(r), 940, 393), ...rodape(N.n1), rascunho(r.textos.fig1)]},
+        children: [par(N.titulo, {negrito: true, centro: true, depois: 18}), par(N.f1, {depois: 4}), img(graficoSerie(r), 940, 410), ...rodape(N.n1), rascunho(r.textos.fig1)]},
       {properties: {page: {size: {orientation: D.PageOrientation.PORTRAIT, width: 11906, height: 16838}, margin: {top: 1134, bottom: 1134, left: 1417, right: 1417}}},
         children: [par(N.f2, {depois: 6}), tRisco, ...rodape(N.n2), rascunho(r.textos.fig2),
           par(N.f3, {depois: 4}), img(graficoCids(r), 540, 388), ...rodape(N.n3), new D.Paragraph({pageBreakBefore: true, spacing: {after: 120}, children: [run(N.tc)]}), tCid, ...rodape(N.ntc), rascunho(r.textos.fig3),
@@ -426,7 +535,8 @@
     aba("Leia-me", [["Informação", "Valor"], ["Procedimento", r.p], ["Região", "Região Norte"], ["Data da extração", r.extracao.toLocaleDateString("pt-BR")],
       ["Solicitações registradas até", r.solicAte], ["Fonte", "Mapa Social do Distrito Federal (MPDFT) – dados agregados, sem identificação de usuários"],
       ["Gerado pelo painel", location.href.split("#")[0]]], [30, 90]);
-    aba("Saldo Regulatório", [["Mês/Ano", "INPUT", "OUTPUT", "SALDO REGULATÓRIO"], ...r.serie.meses.map((m, i) => [m, r.serie.in[i], r.serie.out[i], r.serie.saldo[i]])], [10, 10, 10, 20]);
+    aba("Saldo Regulatório", [["Mês/Ano", "INPUT", "OUTPUT", "SALDO REGULATÓRIO", "Mês aberrante em"], ...r.serie.meses.map((m, i) => [m, r.serie.in[i], r.serie.out[i], r.serie.saldo[i],
+      [["INPUT", "in"], ["OUTPUT", "out"], ["SALDO", "saldo"]].filter(([, k]) => i >= r.aberr.ini && r.aberr[k].flag[i - r.aberr.ini]).map(([t]) => t).join("; ")])], [10, 10, 10, 20, 24]);
     aba("Tempo de espera por risco", [["Classificação", "Mais antiga", "Solicitações", "Tempo de espera em DIAS", "Meta do protocolo (dias)", "Acima da meta?"],
       ...r.risco.map(x => [x.cor, x.antiga, x.n, x.dias ?? "", x.meta ?? "", x.meta && x.dias != null ? (x.acima ? "Sim" : "Não") : ""]),
       ["TOTAL", "", r.risco.reduce((a, x) => a + x.n, 0), "", "", ""]], [14, 12, 12, 22, 22, 14]);
