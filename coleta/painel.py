@@ -8,8 +8,11 @@ Gera:
   dados.json                resumo de todas as filas (painel)
   devolvidas.json           devolvidas por fila × unidade solicitante, série mensal pela data da devolução e, em d12,
                             [unidade, devolvidas, solicitações] dos últimos 12 meses por fila (razão de devolvidas)
+  espera.json               registro diário da fila de espera (total e por fila), versionado em main como atraso.json
+  detalhe/espera.json       solicitações em fila de espera, linha a linha (aba Sem oferta)
   analises/<id>.json        detalhes agregados de cada fila, usados pelo botão "Gerar análise"
-  detalhe/<id>.json         linhas do Mapa Social de cada fila (código SISREG, datas, status, risco, CID, unidade)
+  detalhe/<id>.json         linhas do Mapa Social de cada fila (código SISREG, datas, status, risco, CID, unidade;
+                            inclui as solicitações em fila de espera, com esse status)
   detalhe/devolvidas.json   todas as devolvidas da região, linha a linha
   atraso.json               histórico do atraso do Mapa Social (uma medição por dia); fica no branch main, versionado
 """
@@ -37,6 +40,11 @@ PEND, REENV, DEVOL = ("SOLICITAÇÃO / PENDENTE / REGULADOR", "SOLICITAÇÃO / R
 FILA = '[status_solicitacao_solicitacao]={"%s","%s"}' % (PEND, REENV)
 DEV = '[status_solicitacao_solicitacao]={"%s"}' % DEVOL
 FILA_DEV = '[status_solicitacao_solicitacao]={"%s","%s","%s"}' % (PEND, REENV, DEVOL)
+# Fila de espera = solicitações aguardando pactuação de oferta (não estão com o regulador). Fica fora da "fila"
+# do painel, mas tem aba própria ("Sem oferta") e registro diário em espera.json.
+ESPERA = "SOLICITAÇÃO / PENDENTE / FILA DE ESPERA"
+ESP = '[status_solicitacao_solicitacao]={"%s"}' % ESPERA
+FILA_DEV_ESP = '[status_solicitacao_solicitacao]={"%s","%s","%s","%s"}' % (PEND, REENV, DEVOL, ESPERA)
 MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
 CORES = {"Prioridade 1": "vermelho", "Prioridade 2": "amarelo", "Prioridade 3": "verde", "Prioridade 4": "azul"}
 N_PAINEL = 24          # meses mostrados no painel (e janela dos agendamentos no detalhe)
@@ -82,6 +90,7 @@ def coletar(hoje):
         ["dev_un", [P, U], ["Count({<%s,%s>} distinct codigo_solicitacao)" % (R, DEV)]],
         ["un_sol", [P, U], ["Count({<%s>} distinct codigo_solicitacao)" % R]],
         ["un_ag", [PA, U], ["Count({<%s>} distinct codigo_solicitacao)" % R]],
+        ["esp_un", [P, U], ["Count({<%s,%s>} distinct codigo_solicitacao)" % (R, ESP)]],
         # Razão de devolvidas (aba Devolvidas): solicitações feitas por unidade × mês da solicitação, nos
         # últimos 12 meses completos — total (pendentes + reenviadas + devolvidas + agendadas) e só devolvidas
         ["sol12", [P, U, "Calendar.Ano_Solicitacao", "Calendar.Mes_Solicitacao"],
@@ -94,7 +103,7 @@ def coletar(hoje):
         ["ultima", [], ["Date(Max(data_solicitacao))"]],
         ["det_sol", [P, "codigo_solicitacao", "data_solicitacao", "status_solicitacao_solicitacao",
                      "classificacao_risco", "CID_solicitacao", U, "data_devolucao"],
-         ["Count({<%s,%s>} codigo_solicitacao)" % (R, FILA_DEV)]],
+         ["Count({<%s,%s>} codigo_solicitacao)" % (R, FILA_DEV_ESP)]],
         ["det_ag", [PA, "codigo_solicitacao", "Calendar.Data_Solicitacao", "data_agendamento",
                     "status_solicitacao_agendamento", "classificacao_risco", U],
          ['Count({<%s,[Ano_Agendamento]={">=%d"}>} codigo_solicitacao)' % (R, ano_det)]],
@@ -145,7 +154,7 @@ def montar(b, hoje, ref=None):
 
     procs = defaultdict(lambda: {"in": [0] * n, "out": [0] * n, "cores": {}, "fila": 0, "devolvidas": 0,
                                  "futuros": 0, "tipo": "", "cid": {}, "dev_un": {}, "unidades": set(),
-                                 "ult_ag": None})
+                                 "ult_ag": None, "espera": {"n": 0, "antiga": None, "cores": {}, "unidades": {}}})
     for p, st, risco, q, antiga in b["fila"]["rows"]:
         if not _valido(p):
             continue
@@ -159,6 +168,15 @@ def montar(b, hoje, ref=None):
             if _valido(antiga):
                 dt = _br(antiga)
                 c["antiga"] = min(c["antiga"], dt) if c["antiga"] else dt
+        elif st == ESPERA:
+            e = d["espera"]
+            e["n"] += q
+            c = e["cores"].setdefault(CORES.get(risco, "sem risco"), {"n": 0, "antiga": None})
+            c["n"] += q
+            if _valido(antiga):
+                dt = _br(antiga)
+                c["antiga"] = min(c["antiga"], dt) if c["antiga"] else dt
+                e["antiga"] = min(e["antiga"], dt) if e["antiga"] else dt
     for chave, campo in (("in_sol", "in"), ("in_ag", "in"), ("out", "out")):
         for p, ano, mes, q in b[chave]["rows"]:
             if not _valido(p) or mes not in MESES:
@@ -177,6 +195,9 @@ def montar(b, hoje, ref=None):
     for p, u, q in b["dev_un"]["rows"]:
         if _valido(p) and _valido(u):
             procs[p]["dev_un"][u] = int(q)
+    for p, u, q in b["esp_un"]["rows"]:
+        if _valido(p) and _valido(u) and int(q):
+            procs[p]["espera"]["unidades"][u] = int(q)
     for chave in ("un_sol", "un_ag"):
         for p, u, q in b[chave]["rows"]:
             if _valido(p) and _valido(u) and int(q):
@@ -188,7 +209,7 @@ def montar(b, hoje, ref=None):
     rot = ["%s/%s" % (MESES[mm - 1], str(a)[2:]) for a, mm in meses]
     resumo, detalhes = [], {}
     for p, d in procs.items():
-        if not (d["fila"] or d["devolvidas"] or sum(d["in"]) or sum(d["out"])):
+        if not (d["fila"] or d["devolvidas"] or sum(d["in"]) or sum(d["out"]) or d["espera"]["n"]):
             continue
         cores = {}
         for cor, c in d["cores"].items():
@@ -215,11 +236,20 @@ def montar(b, hoje, ref=None):
             elif (hoje - ult).days > SEM_SAIDA_DIAS:
                 alertas.append("Sem saída há mais de 1 ano: último agendamento em %s" % ult.strftime("%d/%m/%Y"))
         esperas = [c["dias"] for c in cores.values() if c["dias"] is not None]
+        e = d["espera"]
+        espera = None
+        if e["n"]:
+            espera = {"n": e["n"], "antiga": e["antiga"].isoformat() if e["antiga"] else None,
+                      "dias": (hoje - e["antiga"]).days if e["antiga"] else None,
+                      "cores": {cor: {"n": c["n"], "antiga": c["antiga"].isoformat() if c["antiga"] else None,
+                                      "dias": (hoje - c["antiga"]).days if c["antiga"] else None}
+                                for cor, c in e["cores"].items()},
+                      "unidades": sorted(e["unidades"].items(), key=lambda x: -x[1])}
         i = ident(p)
         resumo.append({"id": i, "p": p, "meta_normativa": bool(metas.get(p)), "tipo": d["tipo"], "fila": d["fila"], "cores": cores,
                        "devolvidas": d["devolvidas"], "in": ent, "out": sai, "saldo12": sum(u12),
                        "futuros": d["futuros"], "ult_ag": ult.isoformat() if ult else None,
-                       "espera_max": max(esperas) if esperas else None, "alertas": alertas})
+                       "espera_max": max(esperas) if esperas else None, "alertas": alertas, "espera": espera})
         detalhes[i] = {"p": p, "tipo": d["tipo"], "meses": rot, "in": d["in"], "out": d["out"], "cores": cores,
                        "cid": d["cid"], "devolvidas_unidade": d["dev_un"], "unidades": sorted(d["unidades"])}
     resumo.sort(key=lambda x: -x["fila"])
@@ -361,7 +391,12 @@ def montar_detalhe(b, hoje):
     lista_p = sorted({nomes[i] for i, d in det.items() if any(s[2].startswith("DEVOLVIDA") for s in d["s"])})
     pos_p = {p: k for k, p in enumerate(lista_p)}
     devolvidas = [[pos_p[nomes[i]]] + s[:2] + s[3:] for i, d in det.items() for s in d["s"] if s[2].startswith("DEVOLVIDA")]
-    return det, {"p": lista_p, "r": devolvidas, "agendamentos_desde": corte.isoformat()}
+    # fila de espera, linha a linha: [procedimento, código, data da solicitação, cor, CID, unidade]
+    esp_p = sorted({nomes[i] for i, d in det.items() if any("FILA DE ESPERA" in s[2] for s in d["s"])})
+    pos_e = {p: k for k, p in enumerate(esp_p)}
+    espera = [[pos_e[nomes[i]]] + s[:2] + s[3:6] for i, d in det.items() for s in d["s"] if "FILA DE ESPERA" in s[2]]
+    return det, {"p": lista_p, "r": devolvidas, "agendamentos_desde": corte.isoformat(),
+                 "espera": {"p": esp_p, "r": espera}}
 
 
 def _limpar(pasta):
@@ -407,6 +442,24 @@ def historico_atraso(meta, hoje):
     print("Atraso do Mapa Social: " + "; ".join("%s (%s) %d d" % (h["medido_em"][:5], h["dia_semana"], h["atraso_dias"])
                                                  for h in hist[-7:]))
     return {"medicoes": hist}
+
+
+def historico_espera(dados, hoje):
+    """Registro diário da fila de espera (espera.json, versionado em main; o workflow faz o commit): total e
+    quantidade por fila. Uma entrada por dia (a última coleta do dia prevalece)."""
+    arq = PAINEL / "espera.json"
+    try:
+        dias = json.loads(arq.read_text(encoding="utf-8"))["dias"]
+    except (OSError, ValueError, KeyError) as e:
+        print("espera.json ausente ou ilegível (%s); começando o registro hoje." % e)
+        dias = []
+    filas = {f["id"]: f["espera"]["n"] for f in dados["filas"] if f.get("espera")}
+    hoje_s = hoje.isoformat()
+    dias = [d for d in dias if d["data"] != hoje_s]
+    dias.append({"data": hoje_s, "total": sum(filas.values()), "filas": filas})
+    dias.sort(key=lambda d: d["data"])
+    print("Fila de espera: %d solicitações em %d procedimentos (registro com %d dias)" % (dias[-1]["total"], len(filas), len(dias)))
+    return {"dias": dias}
 
 
 def precisa_atualizar(hoje):
@@ -457,6 +510,7 @@ def main():
     t = time.monotonic()
     hist = historico_atraso(meta, hoje)
     _grava(PAINEL / "atraso.json", hist)
+    _grava(PAINEL / "espera.json", historico_espera(dados, hoje))
     ultimos = [h["atraso_dias"] for h in hist["medicoes"][-7:]]
     for d in (meta, dados, devolvidas):
         d["atraso_ultimos"] = ultimos
@@ -468,6 +522,7 @@ def main():
     _limpar(PAINEL / "detalhe")
     for i, d in det.items():
         _grava(PAINEL / "detalhe" / f"{i}.json", dict(meta, agendamentos_desde=dev_det["agendamentos_desde"], **d))
+    _grava(PAINEL / "detalhe" / "espera.json", dict(meta, **dev_det.pop("espera")))
     _grava(PAINEL / "detalhe" / "devolvidas.json", dict(meta, **dev_det))
     print("[tempo] gravação: %.0f s" % (time.monotonic() - t), flush=True)
     _saida_actions(publicar="sim")

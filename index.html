@@ -158,6 +158,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 <nav class="abas" role="tablist">
   <button role="tab" data-aba="filas" aria-selected="true">Filas</button>
   <button role="tab" data-aba="dev" aria-selected="false">Devolvidas</button>
+  <button role="tab" data-aba="oferta" aria-selected="false" title="Fila de espera (aguardando pactuação), filas sem saída e filas paradas">Sem oferta</button>
 </nav>
 
 <section id="aba-filas">
@@ -174,6 +175,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
     <option value="esperando">Espera acima da meta</option>
     <option value="parada">Fila parada</option>
     <option value="semsaida">Sem saída há mais de 1 ano</option>
+    <option value="espera">Com fila de espera (aguardando pactuação)</option>
   </select>
   <select id="ordem">
     <option value="fila">Maior fila</option>
@@ -255,12 +257,29 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 </div>
 </section>
 
+<section id="aba-oferta" hidden>
+<p class="nota">Procedimentos em que falta oferta pactuada para a Região Norte, reunindo três sinais: <b>fila de espera</b> (solicitações no status “pendente / fila de espera” do SISREG, que aguardam pactuação e não estão com o regulador), <b>sem saída há mais de 1 ano</b> e <b>fila parada</b>. <button type="button" class="ajuda" aria-expanded="false" title="O que cada sinal significa">?</button><span class="nota12" hidden><b>Fila de espera</b>: a solicitação foi feita, mas o procedimento não tem vaga pactuada para a região; ela espera a pactuação, não o regulador, e por isso fica fora da fila mostrada na aba Filas. <b>Sem saída há mais de 1 ano</b>: há solicitações aguardando e o último agendamento registrado tem mais de 365 dias, ou não há nenhum. <b>Fila parada</b>: 20 ou mais aguardando, ninguém agendado nos últimos 3 meses nem marcado à frente. Os dois últimos sinais também aparecem como alertas na aba Filas. O Mapa Social só mostra a situação atual; o registro diário da fila de espera é feito pelo próprio painel a cada coleta e mostra desde quando cada procedimento está nela.</span></p>
+<div class="kpis" id="of-kpis"></div>
+<div class="serie-dv" id="of-serie"><h3>Fila de espera ao longo do tempo</h3><div id="of-graf"></div><p class="nota" id="of-serie-nota"></p></div>
+<div class="ctrl">
+  <input type="search" id="of-busca" placeholder="Buscar procedimento">
+  <select id="of-sinal"><option value="">Qualquer sinal</option><option value="espera">Em fila de espera</option><option value="semsaida">Sem saída há mais de 1 ano</option><option value="parada">Fila parada</option></select>
+  <select id="of-tipo"><option value="">Todos os tipos</option></select>
+  <select id="of-ordem"><option value="espera">Mais em fila de espera</option><option value="antiga">Espera mais antiga</option><option value="fila">Maior fila no regulador</option><option value="nome">Nome (A–Z)</option></select>
+  <button id="of-baixar" title="Procedimentos, unidades e solicitações linha a linha (com o código SISREG), para instruir a pactuação">Baixar para pactuação (Excel)</button>
+  <span class="cont" id="of-cont"></span>
+</div>
+<div class="dv-acoes"><small class="status" id="of-status"></small></div>
+<div class="lista" id="of-lista"></div>
+<button class="mais" id="of-mais" hidden>Mostrar mais</button>
+</section>
+
 <footer>
   <p><b>Fonte:</b> Mapa Social do Distrito Federal (MPDFT), painel público de regulação. Sem dados de identificação de usuários; o download detalhado traz o código SISREG da solicitação, que já é público no Mapa Social.</p>
   <p id="atraso"><b>Atraso dos dados:</b> o Mapa Social fica alguns dias atrás do SISREG: as solicitações mais recentes ainda não aparecem, por isso os totais podem diferir do SISREG.</p>
   <p><b>Como ler:</b> <i>Fila</i> = solicitações elegíveis para regulação: pendentes + reenviadas ao regulador da Região Norte (não inclui devolvidas nem as em fila de espera). Cores: Prioridade 1 = vermelho, 2 = amarelo, 3 = verde, 4 = azul; o número de dias é a espera da solicitação mais antiga de cada cor.
   <i>Entrada</i> = solicitações pela data da solicitação (pendentes, reenviadas e agendadas); <i>saída</i> = agendamentos pela data do atendimento; <i>saldo</i> = entrada − saída, em meses completos. Passe o cursor sobre o gráfico para ver os valores de cada mês. O seletor <i>Gráficos por quadrimestre</i> soma os meses de cada quadrimestre (jan–abr, mai–ago, set–dez); quadrimestres incompletos na janela de 24 meses ficam marcados com asterisco e ponto vazado.</p>
-  <p><b>Alertas:</b> <i>fila crescendo</i> = saldo positivo em 9 ou mais dos últimos 12 meses; <i>espera acima da meta</i> = solicitação mais antiga de uma cor com espera maior que a meta do protocolo do procedimento (só existe quando uma normativa da SES-DF define meta de espera por prioridade para o procedimento; hoje, apenas Consulta em Cirurgia Geral e em Pequena Cirurgia, conforme a Portaria SES-DF 79/2026 – demais filas ficam marcadas como <i>sem meta normativa</i> e não geram esse alerta); <i>fila parada</i> = 20+ solicitações aguardando, ninguém agendado nos últimos 3 meses nem marcado à frente; <i>sem saída há mais de 1 ano</i> = há solicitações aguardando e o último agendamento registrado tem mais de 365 dias (ou não há nenhum).</p>
+  <p><b>Alertas:</b> <i>fila crescendo</i> = saldo positivo em 9 ou mais dos últimos 12 meses; <i>espera acima da meta</i> = solicitação mais antiga de uma cor com espera maior que a meta do protocolo do procedimento (só existe quando uma normativa da SES-DF define meta de espera por prioridade para o procedimento; hoje, apenas Consulta em Cirurgia Geral e em Pequena Cirurgia, conforme a Portaria SES-DF 79/2026 – demais filas ficam marcadas como <i>sem meta normativa</i> e não geram esse alerta); <i>fila parada</i> = 20+ solicitações aguardando, ninguém agendado nos últimos 3 meses nem marcado à frente; <i>sem saída há mais de 1 ano</i> = há solicitações aguardando e o último agendamento registrado tem mais de 365 dias (ou não há nenhum). A aba <i>Sem oferta</i> reúne esses dois últimos alertas com a <i>fila de espera</i> (solicitações aguardando pactuação, fora da fila do regulador).</p>
   <p><b>Espera estimada e simulador:</b> a espera estimada (~N d no cartão) é a fila dividida pela saída mensal média dos últimos 12 meses, isto é, quanto tempo a fila levaria para ser agendada no ritmo atual. No detalhe de cada fila, o botão <i>Simulador</i> abre uma área que mostra o efeito de uma oferta adicional de agendamentos por mês na espera estimada e na projeção da fila em 24 meses; é uma estimativa para a fila toda, sem separar prioridades. O <i>plano para zerar a fila</i> responde a pergunta inversa: dado um prazo (e, se houver, um mutirão inicial), quantos agendamentos a mais por mês são necessários e quantos bastam, depois, para a fila não voltar a crescer.</p>
   <p><b>Gerar análise completa:</b> abra uma fila e escolha PDF, Word ou Excel (tabelas). O documento segue a metodologia padronizada (Figuras 1 a 4 e Tabela 1, com as UBS ordenadas de quem mais devolve por eSF); os parágrafos de interpretação saem em amarelo, como rascunho para revisão. <i>Dados detalhados</i> baixa as linhas da fila: solicitações pendentes, reenviadas e devolvidas, e agendamentos dos últimos 24 meses.</p>
   <p id="rodape-atualizacao">Versão piloto. O painel confere o Mapa Social a cada 2 horas e se atualiza sozinho assim que ele recarrega com solicitações novas (normalmente uma ou duas vezes por dia).</p>
@@ -563,7 +582,7 @@ function item(f){
      ${grafico(f)}
      <div class="rolagem"><table class="cores"><tr><th>Prioridade</th><th>Solicitações</th><th>Mais antiga</th><th>Espera da mais antiga (dias)</th><th title="Tempo médio que quem está na fila hoje já esperou">Média na fila hoje (dias)</th><th title="Tempo médio entre a solicitação e o atendimento, nos agendamentos com atendimento nos últimos ${D.atend_dias||90} dias">Média até o atendimento (dias)</th><th>Meta (dias)</th></tr>${linhas}</table></div>
      <p class="nota" style="margin:4px 0 0">“Média na fila hoje” = há quanto tempo, em média, esperam as solicitações que ainda estão na fila. “Média até o atendimento” = tempo entre a solicitação e o atendimento nos agendados com atendimento nos últimos ${D.atend_dias||90} dias (n = quantos; passe o cursor para ver a mediana).</p>
-     <p style="font-size:.85rem;color:var(--muted)">Devolvidas: ${fmt(f.devolvidas)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Sem meta de tempo de espera definida em normativa da SES-DF para este procedimento"}</p>
+     <p style="font-size:.85rem;color:var(--muted)">Devolvidas: ${fmt(f.devolvidas)} · Em fila de espera (aguardando pactuação, fora desta fila): ${f.espera?`<a href="#aba-oferta" title="Ver na aba Sem oferta">${fmt(f.espera.n)}</a>`:"0"} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Sem meta de tempo de espera definida em normativa da SES-DF para este procedimento"}</p>
      ${f.fila>0?simHtml(f):""}
      <div class="gerar" data-id="${f.id}" data-p="${esc(f.p)}">
        <b>Gerar análise completa</b>
@@ -576,7 +595,7 @@ function item(f){
 function filtrar(){
   const q=norm($("busca").value.trim()), t=$("tipo").value, al=$("alerta").value, o=$("ordem").value;
   let L=D.filas.filter(f=>(!q||norm(f.p).includes(q))&&(!t||f.tipo===t)&&
-    (!al || (al==="qualquer" ? f.alertas.length : al==="nenhum" ? !f.alertas.length : al==="sem-meta" ? !f.meta_normativa : al==="com-meta" ? f.meta_normativa : f.alertas.some(a=>TIPO_ALERTA[al].test(a)))));
+    (!al || (al==="qualquer" ? f.alertas.length : al==="nenhum" ? !f.alertas.length : al==="sem-meta" ? !f.meta_normativa : al==="com-meta" ? f.meta_normativa : al==="espera" ? (f.espera&&f.espera.n) : f.alertas.some(a=>TIPO_ALERTA[al].test(a)))));
   const k={fila:f=>-f.fila,espera:f=>-(f.espera_max||0),saldo:f=>-f.saldo12,devolvidas:f=>-f.devolvidas,semsaida:f=>-diasSemSaida(f)};
   L.sort(o==="nome"?(a,b)=>a.p.localeCompare(b.p,"pt"):(a,b)=>k[o](a)-k[o](b)||b.fila-a.fila);
   return L;
@@ -606,6 +625,7 @@ function lerHash(){
   const h=location.hash||"";
   if(h.startsWith("#f-")) irParaFila(h.slice(3));
   else if(h==="#aba-un"||h==="#aba-proc"||h==="#aba-dev") mostrarAba("dev",h==="#aba-proc"?"pr":h==="#aba-un"?"un":undefined);
+  else if(h==="#aba-oferta") mostrarAba("oferta");
 }
 async function baixarLista(){
   await xlsx();
@@ -809,12 +829,95 @@ function mostrarVisao(v){
 async function mostrarAba(a,v){
   abaAtual=a;
   document.querySelectorAll(".abas button").forEach(b=>b.setAttribute("aria-selected",b.dataset.aba===a));
-  ["filas","dev"].forEach(x=>$("aba-"+x).hidden=x!==a);
+  ["filas","dev","oferta"].forEach(x=>$("aba-"+x).hidden=x!==a);
   if(a==="filas") return;
+  if(a==="oferta"){ history.replaceState(null,"","#aba-oferta"); await abrirOferta(); return; }
   if(!DV){ $("un-lista").innerHTML='<p style="padding:12px">Carregando devolvidas…</p>';
     try{ await carregarDV(); }catch(err){ $("un-lista").innerHTML=`<p style="padding:12px">Não foi possível carregar as devolvidas (${esc(err.message)}).</p>`; return; } }
   mostrarVisao(v||visao);
 }
+
+// ---------------------------------------------------------------- aba Sem oferta (fila de espera + sem saída + parada)
+let ESP=null, visOf=60;
+const ROT_SINAL={espera:"fila de espera",semsaida:"sem saída há mais de 1 ano",parada:"fila parada"};
+async function carregarEsp(){ if(ESP) return ESP; try{ const r=await fetch("espera.json",{cache:"no-store"}); ESP=r.ok?await r.json():{dias:[]}; }catch(e){ ESP={dias:[]}; } if(!ESP.dias) ESP.dias=[]; return ESP; }
+function sinais(f){ const s=[]; if(f.espera&&f.espera.n) s.push("espera"); if(f.alertas.some(a=>TIPO_ALERTA.semsaida.test(a))) s.push("semsaida"); if(f.alertas.some(a=>TIPO_ALERTA.parada.test(a))) s.push("parada"); return s; }
+// primeiro dia do trecho contínuo mais recente em que a fila aparece no registro diário
+function desdeEspera(id){ const ds=ESP?ESP.dias:[]; let desde=null; for(let i=ds.length-1;i>=0;i--){ if((ds[i].filas||{})[id]) desde=ds[i].data; else break; } return desde; }
+const diasDesde=d=>d?Math.round((Date.now()-new Date(d+"T12:00:00"))/864e5):null;
+function filtrarOf(){
+  const q=norm($("of-busca").value.trim()), si=$("of-sinal").value, t=$("of-tipo").value, o=$("of-ordem").value;
+  const L=D.filas.filter(f=>sinais(f).length&&(!si||sinais(f).includes(si))&&(!q||norm(f.p).includes(q))&&(!t||f.tipo===t));
+  const en=f=>f.espera?f.espera.n:0, ant=f=>f.espera&&f.espera.dias!=null?f.espera.dias:-1;
+  L.sort(o==="nome"?(a,b)=>a.p.localeCompare(b.p,"pt"):o==="antiga"?(a,b)=>ant(b)-ant(a)||en(b)-en(a):o==="fila"?(a,b)=>b.fila-a.fila||en(b)-en(a):(a,b)=>en(b)-en(a)||b.fila-a.fila);
+  return L;
+}
+function chipsEsp(e){ return COR.filter(c=>e.cores[c]).map(c=>{const k=e.cores[c]; return `<span class="chip ${c.replace(" ","")}" title="${c}: ${fmt(k.n)} em fila de espera; mais antiga de ${dd(k.antiga)}">${fmt(k.n)}${k.dias!=null?" · "+fmt(k.dias)+" d":""}</span>`;}).join("")||`<span style="color:var(--muted);font-size:.8rem">sem fila de espera</span>`; }
+function itemOf(f,pos){
+  const e=f.espera, ss=sinais(f), desde=e?desdeEspera(f.id):null, nd=diasDesde(desde);
+  const us=e?e.unidades.map(([u,n])=>`<tr><td>${esc(u)}</td><td>${fmt(n)}</td><td>${fmt(n/e.n*100,1)}%</td></tr>`).join(""):"";
+  return `<div class="fila" tabindex="0" data-pid="${f.id}">
+    <div class="lin dv">
+      <div class="nome">${pos?pos+"º · ":""}${esc(f.p)}<small>${esc(f.tipo||"")} · ${ss.map(x=>`<span class="tag">${ROT_SINAL[x]}</span>`).join(" ")}</small></div>
+      <div class="num"><b>${e?fmt(e.n):"0"}</b><small>em fila de espera</small></div>
+      <div class="num"><b>${e&&e.dias!=null?fmt(e.dias)+" d":"–"}</b><small>espera mais antiga</small></div>
+      <div class="num"><b>${fmt(f.fila)}</b><small>na fila do regulador</small></div>
+      <div class="num" title="${desde?"No registro diário desde "+dd(desde):"Ainda não consta no registro diário"}"><b>${nd!=null?fmt(nd)+" d":"–"}</b><small>no registro</small></div>
+      <div class="num"><b>${dd(f.ult_ag)}</b><small>último agendamento</small></div>
+    </div>
+    <div class="det">
+      ${e?`<div class="chips" style="margin-bottom:8px">${chipsEsp(e)}</div><div class="rolagem"><table class="tab"><tr><th>Unidade solicitante</th><th>Em fila de espera</th><th>% do procedimento</th></tr>${us}</table></div>`:`<p class="nota">Sem solicitações em fila de espera; o sinal vem dos alertas da fila (${ss.map(x=>ROT_SINAL[x]).join(", ")}).</p>`}
+      ${f.alertas.length?`<div class="alertas">${f.alertas.map(a=>`<span class="alerta">⚠ ${esc(a)}</span>`).join("")}</div>`:""}
+      <div class="dv-acoes"><a class="irfila" href="#f-${f.id}">Abrir a fila no painel</a></div>
+    </div></div>`;
+}
+function renderOf(){
+  const L=filtrarOf(), rank=$("of-ordem").value!=="nome";
+  const abertos=[...document.querySelectorAll("#of-lista .fila.aberta")].map(c=>c.dataset.pid);
+  $("of-lista").innerHTML=L.slice(0,visOf).map((f,i)=>itemOf(f,rank?i+1:0)).join("")||"<p>Nenhum procedimento encontrado.</p>";
+  abertos.forEach(id=>{ const c=document.querySelector(`#of-lista .fila[data-pid="${id}"]`); if(c) c.classList.add("aberta"); });
+  $("of-mais").hidden=L.length<=visOf; $("of-mais").textContent=`Mostrar mais (${fmt(L.length-visOf)} restantes)`;
+  $("of-cont").textContent=`${fmt(L.length)} procedimentos · ${fmt(L.reduce((s,f)=>s+(f.espera?f.espera.n:0),0))} solicitações em fila de espera`;
+}
+function kpisOf(){
+  const E=D.filas.filter(f=>f.espera&&f.espera.n), tot=E.reduce((s,f)=>s+f.espera.n,0), ant=E.reduce((m,f)=>f.espera.dias!=null&&f.espera.dias>m?f.espera.dias:m,0);
+  $("of-kpis").innerHTML=[[fmt(tot),"solicitações em fila de espera (aguardando pactuação)"],[fmt(E.length),"procedimentos com fila de espera"],[ant?fmt(ant)+" d":"–","espera mais antiga na fila de espera"],
+    [fmt(D.filas.filter(f=>sinais(f).includes("semsaida")).length),"filas sem saída há mais de 1 ano"],[fmt(D.filas.filter(f=>sinais(f).includes("parada")).length),"filas paradas"]].map(([b,t])=>`<div class="kpi"><b>${b}</b><span>${t}</span></div>`).join("");
+}
+function serieOf(){
+  const ds=ESP.dias, box=$("of-graf"), nota=$("of-serie-nota");
+  if(!ds.length){ box.innerHTML=""; nota.textContent="O registro diário da fila de espera ainda não começou."; return; }
+  const W=760,H=170,pl=52,pr=12,pt=14,pb=24, n=ds.length, mx=Math.max(1,...ds.map(d=>d.total));
+  const X=i=>pl+(n>1?i/(n-1):0.5)*(W-pl-pr), Y=v=>pt+(1-v/mx)*(H-pt-pb), passo=Math.max(1,Math.ceil(n/8));
+  const rot=ds.map((d,i)=>i%passo===0||i===n-1?`<text x="${X(i)}" y="${H-6}" font-size="10" text-anchor="middle" fill="var(--muted)">${dd(d.data).slice(0,5)}</text>`:"").join("");
+  box.innerHTML=`<div class="barras"><svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Solicitações em fila de espera por dia">
+    <line x1="${pl}" x2="${W-pr}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--line)"/><text x="${pl-6}" y="${Y(0)+3}" font-size="10" text-anchor="end" fill="var(--muted)">0</text><text x="${pl-6}" y="${Y(mx)+4}" font-size="10" text-anchor="end" fill="var(--muted)">${fmt(mx)}</text>
+    ${n>1?`<polyline fill="none" stroke="var(--accent)" stroke-width="2" points="${ds.map((d,i)=>X(i)+","+Y(d.total)).join(" ")}"/>`:""}
+    ${ds.map((d,i)=>`<circle cx="${X(i)}" cy="${Y(d.total)}" r="3.5" fill="var(--accent)"><title>${dd(d.data)}: ${fmt(d.total)} solicitações em ${fmt(Object.keys(d.filas||{}).length)} procedimentos</title></circle>`).join("")}${rot}</svg></div>`;
+  const pri=ds[0], ult=ds[n-1];
+  nota.textContent=`Registro diário iniciado em ${dd(pri.data)} (${fmt(n)} ${n===1?"dia":"dias"}). Última coleta: ${fmt(ult.total)} solicitações em ${fmt(Object.keys(ult.filas||{}).length)} procedimentos${n>1?`; no início: ${fmt(pri.total)}`:""}. Como o Mapa Social só mostra a situação atual, a série é construída pelo próprio painel a cada coleta: começa curta e cresce com o tempo.`;
+}
+async function abrirOferta(){ await carregarEsp(); kpisOf(); serieOf(); renderOf(); }
+async function baixarOferta(){
+  await xlsx(); const L=filtrarOf(), wb=XLSX.utils.book_new(), corN=(f,c)=>f.espera&&f.espera.cores[c]?f.espera.cores[c].n:0;
+  const ws=XLSX.utils.aoa_to_sheet([["Posição","Procedimento","Tipo","Sinais","Em fila de espera","Vermelho","Amarelo","Verde","Azul","Sem risco","Espera mais antiga","Espera mais antiga (dias)","Na fila do regulador","Último agendamento","No registro diário desde","Alertas"],
+    ...L.map((f,i)=>[i+1,f.p,f.tipo,sinais(f).map(x=>ROT_SINAL[x]).join("; "),f.espera?f.espera.n:0,corN(f,"vermelho"),corN(f,"amarelo"),corN(f,"verde"),corN(f,"azul"),corN(f,"sem risco"),f.espera?dd(f.espera.antiga):"",f.espera&&f.espera.dias!=null?f.espera.dias:"",f.fila,dd(f.ult_ag),f.espera?(dd(desdeEspera(f.id))||""):"",f.alertas.join("; ")])]);
+  ws["!cols"]=[8,55,10,34,16,9,9,9,9,9,16,18,16,16,18,60].map(w=>({wch:w})); XLSX.utils.book_append_sheet(wb,ws,"Procedimentos");
+  const un=[]; L.forEach(f=>f.espera&&f.espera.unidades.forEach(([u,n])=>un.push([f.p,f.tipo,u,n])));
+  const w2=XLSX.utils.aoa_to_sheet([["Procedimento","Tipo","Unidade solicitante","Em fila de espera"],...un]); w2["!cols"]=[55,10,40,16].map(w=>({wch:w})); XLSX.utils.book_append_sheet(wb,w2,"Unidades");
+  let nl=0;
+  try{ const r=await fetch("detalhe/espera.json",{cache:"no-store"}); if(r.ok){ const E=await r.json(), sel=new Set(L.map(f=>f.p));
+    const lin=E.r.filter(x=>sel.has(E.p[x[0]])).map(([pi,c,ds,cor,cid,u])=>[E.p[pi],u,c,ds,cor?cor.charAt(0).toUpperCase()+cor.slice(1):"",cid]); nl=lin.length;
+    const w3=XLSX.utils.aoa_to_sheet([["Procedimento","Unidade solicitante","Código SISREG","Data da solicitação","Classificação de risco","CID"],...lin]); w3["!cols"]=[55,40,14,16,18,50].map(w=>({wch:w})); XLSX.utils.book_append_sheet(wb,w3,"Linha a linha"); } }catch(e){}
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Aba Sem oferta","procedimentos com fila de espera (aguardando pactuação), sem saída há mais de 1 ano ou fila parada"],["Filtro",`${$("of-sinal").options[$("of-sinal").selectedIndex].text} · ${$("of-tipo").value||"todos os tipos"} · busca: ${$("of-busca").value||"(nenhuma)"}`],["Registro diário",ESP.dias.length?`desde ${dd(ESP.dias[0].data)} (${ESP.dias.length} dias)`:"ainda não iniciado"]])),"Leia-me");
+  XLSX.writeFile(wb,`Sem oferta - fila de espera - Região Norte (${D.data.split("-").reverse().join("-")}).xlsx`);
+  return nl||L.length;
+}
+["of-busca","of-sinal","of-tipo","of-ordem"].forEach(id=>$(id).addEventListener("input",()=>{ visOf=60; renderOf(); }));
+$("of-mais").onclick=()=>{ visOf+=60; renderOf(); };
+$("of-baixar").onclick=()=>comStatus($("of-status"),baixarOferta);
+$("of-lista").addEventListener("click",e=>alternar(e));
+$("of-lista").addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.classList.contains("fila")) e.target.classList.toggle("aberta"); });
 
 // ---------------------------------------------------------------- carga
 const PRONTO=fetch("dados.json",{cache:"no-store"}).then(r=>{if(!r.ok) throw new Error(r.status); return r.json();}).then(d=>{
@@ -831,10 +934,11 @@ const PRONTO=fetch("dados.json",{cache:"no-store"}).then(r=>{if(!r.ok) throw new
     [fmt(ativos.reduce((s,f)=>s+f.fila,0)),"solicitações na fila (pendentes + reenviadas)"],
     [fmt(d.filas.filter(f=>f.alertas.length).length),"filas com alertas"],
     [fmt(d.filas.filter(f=>f.alertas.some(a=>TIPO_ALERTA.semsaida.test(a))).length),"filas sem saída há mais de 1 ano"],
-    [fmt(d.filas.reduce((s,f)=>s+f.devolvidas,0)),"solicitações devolvidas"]
+    [fmt(d.filas.reduce((s,f)=>s+f.devolvidas,0)),"solicitações devolvidas"],
+    [fmt(d.filas.reduce((s,f)=>s+(f.espera?f.espera.n:0),0)),"em fila de espera (aguardando pactuação)"]
   ].map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join("");
   const tipos=[...new Set(d.filas.map(f=>f.tipo).filter(Boolean))].sort();
-  ["tipo","pr-tipo"].forEach(id=>tipos.forEach(t=>$(id).insertAdjacentHTML("beforeend",`<option>${esc(t)}</option>`)));
+  ["tipo","pr-tipo","of-tipo"].forEach(id=>tipos.forEach(t=>$(id).insertAdjacentHTML("beforeend",`<option>${esc(t)}</option>`)));
   render(); lerHash();
 }).catch(err=>{
   $("info").textContent="não foi possível carregar os dados";
