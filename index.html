@@ -89,7 +89,7 @@ header p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
 .serie-dv h3{margin:0 0 8px;font-size:1rem}
 .serie-dv .ctrl{margin-bottom:8px}
 .serie-dv .ctrl select{max-width:100%}
-#sv-proc{max-width:min(380px,100%)}
+.busca-proc{display:inline-flex;align-items:center;gap:4px;max-width:100%}#sv-proc-txt{width:min(380px,100%);min-width:min(300px,100%);padding:6px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--card);color:var(--txt)}
 .serie-dv .nota{margin:6px 0 0;font-size:.82rem;color:var(--muted)}
 .periodo-nota{font-size:.78rem;color:var(--muted);margin:2px 0 0}
 .graf svg{display:block;touch-action:pan-y}
@@ -195,18 +195,20 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 
 <section id="aba-dev" hidden>
 <div class="serie-dv" id="dv-serie">
-<h3>Devolvidas ao longo do tempo</h3>
-<div class="ctrl">
+<button type="button" class="sim-abrir" id="sv-abrir" aria-expanded="false">▸ Devolvidas ao longo do tempo</button>
+<div id="sv-corpo" hidden>
+<div class="ctrl" style="margin-top:10px">
   <select id="sv-nivel"><option value="">Todas as unidades</option></select>
   <select id="sv-un"><option value="">Todas as unidades do nível</option></select>
   <select id="sv-tipo"><option value="">Consultas e exames</option></select>
-  <select id="sv-proc"><option value="">Todos os procedimentos</option></select>
+  <span class="busca-proc"><input type="text" id="sv-proc-txt" list="sv-proc-lista" placeholder="Procedimento (digite ou abra a lista)" autocomplete="off" aria-label="Procedimento"><datalist id="sv-proc-lista"></datalist><input type="hidden" id="sv-proc" value=""><button type="button" class="ajuda" id="sv-proc-x" title="Limpar o procedimento" hidden>×</button></span>
   <select id="sv-medida"><option value="n">Número de devolvidas</option><option value="esf">Devolvidas por eSF (só APS)</option></select>
   <select id="dv-periodo" class="periodo"><option value="m">Por mês</option><option value="q">Por quadrimestre</option></select>
   <span class="cont" id="sv-cont"></span>
 </div>
 <div id="sv-graf"></div>
 <p class="nota">Solicitações devolvidas hoje, contadas pela data em que o regulador as devolveu, nos últimos 24 meses completos (o mês corrente fica de fora). Devoluções que depois foram reenviadas e agendadas não aparecem, porque o Mapa Social só mostra a situação atual de cada solicitação; por isso os meses mais antigos tendem a ficar um pouco abaixo do que de fato ocorreu. <i>Por eSF</i> = devolvidas ÷ soma das equipes de Saúde da Família das UBS selecionadas.</p>
+</div>
 </div>
 <div class="visao" role="group" aria-label="Ver por">
   <span>Ver por:</span>
@@ -378,7 +380,7 @@ document.addEventListener("click",e=>{
 });
 // simulador embutido: abre ao clicar dentro da ficha e só calcula na primeira abertura
 document.addEventListener("click",e=>{
-  const b=e.target.closest(".sim-abrir"); if(!b) return;
+  const b=e.target.closest(".sim-abrir"); if(!b||b.id==="sv-abrir") return;   // sv-abrir tem tratador próprio
   const sm=b.nextElementSibling; sm.hidden=!sm.hidden; b.setAttribute("aria-expanded",String(!sm.hidden)); b.textContent=(sm.hidden?"▸ ":"▾ ")+b.textContent.slice(2);
   if(!sm.hidden&&!sm.dataset.ok){ sm.dataset.ok=1; atualizarSim(sm,"delta"); }
 });
@@ -672,7 +674,7 @@ function prepararSerie(){
   sel("sv-nivel",NIVEIS.filter(n=>DV.unidades.some(u=>u[1]===n)).map(n=>[n,n==="APS"?"APS (UBS e PSR)":n==="OUTROS"?"Outras unidades":n]));
   sel("sv-tipo",[...new Set(D.filas.map(f=>f.tipo).filter(Boolean))].sort().map(t=>[t,t]));
   const procs=DV.serie_ids.map(id=>porId[id]).filter(Boolean).sort((a,b)=>a.p.localeCompare(b.p,"pt"));
-  sel("sv-proc",procs.map(f=>[f.id,f.p]));
+  $("sv-proc-lista").innerHTML=procs.map(f=>`<option value="${esc(f.p)}"></option>`).join(""); PROC_ID=Object.fromEntries(procs.map(f=>[f.p,f.id]));
   atualizarUnSerie();
 }
 function atualizarUnSerie(){
@@ -949,8 +951,15 @@ const PRONTO=fetch("dados.json",{cache:"no-store"}).then(r=>{if(!r.ok) throw new
 ["pr-busca","pr-tipo","pr-nivel","pr-ordem"].forEach(id=>$(id).addEventListener("input",()=>{visPr=60;DV&&renderPr();}));
 $("sv-nivel").addEventListener("input",()=>{atualizarUnSerie();renderSerie();});
 ["sv-un","sv-medida"].forEach(id=>$(id).addEventListener("input",renderSerie));
-$("sv-tipo").addEventListener("input",()=>{ if($("sv-tipo").value) $("sv-proc").value=""; renderSerie(); });
-$("sv-proc").addEventListener("input",()=>{ if($("sv-proc").value) $("sv-tipo").value=""; renderSerie(); });
+$("sv-tipo").addEventListener("input",()=>{ if($("sv-tipo").value){ $("sv-proc").value=""; $("sv-proc-txt").value=""; $("sv-proc-x").hidden=true; } renderSerie(); });
+let PROC_ID={};
+// busca de procedimento: o texto digitado (ou escolhido na lista) vira o id guardado no campo oculto
+function aplicarProc(){ const t=$("sv-proc-txt").value.trim(), id=PROC_ID[t]||""; $("sv-proc").value=id; $("sv-proc-x").hidden=!t;
+  if(id) $("sv-tipo").value=""; renderSerie(); }
+$("sv-proc-txt").addEventListener("input",aplicarProc);
+$("sv-proc-txt").addEventListener("focus",e=>e.target.select());   // ao clicar, o texto fica selecionado: digitar substitui e a lista volta completa
+$("sv-proc-x").onclick=()=>{ $("sv-proc-txt").value=""; aplicarProc(); $("sv-proc-txt").focus(); };
+$("sv-abrir").onclick=()=>{ const c=$("sv-corpo"); c.hidden=!c.hidden; $("sv-abrir").setAttribute("aria-expanded",String(!c.hidden)); $("sv-abrir").textContent=(c.hidden?"▸ ":"▾ ")+"Devolvidas ao longo do tempo"; };
 document.querySelectorAll("select.periodo").forEach(s=>s.addEventListener("input",()=>mudarPeriodo(s.value)));
 $("mais").onclick=()=>{vis+=60;render();};
 $("pr-mais").onclick=()=>{visPr+=60;renderPr();};
