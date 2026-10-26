@@ -844,7 +844,7 @@ async function carregarEsp(){ if(ESP) return ESP; try{ const r=await fetch("espe
 function sinais(f){ const s=[]; if(f.espera&&f.espera.n) s.push("espera"); if(f.alertas.some(a=>TIPO_ALERTA.semsaida.test(a))) s.push("semsaida"); if(f.alertas.some(a=>TIPO_ALERTA.parada.test(a))) s.push("parada"); return s; }
 // primeiro dia do trecho contínuo mais recente em que a fila aparece no registro diário
 function desdeEspera(id){ const ds=ESP?ESP.dias:[]; let desde=null; for(let i=ds.length-1;i>=0;i--){ if((ds[i].filas||{})[id]) desde=ds[i].data; else break; } return desde; }
-const diasDesde=d=>d?Math.round((Date.now()-new Date(d+"T12:00:00"))/864e5):null;
+const diasDesde=d=>d?Math.max(0,Math.round((Date.now()-new Date(d+"T12:00:00"))/864e5)):null;
 function filtrarOf(){
   const q=norm($("of-busca").value.trim()), si=$("of-sinal").value, t=$("of-tipo").value, o=$("of-ordem").value;
   const L=D.filas.filter(f=>sinais(f).length&&(!si||sinais(f).includes(si))&&(!q||norm(f.p).includes(q))&&(!t||f.tipo===t));
@@ -862,7 +862,7 @@ function itemOf(f,pos){
       <div class="num"><b>${e?fmt(e.n):"0"}</b><small>em fila de espera</small></div>
       <div class="num"><b>${e&&e.dias!=null?fmt(e.dias)+" d":"–"}</b><small>espera mais antiga</small></div>
       <div class="num"><b>${fmt(f.fila)}</b><small>na fila do regulador</small></div>
-      <div class="num" title="${desde?"No registro diário desde "+dd(desde):"Ainda não consta no registro diário"}"><b>${nd!=null?fmt(nd)+" d":"–"}</b><small>no registro</small></div>
+      <div class="num" title="${desde?"No registro diário desde "+dd(desde):"Ainda não consta no registro diário"}"><b>${nd!=null?fmt(Math.max(0,nd))+" d":"–"}</b><small>no registro${desde?" desde "+dd(desde).slice(0,5):""}</small></div>
       <div class="num"><b>${dd(f.ult_ag)}</b><small>último agendamento</small></div>
     </div>
     <div class="det">
