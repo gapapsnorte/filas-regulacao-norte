@@ -398,8 +398,13 @@
     });
     return c.toDataURL("image/png");
   }
-  const graficoCids = r => pizza(r.cids.map(x => x.n), r.cids.map(x => x.grupo),
-    [...["#4472C4", "#ED7D31", "#FF0000", "#7F7F7F", "#70AD47", "#7030A0", "#00B0F0", "#9E480E", "#264478"].slice(0, r.cids.length - 1), "#FFC000"], (v, t) => `${Math.round(v / t * 100)}%`);
+  const PAL_CID = ["#4472C4", "#ED7D31", "#FF0000", "#7F7F7F", "#70AD47", "#7030A0", "#00B0F0", "#9E480E", "#264478"];
+  const coresCids = r => [...PAL_CID.slice(0, r.cids.length - 1), "#FFC000"];
+  const corGrupo = r => Object.fromEntries(r.cids.map((x, i) => [x.grupo, coresCids(r)[i]]));
+  // versão clara da cor do grupo (78% de branco) para o fundo das linhas de categoria da Figura 3.2
+  const tom = hex => { const n = parseInt(hex.slice(1), 16), f = c => Math.round(255 - (255 - c) * 0.22); return [f(n >> 16), f((n >> 8) & 255), f(n & 255)]; };
+  const tomHex = hex => tom(hex).map(v => v.toString(16).padStart(2, "0")).join("").toUpperCase();
+  const graficoCids = r => pizza(r.cids.map(x => x.n), r.cids.map(x => x.grupo), coresCids(r), (v, t) => `${Math.round(v / t * 100)}%`);
   function graficoNiveis(r) {
     const base = {APS: "#70AD47", DIRASE: "#2F5597", HRS: "#FF0000", HRPL: "#C00000", UPA: "#FFC000", OUTROS: "#7F7F7F"};
     const extra = ["#7030A0", "#00B0F0", "#A5A5A5", "#264478"]; let k = 0;
@@ -452,6 +457,7 @@
     imagem(graficoCids(r), 140, 100.6);
     rodape(N.n3);
     garantir(45); texto(N.tc, 12, {depois: 3});
+    const cg31 = corGrupo(r);
     doc.autoTable({
       startY: y, margin: {left: M, right: M}, theme: "grid",
       styles: {font: "times", fontSize: 8.5, textColor: 0, lineColor: 120, lineWidth: 0.2, cellPadding: 0.8},
@@ -459,7 +465,7 @@
       columnStyles: {0: {halign: "left", cellWidth: 72}, 1: {halign: "right"}, 2: {halign: "right"}, 3: {halign: "right"}, 4: {halign: "left"}},
       head: [["CID", "Solicitações", "%", "% acum.", "Grupo na Figura 3.1"]],
       body: r.topCids.map(x => [x.cat ? x.c : "      " + x.c, fmt(x.n), fmt(x.pct, 1) + "%", x.acum != null ? fmt(x.acum, 1) + "%" : "", x.g]),
-      didParseCell: h => { if (h.section === "body" && r.topCids[h.row.index].cat) { h.cell.styles.fontStyle = "bold"; h.cell.styles.fillColor = 242; } },
+      didParseCell: h => { const x = r.topCids[h.row.index]; if (h.section === "body" && x.cat) { h.cell.styles.fontStyle = "bold"; h.cell.styles.fillColor = cg31[x.g] ? tom(cg31[x.g]) : 242; } },
     });
     y = doc.lastAutoTable.finalY + 4;
     rodape(N.ntc); rascunho(r.textos.fig3);
@@ -512,7 +518,7 @@
     ]});
     const tCid = new D.Table({alignment: D.AlignmentType.CENTER, columnWidths: [3700, 1400, 800, 1000, 2200], rows: [
       new D.TableRow({tableHeader: true, children: ["CID", "Solicitações", "%", "% acum.", "Grupo na Figura 3.1"].map(t => cel(t, {fonte: "Times New Roman", tam: 10, negrito: true}))}),
-      ...r.topCids.map(x => { const o = {...o9, negrito: x.cat, fill: x.cat ? "F2F2F2" : undefined};
+      ...r.topCids.map(x => { const cgw = corGrupo(r); const o = {...o9, negrito: x.cat, fill: x.cat ? (cgw[x.g] ? tomHex(cgw[x.g]) : "F2F2F2") : undefined};
         return new D.TableRow({children: [cel(x.cat ? x.c : "      " + x.c, {...o, al: L_}), cel(fmt(x.n), {...o, al: R_}),
           cel(fmt(x.pct, 1) + "%", {...o, al: R_}), cel(x.acum != null ? fmt(x.acum, 1) + "%" : "", {...o, al: R_}), cel(x.g, {...o, al: L_})]}); }),
     ]});

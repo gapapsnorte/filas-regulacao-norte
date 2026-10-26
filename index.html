@@ -55,7 +55,11 @@ header p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
 .alertas{margin-top:6px;display:flex;flex-wrap:wrap;gap:5px}
 .tag{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:0 7px;font-size:.7rem;color:var(--muted);white-space:nowrap}
 .tag.ok{border-color:var(--out);color:var(--out)}
-.sim{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);cursor:default}
+.sim-wrap{margin-top:12px}.sim-abrir{width:100%;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font:inherit;font-weight:600;cursor:pointer;color:var(--txt)}.sim-abrir:hover{border-color:var(--accent)}
+.sim{margin-top:6px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);cursor:default}.sim[hidden]{display:none}
+.plano{margin-top:12px;padding:10px 12px;border:1px dashed var(--line);border-radius:8px;background:var(--card)}.plano h5{margin:0 0 6px;font-size:.92rem;display:flex;align-items:center;gap:8px}
+.plano input[type=number]{width:72px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--bg);color:var(--txt)}.plano label{color:var(--txt)}.plano-txt{font-size:.9rem;margin:8px 0 0;line-height:1.5}
+.nota12{display:block;margin-top:4px}.nota12[hidden]{display:none}
 .sim h4{margin:0 0 4px;font-size:.95rem}
 .sim .nota{margin:0 0 10px}
 .sim-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
@@ -209,7 +213,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 </div>
 
 <div id="dv-un" hidden>
-<p class="nota">Solicitações devolvidas pelo regulador, por unidade que solicitou: total e separado em consultas e exames. <i>Por eSF</i> = devolvidas ÷ número de equipes de Saúde da Família da UBS (só para a APS). <span class="nota12"></span> Clique no cabeçalho para ordenar e na unidade para ver os procedimentos que ela mais devolve.</p>
+<p class="nota">Solicitações devolvidas pelo regulador, por unidade que solicitou: total e separado em consultas e exames. <i>Por eSF</i> = devolvidas ÷ número de equipes de Saúde da Família da UBS (só para a APS). <button type="button" class="ajuda" aria-expanded="false" title="Como é calculada a % de devolvidas (12 m)">?</button><span class="nota12" hidden></span> Clique no cabeçalho para ordenar e na unidade para ver os procedimentos que ela mais devolve.</p>
 <div class="ctrl">
   <input type="search" id="un-busca" placeholder="Buscar unidade (ex.: UBS 2, PSR, policlínica)">
   <select id="un-nivel"><option value="APS">APS (UBS e PSR)</option><option value="">Todos os níveis</option></select>
@@ -232,7 +236,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 </div>
 
 <div id="dv-pr">
-<p class="nota">Solicitações devolvidas pelo regulador, por procedimento (consulta ou exame), com as unidades que mais devolvem em cada um. <span class="nota12"></span></p>
+<p class="nota">Solicitações devolvidas pelo regulador, por procedimento (consulta ou exame), com as unidades que mais devolvem em cada um. <button type="button" class="ajuda" aria-expanded="false" title="Como é calculada a % de devolvidas (12 m)">?</button><span class="nota12" hidden></span></p>
 <div class="ctrl">
   <input type="search" id="pr-busca" placeholder="Buscar procedimento">
   <select id="pr-tipo"><option value="">Todos os tipos</option></select>
@@ -257,7 +261,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
   <p><b>Como ler:</b> <i>Fila</i> = solicitações elegíveis para regulação: pendentes + reenviadas ao regulador da Região Norte (não inclui devolvidas nem as em fila de espera). Cores: Prioridade 1 = vermelho, 2 = amarelo, 3 = verde, 4 = azul; o número de dias é a espera da solicitação mais antiga de cada cor.
   <i>Entrada</i> = solicitações pela data da solicitação (pendentes, reenviadas e agendadas); <i>saída</i> = agendamentos pela data do atendimento; <i>saldo</i> = entrada − saída, em meses completos. Passe o cursor sobre o gráfico para ver os valores de cada mês. O seletor <i>Gráficos por quadrimestre</i> soma os meses de cada quadrimestre (jan–abr, mai–ago, set–dez); quadrimestres incompletos na janela de 24 meses ficam marcados com asterisco e ponto vazado.</p>
   <p><b>Alertas:</b> <i>fila crescendo</i> = saldo positivo em 9 ou mais dos últimos 12 meses; <i>espera acima da meta</i> = solicitação mais antiga de uma cor com espera maior que a meta do protocolo do procedimento (só existe quando uma normativa da SES-DF define meta de espera por prioridade para o procedimento; hoje, apenas Consulta em Cirurgia Geral e em Pequena Cirurgia, conforme a Portaria SES-DF 79/2026 – demais filas ficam marcadas como <i>sem meta normativa</i> e não geram esse alerta); <i>fila parada</i> = 20+ solicitações aguardando, ninguém agendado nos últimos 3 meses nem marcado à frente; <i>sem saída há mais de 1 ano</i> = há solicitações aguardando e o último agendamento registrado tem mais de 365 dias (ou não há nenhum).</p>
-  <p><b>Espera estimada e simulador:</b> a espera estimada (~N d no cartão) é a fila dividida pela saída mensal média dos últimos 12 meses, isto é, quanto tempo a fila levaria para ser agendada no ritmo atual. No detalhe de cada fila, o simulador mostra o efeito de uma oferta adicional de agendamentos por mês na espera estimada e na projeção da fila em 24 meses; é uma estimativa para a fila toda, sem separar prioridades.</p>
+  <p><b>Espera estimada e simulador:</b> a espera estimada (~N d no cartão) é a fila dividida pela saída mensal média dos últimos 12 meses, isto é, quanto tempo a fila levaria para ser agendada no ritmo atual. No detalhe de cada fila, o botão <i>Simulador</i> abre uma área que mostra o efeito de uma oferta adicional de agendamentos por mês na espera estimada e na projeção da fila em 24 meses; é uma estimativa para a fila toda, sem separar prioridades. O <i>plano para zerar a fila</i> responde a pergunta inversa: dado um prazo (e, se houver, um mutirão inicial), quantos agendamentos a mais por mês são necessários e quantos bastam, depois, para a fila não voltar a crescer.</p>
   <p><b>Gerar análise completa:</b> abra uma fila e escolha PDF, Word ou Excel (tabelas). O documento segue a metodologia padronizada (Figuras 1 a 4 e Tabela 1, com as UBS ordenadas de quem mais devolve por eSF); os parágrafos de interpretação saem em amarelo, como rascunho para revisão. <i>Dados detalhados</i> baixa as linhas da fila: solicitações pendentes, reenviadas e devolvidas, e agendamentos dos últimos 24 meses.</p>
   <p id="rodape-atualizacao">Versão piloto. O painel confere o Mapa Social a cada 2 horas e se atualiza sozinho assim que ele recarrega com solicitações novas (normalmente uma ou duas vezes por dia).</p>
 </footer>
@@ -344,12 +348,20 @@ function legenda(){
    <div class="ajuda-txt" hidden>
     <p><b>O que é um mês aberrante.</b> É um mês que foge muito do padrão da própria fila: fica <b>mais de 4 vezes a oscilação típica</b> dos últimos 24 meses acima da linha de tendência (no saldo, acima ou abaixo). Costuma ser mutirão, suspensão de agenda ou carga atípica de solicitações, e vale explicá-lo na análise. Quando a saída de um mês é aberrante, o saldo daquele mês também é marcado.</p>
     <p><b>O que acontece com ele.</b> Continua no gráfico, tracejado e com círculo vazio, mas fica <b>de fora do cálculo da linha de tendência e do R²</b>, para que um pico isolado não puxe a reta. Se passa da escala, é desenhado no limite com o valor real escrito ao lado.</p>
-    <p><b>Como é identificado.</b> A oscilação típica e a reta usada na identificação vêm do estimador de Theil-Sen (mediana das inclinações entre pares de meses, refeita sobre os resíduos); a linha de tendência final e o R² são de mínimos quadrados, calculados sem os aberrantes. Filas pequenas (menos de 12 meses com movimento ou menos de 120 solicitações) não são avaliadas. Sequências de mais de 3 meses seguidos não são marcadas: indicam mudança de patamar, não pico.</p>
+    <p><b>Como é identificado.</b> A oscilação típica e a reta usada na identificação vêm do estimador de Theil-Sen (mediana das inclinações entre pares de meses, refeita sobre os resíduos); a linha de tendência final e o R² são de mínimos quadrados, calculados sem os aberrantes. Duas exceções: em filas pequenas (menos de 12 meses com movimento ou menos de 120 solicitações no período) não dá para medir com segurança o que é oscilação normal, então nenhum mês é marcado e todos entram na tendência; e quando 4 ou mais meses seguidos ficam acima do corte, isso não é um pico e sim um novo patamar (por exemplo, um serviço que passou a ofertar o dobro), então esses meses também ficam na tendência.</p>
    </div>`;
 }
+// botão "?": mostra/esconde o elemento logo depois dele (ou logo depois do seu pai, quando ele é o último de uma linha)
 document.addEventListener("click",e=>{
   const b=e.target.closest(".ajuda"); if(!b) return;
-  const t=b.closest(".leg").nextElementSibling; t.hidden=!t.hidden; b.setAttribute("aria-expanded",String(!t.hidden));
+  const t=b.nextElementSibling||b.parentElement.nextElementSibling; if(!t) return;
+  t.hidden=!t.hidden; b.setAttribute("aria-expanded",String(!t.hidden));
+});
+// simulador embutido: abre ao clicar dentro da ficha e só calcula na primeira abertura
+document.addEventListener("click",e=>{
+  const b=e.target.closest(".sim-abrir"); if(!b) return;
+  const sm=b.nextElementSibling; sm.hidden=!sm.hidden; b.setAttribute("aria-expanded",String(!sm.hidden)); b.textContent=(sm.hidden?"▸ ":"▾ ")+b.textContent.slice(2);
+  if(!sm.hidden&&!sm.dataset.ok){ sm.dataset.ok=1; atualizarSim(sm,"delta"); }
 });
 function grafico(f){
   const M=PER==="m", ab=abFila(f), s=serieF(f), {n,saldo,st,mn,mx,X,Y,Yc}=escala(s,M?ab:null), P=s.P, passoX=M?3:1;
@@ -425,15 +437,38 @@ function baseCor(f,cor){
   const k=(f.cor_stats||{})[cor]||{}, fila=f.cores[cor]?f.cores[cor].n:0, sai=k.sai||0;
   return {ent:k.ent||0,sai,fila,espera:sai>0?fila/sai*DIAS_MES:null};
 }
-function projSim(b,delta,meses=24){
+function projSim(b,delta,meses=24,mutirao=0){
   const pts=[b.fila]; let L=b.fila;
-  for(let i=0;i<meses;i++){ L=Math.max(0,L+b.ent-(b.sai+delta)); pts.push(L); }
+  for(let i=0;i<meses;i++){ if(i===0) L=Math.max(0,L-mutirao); L=Math.max(0,L+b.ent-(b.sai+delta)); pts.push(L); }
   return pts;
+}
+// Plano para zerar a fila: oferta adicional por mês = (entrada − saída) + estoque ÷ prazo; o mutirão abate o estoque no 1º mês.
+// Variante "dentro da meta": a fila ao fim do prazo pode ficar em (saída final × meta), que é a fila compatível com a espera-meta.
+function plano(b,P,M,metaD){
+  const L0=Math.max(0,b.fila-M), m=metaD?metaD/DIAS_MES:0;
+  const N=metaD?Math.max(0,(L0+P*(b.ent-b.sai)-b.sai*m)/(P+m)):Math.max(0,(b.ent-b.sai)+L0/P);
+  return {L0,N,manter:b.ent,extraManter:Math.max(0,b.ent-b.sai)};
+}
+function planoHtml(f){
+  const meta=(window._analiseMeta&&window._analiseMeta(f.p))||{}, temMeta=COR.some(c=>f.cores[c]&&meta[c]);
+  return `<div class="plano"><h5>Plano para zerar a fila <button type="button" class="ajuda" aria-expanded="false" title="Como o plano e a espera são calculados">?</button></h5>
+   <div class="ajuda-txt" hidden>
+    <p><b>Duas contas somadas.</b> (1) Parar de crescer: oferecer por mês pelo menos o que entra. (2) Esvaziar o estoque: dividir o que já está na fila pelo prazo escolhido. Oferta adicional por mês = (entrada − saída) + fila ÷ prazo. O mutirão abate a fila de uma vez no 1º mês e diminui a parcela do estoque. Depois de zerar, basta agendar por mês o mesmo que entra.</p>
+    <p><b>Espera estimada (lei de Little).</b> Numa fila em regime estável, o número de pessoas esperando = ritmo de chegada × tempo de espera. Invertendo a conta: espera ≈ fila ÷ ritmo de saída. Exemplo: 300 na fila e 30 agendados por mês → quem entra hoje espera cerca de 10 meses. Quando a fila cresce (saída menor que a entrada), a conta subestima a espera real; por isso o número é um piso.</p>
+    <p><b>Limites.</b> Saída = agendamentos do Mapa Social (inclui faltas e cancelados); a demanda costuma subir quando a fila anda; a conta não separa prioridades, salvo quando você escolhe uma cor acima.</p>
+   </div>
+   <div class="sim-grid">
+    <div><label>Zerar em <input type="number" class="p-prazo" min="1" max="60" value="12"> meses</label></div>
+    <div><label>Mutirão no 1º mês: <input type="number" class="p-mutirao" min="0" step="10" value="0"> vagas</label></div>
+    ${temMeta?`<div><label><input type="checkbox" class="p-meta"> em vez de zerar, trazer a espera para dentro da meta (só com uma cor escolhida)</label></div>`:""}
+   </div>
+   <p class="plano-txt"></p></div>`;
 }
 function simHtml(f){
   const b=baseSim(f), maxD=Math.max(20,Math.ceil(Math.max(b.sai,b.ent)*1.5/10)*10), passo=Math.max(1,Math.round(maxD/300));
   const eMax=b.espera?Math.min(3650,Math.max(30,Math.ceil(b.espera/10)*10)):180;
-  return `<div class="sim" data-id="${f.id}"><h4>Simulador de oferta × tempo de espera</h4>
+  return `<div class="sim-wrap"><button type="button" class="sim-abrir" aria-expanded="false">▸ Simulador: oferta, espera e plano para zerar a fila</button>
+   <div class="sim" data-id="${f.id}" hidden><h4>Simulador de oferta × tempo de espera</h4>
    <p class="nota">Estimativa para a fila inteira do procedimento, com a entrada e a saída médias dos últimos 12 meses mantidas. Mova uma barra e a outra acompanha.</p>
    <div class="sim-grid">
     <div><label>Destinar a oferta adicional a: <select class="s-cor"><option value="">todas as cores (proporcional à saída atual)</option>${COR.filter(c=>f.cores[c]).map(c=>`<option value="${c}">somente ${c}</option>`).join("")}</select></label></div>
@@ -442,8 +477,9 @@ function simHtml(f){
     <div><label>Tempo de espera estimado<span class="v-foco"></span>: <b class="v-esp">–</b></label>
       <input type="range" class="s-esp" min="1" max="${eMax}" step="1" value="${b.espera?Math.min(eMax,Math.round(b.espera)):eMax}" ${b.espera?"":"disabled"}></div>
    </div>
+   ${planoHtml(f)}
    <div class="sim-res"></div><div class="sim-cor"></div><div class="sim-graf"></div>
-   <small class="nota">Premissas: saída = agendamentos do Mapa Social (inclui cancelados e faltas, o que pode superestimar a capacidade real); a estimativa não separa prioridades — vermelhos são agendados antes e esperam menos, azuis esperam mais; não é o “tempo médio” do Mapa Social (que usa os agendamentos dos últimos 15 dias). Não considera custo, vagas físicas nem mudança na demanda.</small></div>`;
+   <small class="nota">Premissas: saída = agendamentos do Mapa Social (inclui cancelados e faltas, o que pode superestimar a capacidade real); a estimativa não separa prioridades — vermelhos são agendados antes e esperam menos, azuis esperam mais; não é o “tempo médio” do Mapa Social (que usa os agendamentos dos últimos 15 dias). Não considera custo, vagas físicas nem mudança na demanda.</small></div></div>`;
 }
 function atualizarSim(box,origem){
   const f=porId[box.dataset.id], cor=box.querySelector(".s-cor").value, b=baseCor(f,cor), sd=box.querySelector(".s-delta"), se=box.querySelector(".s-esp");
@@ -451,6 +487,11 @@ function atualizarSim(box,origem){
   if(origem==="cor"){ sd.value=0; se.disabled=!(b.sai>0);
     const mx=Math.max(20,Math.ceil(Math.max(b.sai,b.ent,baseSim(f).sai*0.5)*1.5/10)*10); sd.max=mx; sd.step=Math.max(1,Math.round(mx/300));
     se.max=b.espera?Math.min(3650,Math.max(30,Math.ceil(b.espera/10)*10)):180; se.value=b.espera?Math.min(+se.max,Math.round(b.espera)):se.max; origem="delta"; }
+  const pz=box.querySelector(".p-prazo"), pm=box.querySelector(".p-mutirao"), pk=box.querySelector(".p-meta");
+  const P=Math.min(60,Math.max(1,Math.round(+pz.value)||12)), M=Math.max(0,Math.round(+pm.value)||0);
+  const metaC=cor&&pk&&pk.checked?((((window._analiseMeta&&window._analiseMeta(f.p))||{})[cor])||null):null;
+  const plz=plano(b,P,M,metaC);
+  if(origem==="plano"){ if(plz.N>+sd.max) sd.max=Math.ceil(plz.N*1.2); sd.step=1; sd.value=Math.ceil(plz.N); origem="delta"; }   // a barra passa a andar de 1 em 1 para mostrar exatamente a oferta do plano
   let delta=+sd.value;
   if(origem==="esp"){ const alvo=+se.value; delta=Math.max(0,b.fila*DIAS_MES/alvo-b.sai); if(delta>+sd.max) delta=+sd.max; sd.value=delta; delta=+sd.value; }   // a barra arredonda ao passo; o texto segue a barra
   const sai=b.sai+delta, esp=sai>0?b.fila/sai*DIAS_MES:null;
@@ -458,20 +499,30 @@ function atualizarSim(box,origem){
   box.querySelector(".v-delta").textContent=fmt(delta);
   box.querySelector(".v-pct").textContent=b.sai>=5?`(${delta>=0?"+":""}${fmt(delta/b.sai*100)}% da saída atual de ${fmt(b.sai)}/mês)`:`(saída atual: ${fmt(b.sai,1)}/mês)`;
   box.querySelector(".v-esp").textContent=esp!=null?(esp>3650?"mais de 10 anos":`${fmt(esp)} dias (${fmt(esp/DIAS_MES,1)} meses)`):"–";
-  const p0=projSim(b,0), p1=projSim(b,delta), liq=sai-b.ent;
-  const zero=liq>0&&b.fila>0?Math.ceil(b.fila/liq):null, zero0=(b.sai-b.ent)>0&&b.fila>0?Math.ceil(b.fila/(b.sai-b.ent)):null;
+  const p0=projSim(b,0), p1=projSim(b,delta,24,M), liq=sai-b.ent;
+  const zero=b.fila>0?(plz.L0<=0?1:liq>0?Math.ceil(plz.L0/liq):null):null, zero0=(b.sai-b.ent)>0&&b.fila>0?Math.ceil(b.fila/(b.sai-b.ent)):null;
+  // texto do plano
+  const txt=[]; if(b.fila<=0) txt.push("Não há solicitações aguardando."); else {
+    const cresce=b.ent-b.sai;
+    txt.push(`Hoje entram <b>${fmt(b.ent,1)}</b> e saem <b>${fmt(b.sai,1)}</b> por mês${cresce>0.05?` (a fila cresce ${fmt(cresce,1)}/mês)`:cresce<-0.05?` (a fila já cai ${fmt(-cresce,1)}/mês)`:""}; <b>${fmt(b.fila)}</b> aguardam${cor?` na cor ${cor}`:""}.`);
+    const alvo=metaC?`trazer a espera para dentro da meta de ${fmt(metaC)} dias`:"zerar a fila";
+    txt.push(`Para ${alvo} em <b>${P}</b> meses${M?`, com mutirão de <b>${fmt(M)}</b> vagas no 1º mês${M>=b.fila?" (que já cobre toda a fila)":""}`:""}: `+
+      (plz.N>0.05?`<b>+${fmt(Math.ceil(plz.N))}</b> agendamentos a mais por mês (total de ≈ ${fmt(Math.ceil(b.sai+plz.N))}/mês) durante os ${P} meses.`:`o ritmo atual já basta${M?" junto com o mutirão":""}; nenhuma vaga a mais por mês.`));
+    txt.push(`Depois, <b>${fmt(Math.ceil(plz.manter))}</b> agendamentos por mês${plz.extraManter>0.05?` (${fmt(Math.ceil(plz.extraManter))} a mais do que saem hoje)`:" (menos do que saem hoje)"} mantêm ${metaC?"a espera dentro da meta":"a fila zerada"}.`);
+    if(M&&!cor) txt.push(`<small>O mutirão é abatido da fila inteira; com uma cor escolhida acima, ele vale só para aquela cor.</small>`); }
+  box.querySelector(".plano-txt").innerHTML=txt.join(" ");
   const cel=(t,v,c="")=>`<div class="${c}"><b>${v}</b><span>${t}</span></div>`;
   box.querySelector(".sim-res").innerHTML=
     cel("espera estimada hoje",b.espera!=null?dias10(b.espera)+(b.espera>3650?"":" dias"):"–")+
     cel("espera estimada com a oferta",esp!=null?dias10(esp)+(esp>3650?"":" dias"):"–",esp!=null&&b.espera!=null&&esp<b.espera?"bom":"")+
     cel("saldo mensal com a oferta",(liq>=0?"−":"+")+fmt(Math.abs(liq))+" /mês",liq>0?"bom":liq<0?"ruim":"")+
-    cel("fila em 12 meses",fmt(p1[12])+(p0[12]!==p1[12]?` (sem oferta: ${fmt(p0[12])})`:""))+
-    cel("meses para zerar a fila",zero!=null?fmt(zero)+(zero0&&zero0!==zero?` (sem oferta: ${fmt(zero0)})`:zero0?"":" (sem oferta: não zera)"):(b.fila?"não zera":"–"),zero!=null?"bom":b.fila?"ruim":"");
+    cel("fila em 12 meses"+(M?" (com o mutirão)":""),fmt(p1[12])+(p0[12]!==p1[12]?` (sem oferta: ${fmt(p0[12])})`:""))+
+    cel("meses para zerar a fila"+(M?" (com o mutirão)":""),zero!=null?fmt(zero)+(zero0&&zero0!==zero?` (sem oferta: ${fmt(zero0)})`:zero0?"":" (sem oferta: não zera)"):(b.fila?"não zera":"–"),zero!=null?"bom":b.fila?"ruim":"");
   // efeito em cada cor: a oferta vai toda para a cor escolhida, ou é repartida na proporção da saída atual de cada cor
   const cores=COR.filter(c=>f.cores[c]), bs=cores.map(c=>baseCor(f,c)), somaS=bs.reduce((t,x)=>t+x.sai,0), somaF=bs.reduce((t,x)=>t+x.fila,0)||1;
   const parte=bc=>somaS>0?bc.sai/somaS:bc.fila/somaF;   // sem saída em nenhuma cor, reparte pela fila
   const linhasC=cores.map((c,i)=>{ const bc=bs[i], dc=cor?(c===cor?delta:0):delta*parte(bc), sc=bc.sai+dc, e0=bc.espera, e1=sc>0?bc.fila/sc*DIAS_MES:null;
-    const pr=projSim(bc,dc), z=sc>bc.ent&&bc.fila>0?Math.ceil(bc.fila/(sc-bc.ent)):null;
+    const mc=cor?(c===cor?M:0):M*parte(bc), pr=projSim(bc,dc,24,mc), lc=Math.max(0,bc.fila-mc), z=bc.fila>0?(lc<=0?1:sc>bc.ent?Math.ceil(lc/(sc-bc.ent)):null):null;
     return `<tr><td>${c}</td><td>${fmt(bc.fila)}</td><td>${fmt(bc.ent,1)}</td><td>${fmt(bc.sai,1)}</td><td>${dc?"+"+fmt(dc,1):"–"}</td><td>${dias10(e0)}</td><td><b>${dias10(e1)}</b></td><td>${fmt(pr[12])}</td><td>${z!=null?fmt(z)+" m":(bc.fila?"não zera":"–")}</td></tr>`; }).join("");
   box.querySelector(".sim-cor").innerHTML=`<div class="rolagem"><table class="cores"><tr><th>Cor</th><th>Na fila</th><th>Entrada/mês</th><th>Saída/mês</th><th>Oferta</th><th>Espera estimada hoje (dias)</th><th>Com a oferta (dias)</th><th>Fila em 12 meses</th><th>Zera em</th></tr>${linhasC}</table></div>
     <small class="nota">Entrada e saída por cor = médias dos últimos 12 meses completos, medidas nas solicitações e nos agendamentos de cada cor. “Sem saída” = nenhum atendimento dessa cor no período. Com “todas as cores”, a oferta é repartida na proporção da saída atual de cada cor (ou da fila, se nenhuma cor tiver saída).</small>`;
@@ -485,7 +536,7 @@ function atualizarSim(box,origem){
     <div class="leg"><span><i style="background:var(--muted)"></i>Sem oferta adicional</span><span><i style="background:var(--accent)"></i>Com a oferta simulada · fila de solicitações projetada</span></div>`;
 }
 document.addEventListener("input",e=>{ const box=e.target.closest&&e.target.closest(".sim"); if(!box) return;
-  atualizarSim(box,e.target.classList.contains("s-esp")?"esp":e.target.classList.contains("s-cor")?"cor":"delta"); });
+  const k=e.target.classList; atualizarSim(box,k.contains("s-esp")?"esp":k.contains("s-cor")?"cor":(k.contains("p-prazo")||k.contains("p-mutirao")||k.contains("p-meta"))?"plano":"delta"); });
 
 // ---------------------------------------------------------------- aba Filas
 function chips(f){
@@ -541,7 +592,7 @@ function render(){
 }
 function abrir(c){
   c.classList.add("aberta");
-  const sm=c.querySelector(".sim"); if(sm&&!sm.dataset.ok){ sm.dataset.ok=1; atualizarSim(sm,"delta"); }
+  const sm=c.querySelector(".sim"); if(sm&&!sm.hidden&&!sm.dataset.ok){ sm.dataset.ok=1; atualizarSim(sm,"delta"); }
   const inp=c.querySelector(".nome-curto"); if(inp&&!inp.value&&window._analiseNomeCurto) inp.value=window._analiseNomeCurto(c.querySelector(".gerar").dataset.p);
 }
 function irParaFila(id){
@@ -581,7 +632,7 @@ async function carregarDV(){
     $("pr-nivel").insertAdjacentHTML("beforeend",`<option value="${n}">Só devolvidas da ${n==="OUTROS"?"outras unidades":n}</option>`);
   });
   const j=DV.janela12||[];
-  document.querySelectorAll(".nota12").forEach(el=>el.innerHTML=`<i>% devolvidas (12 m)</i> = das solicitações feitas${j.length?` de ${esc(j[0])} a ${esc(j[1])}`:" nos últimos 12 meses completos"}, quantas estão devolvidas hoje (cada solicitação conta uma vez; a que foi agendada depois de uma devolução conta como não devolvida). Na ordenação por esse percentual, só entram na frente quem fez ${MIN12}+ solicitações no período.`);
+  document.querySelectorAll(".nota12").forEach(el=>el.innerHTML=`<b>% devolvidas (12 m)</b> = das solicitações feitas${j.length?` de ${esc(j[0])} a ${esc(j[1])}`:" nos últimos 12 meses completos"} (pela data da solicitação), quantas estão devolvidas hoje. O total inclui tudo o que foi solicitado no período: pendentes, reenviadas, devolvidas e agendadas. Cada solicitação conta uma vez; a que foi devolvida, corrigida e depois agendada conta como não devolvida, porque o Mapa Social só guarda a situação atual (por isso o percentual é um piso). Na ordenação por esse percentual, só entram na frente unidades ou procedimentos com ${MIN12} ou mais solicitações no período.`);
   prepararSerie(); renderSerie();
   return DV;
 }
