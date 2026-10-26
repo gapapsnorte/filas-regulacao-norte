@@ -281,7 +281,7 @@
         "que permanecem no gráfico em tracejado e com círculo vazio. Quando o valor ultrapassa a escala, o ponto é desenhado no limite do eixo, com o valor real escrito ao lado (nesses meses a altura não é fiel). Meses anteriores à janela não foram avaliados."],
       f2: `Figura 2 – Tempo de espera por prioridade em ${r.nome}`, n2,
       f3: `Figura 3.1 – Distribuição de solicitações pendentes em ${r.nome} por Código Internacional de Doenças (CID)`,
-      n3: [FONTE, `Nota: Dados extraídos em ${e}.`],
+      n3: [FONTE, `Nota: Dados extraídos em ${e}. Rótulos apresentam número absoluto e percentual em relação ao total de ${fmt(r.cids.reduce((t, x) => t + x.n, 0))} solicitações pendentes e reenviadas.`],
       f4: `Figura 4 – Proporção de solicitações devolvidas de ${r.nome} na Região Norte`,
       n4: [FONTE, `Nota: Dados extraídos em ${e}. Rótulos apresentam número absoluto e percentual em relação ao total de ${fmt(r.totDev)} solicitações devolvidas.` +
         (r.notas.destacadas.length ? " DIRASE inclui Policlínicas, CEO, NUFIRF e CAPS; unidades com 5% ou mais das devolvidas aparecem separadas." : "")],
