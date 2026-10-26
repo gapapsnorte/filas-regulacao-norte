@@ -564,6 +564,16 @@ function chips(f){
   return COR.filter(c=>f.cores[c]).map(c=>{const k=f.cores[c];
     return `<span class="chip ${c.replace(" ","")}" title="${c}: ${fmt(k.n)} solicitações; mais antiga de ${dd(k.antiga)}">${fmt(k.n)}${k.dias!=null?" · "+fmt(k.dias)+" d":""}</span>`}).join("") || `<span style="color:var(--muted);font-size:.8rem">sem fila</span>`;
 }
+// Fila de espera na ficha: solicitações aguardando pactuação, à parte da fila acima
+function blocoEspera(f){
+  const e=f.espera; if(!e||!e.n) return "";
+  const us=e.unidades.slice(0,8).map(([u,n])=>`<tr><td>${esc(u)}</td><td>${fmt(n)}</td><td>${fmt(n/e.n*100,1)}%</td></tr>`).join("");
+  return `<div class="plano"><h5>Em fila de espera: ${fmt(e.n)} <small style="font-weight:400;color:var(--muted)">· aguardando pactuação · mais antiga de ${dd(e.antiga)} (${fmt(e.dias)} dias)</small></h5>
+    <p class="nota" style="margin:0 0 6px">São solicitações à parte: não estão incluídas na fila de ${fmt(f.fila)} mostrada acima nem nos gráficos.</p>
+    <div class="chips" style="margin-bottom:8px">${chipsEsp(e)}</div>
+    <div class="rolagem"><table class="tab"><tr><th>Unidade solicitante</th><th>Em fila de espera</th><th>% do total</th></tr>${us}</table></div>
+    ${e.unidades.length>8?`<small class="nota">Mostradas as 8 unidades com mais solicitações, de ${fmt(e.unidades.length)}.</small>`:""}</div>`;
+}
 function item(f){
   const meta = (window._analiseMeta && window._analiseMeta(f.p)) || {};
   const linhas = COR.filter(c=>f.cores[c]).map(c=>{const k=f.cores[c], m=meta[c];
@@ -584,7 +594,8 @@ function item(f){
      ${grafico(f)}
      <div class="rolagem"><table class="cores"><tr><th>Prioridade</th><th>Solicitações</th><th>Mais antiga</th><th>Espera da mais antiga (dias)</th><th title="Tempo médio que quem está na fila hoje já esperou">Média na fila hoje (dias)</th><th title="Tempo médio entre a solicitação e o atendimento, nos agendamentos com atendimento nos últimos ${D.atend_dias||90} dias">Média até o atendimento (dias)</th><th>Meta (dias)</th></tr>${linhas}</table></div>
      <p class="nota" style="margin:4px 0 0">“Média na fila hoje” = há quanto tempo, em média, esperam as solicitações que ainda estão na fila. “Média até o atendimento” = tempo entre a solicitação e o atendimento nos agendados com atendimento nos últimos ${D.atend_dias||90} dias (n = quantos; passe o cursor para ver a mediana).</p>
-     <p style="font-size:.85rem;color:var(--muted)">Devolvidas: ${fmt(f.devolvidas)} · Em fila de espera (aguardando pactuação): ${f.espera?`<a href="#aba-oferta" title="Ver na aba Sem oferta">${fmt(f.espera.n)}</a>`:"0"} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Sem meta de tempo de espera definida em normativa da SES-DF para este procedimento"}</p>
+     <p style="font-size:.85rem;color:var(--muted)">Devolvidas: ${fmt(f.devolvidas)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Sem meta de tempo de espera definida em normativa da SES-DF para este procedimento"}</p>
+     ${blocoEspera(f)}
      ${f.fila>0?simHtml(f):""}
      <div class="gerar" data-id="${f.id}" data-p="${esc(f.p)}">
        <b>Gerar análise completa</b>
