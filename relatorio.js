@@ -177,7 +177,12 @@
     const ord = Object.values(cats).sort((a, b) => b.n - a.n);
     let acum = 0;
     r.topCids = [];
-    ord.slice(0, 15).forEach((cat, i) => {
+    // as 15 categorias mais frequentes, agrupadas em sequência por grupo da Figura 3.1 (grupos do maior para o menor; OUTROS CIDS por último);
+    // dentro do grupo, por frequência. O % acumulado segue a ordem em que a tabela é lida.
+    const top = ord.slice(0, 15), somaGrupo = {};
+    top.forEach(c => somaGrupo[c.g] = (somaGrupo[c.g] || 0) + c.n);
+    top.sort((a, b) => (a.g === "OUTROS CIDS") - (b.g === "OUTROS CIDS") || somaGrupo[b.g] - somaGrupo[a.g] || (a.g < b.g ? -1 : a.g > b.g ? 1 : 0) || b.n - a.n);
+    top.forEach((cat, i) => {
       acum += cat.n;
       const desc = cat.desc || `${cat.k} - ${(cat.subs[0].txt.split(" - ").slice(1).join(" - ") || "")} (categoria)`;
       r.topCids.push({num: `${i + 1}`, c: desc, n: cat.n, pct: cat.n / totC * 100, acum: acum / totC * 100, g: cat.g, cat: true});
