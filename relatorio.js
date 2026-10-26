@@ -162,7 +162,8 @@
     const somaG = {}; grupos.forEach(([, g]) => somaG[g] = 0); somaG["OUTROS CIDS"] = 0;
     cids.forEach(([c, n]) => { const g = grupos.find(([pr]) => c.startsWith(pr)); somaG[g ? g[1] : "OUTROS CIDS"] += n; });
     const totC = Object.values(somaG).reduce((a, b) => a + b, 0) || 1;
-    r.cids = Object.entries(somaG).map(([g, n]) => ({grupo: g, n, pct: Math.round(n / totC * 1000) / 10}));
+    // grupos cadastrados sem nenhuma solicitação nesta fila saem da Figura 3.1 (OUTROS CIDS fica sempre)
+    r.cids = Object.entries(somaG).filter(([g, n]) => n || g === "OUTROS CIDS").map(([g, n]) => ({grupo: g, n, pct: Math.round(n / totC * 1000) / 10}));
     const grupoDe = c => { const g = grupos.find(([pr]) => c.startsWith(pr)); return g ? g[1] : "OUTROS CIDS"; };
     r.cidsDetalhe = cids.sort((a, b) => b[1] - a[1]).map(([c, n]) => [c, n, grupoDe(c)]);
     // Tabela 1: 15 categorias (3 caracteres) mais frequentes; subcategorias registradas como x.1, x.2...

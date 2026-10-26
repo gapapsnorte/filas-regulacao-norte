@@ -6,7 +6,8 @@ Uso local: python coleta/painel.py             (coleta e grava, sem publicar)
 
 Gera:
   dados.json                resumo de todas as filas (painel)
-  devolvidas.json           devolvidas por fila × unidade solicitante e série mensal pela data da devolução (aba Devolvidas)
+  devolvidas.json           devolvidas por fila × unidade solicitante, série mensal pela data da devolução e, em d12,
+                            [unidade, devolvidas, solicitações] dos últimos 12 meses por fila (razão de devolvidas)
   analises/<id>.json        detalhes agregados de cada fila, usados pelo botão "Gerar análise"
   detalhe/<id>.json         linhas do Mapa Social de cada fila (código SISREG, datas, status, risco, CID, unidade)
   detalhe/devolvidas.json   todas as devolvidas da região, linha a linha
@@ -51,6 +52,18 @@ def _mes_inicial_painel(hoje):
     return date(a, mm, 1)
 
 
+def janela12(hoje):
+    """Os 12 meses completos anteriores ao mês corrente, como (ano, mês)."""
+    a, mm = hoje.year, hoje.month - 12
+    if mm < 1:
+        a, mm = a - 1, mm + 12
+    out = []
+    for _ in range(12):
+        out.append((a, mm))
+        a, mm = (a, mm + 1) if mm < 12 else (a + 1, 1)
+    return out
+
+
 def coletar(hoje):
     ini = hoje.year - ANOS_SERIE
     P, PA, U = "descrição_procedimento_solicitacao", "descrição_procedimento_agendamento", "nome_unidade_solicitante"
@@ -69,6 +82,14 @@ def coletar(hoje):
         ["dev_un", [P, U], ["Count({<%s,%s>} distinct codigo_solicitacao)" % (R, DEV)]],
         ["un_sol", [P, U], ["Count({<%s>} distinct codigo_solicitacao)" % R]],
         ["un_ag", [PA, U], ["Count({<%s>} distinct codigo_solicitacao)" % R]],
+        # Razão de devolvidas (aba Devolvidas): solicitações feitas por unidade × mês da solicitação, nos
+        # últimos 12 meses completos — total (pendentes + reenviadas + devolvidas + agendadas) e só devolvidas
+        ["sol12", [P, U, "Calendar.Ano_Solicitacao", "Calendar.Mes_Solicitacao"],
+         ['Count({<%s,%s,[Calendar.Ano_Solicitacao]={">=%d"}>} distinct codigo_solicitacao)' % (R, FILA_DEV, hoje.year - 1)]],
+        ["dev12", [P, U, "Calendar.Ano_Solicitacao", "Calendar.Mes_Solicitacao"],
+         ['Count({<%s,%s,[Calendar.Ano_Solicitacao]={">=%d"}>} distinct codigo_solicitacao)' % (R, DEV, hoje.year - 1)]],
+        ["ag12", [PA, U, "Calendar.Ano_Solicitacao", "Calendar.Mes_Solicitacao"],
+         ['Count({<%s,[Calendar.Ano_Solicitacao]={">=%d"}>} distinct codigo_solicitacao)' % (R, hoje.year - 1)]],
         ["tipo", [P, "tipo_procedimento_solicitacao"], ["Count({<%s>} distinct codigo_solicitacao)" % R]],
         ["ultima", [], ["Date(Max(data_solicitacao))"]],
         ["det_sol", [P, "codigo_solicitacao", "data_solicitacao", "status_solicitacao_solicitacao",
@@ -209,13 +230,28 @@ def montar(b, hoje, ref=None):
 
     # Devolvidas por fila × unidade solicitante (abas de devolvidas)
     niveis, esf = ref.get("niveis", []), ref.get("esf", {})
-    nomes = sorted({u for d in procs.values() for u in d["dev_un"]})
+    # Razão de devolvidas: das solicitações feitas pela unidade nos últimos 12 meses completos (pela data da
+    # solicitação), quantas estão devolvidas hoje. Cada código conta uma vez; a que foi agendada depois de uma
+    # devolução conta como não devolvida (o Mapa Social só guarda a situação atual).
+    j12 = set(janela12(hoje))
+    tot12, dev12 = defaultdict(int), defaultdict(int)
+    for chave, alvo in (("sol12", tot12), ("ag12", tot12), ("dev12", dev12)):
+        for p, u, ano, mes, q in b[chave]["rows"]:
+            if _valido(p) and _valido(u) and mes in MESES and (int(ano), MESES.index(mes) + 1) in j12:
+                alvo[(p, u)] += int(q)
+    nomes = sorted({u for d in procs.values() for u in d["dev_un"]} | {u for (p, u) in tot12 if p in procs})
     pos_u = {u: k for k, u in enumerate(nomes)}
     ids_serie, celulas = serie_devolvidas(b, meses[-N_PAINEL:], pos_u, nomes)
+    d12 = defaultdict(list)
+    for (p, u), t in sorted(tot12.items()):
+        if p in procs and t:
+            d12[ident(p)].append([pos_u[u], min(dev12.get((p, u), 0), t), t])
+    r12 = ["%s/%s" % (MESES[mm - 1], str(a)[2:]) for a, mm in janela12(hoje)]
     devolvidas = dict(meta, unidades=[[u, nivel(u, niveis), esf.get(u)] for u in nomes],
                       filas={ident(p): sorted(([pos_u[u], q] for u, q in d["dev_un"].items()), key=lambda x: -x[1])
                              for p, d in procs.items() if d["dev_un"]},
-                      meses=rot[-N_PAINEL:], serie_ids=ids_serie, serie=celulas)
+                      meses=rot[-N_PAINEL:], serie_ids=ids_serie, serie=celulas,
+                      janela12=[r12[0], r12[-1]], d12=dict(d12))
     return dict(meta, meses=rot[-N_PAINEL:], filas=resumo), detalhes, devolvidas, meta
 
 

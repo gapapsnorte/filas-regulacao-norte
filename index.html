@@ -73,6 +73,9 @@ header p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
 .fila.aberta .det{display:block}
 .leg{display:flex;gap:14px;font-size:.8rem;color:var(--muted);margin:4px 0}
 .leg i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:4px}
+.leg{flex-wrap:wrap;align-items:center;row-gap:4px}.leg svg{vertical-align:middle;margin-right:4px;color:var(--muted)}
+.ajuda{border:1px solid var(--line);background:var(--card);color:var(--accent);border-radius:50%;width:22px;height:22px;font-size:.8rem;font-weight:700;cursor:pointer;line-height:1;padding:0}
+.ajuda-txt{font-size:.82rem;line-height:1.45;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:2px 0 8px;max-width:760px}.ajuda-txt p{margin:4px 0}
 .graf{position:relative;max-width:760px}
 .barras{position:relative;max-width:760px}
 .barras svg{display:block}
@@ -206,7 +209,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 </div>
 
 <div id="dv-un" hidden>
-<p class="nota">Solicitações devolvidas pelo regulador, por unidade que solicitou: total e separado em consultas e exames. <i>Por eSF</i> = devolvidas ÷ número de equipes de Saúde da Família da UBS (só para a APS). Clique no cabeçalho para ordenar e na unidade para ver os procedimentos que ela mais devolve.</p>
+<p class="nota">Solicitações devolvidas pelo regulador, por unidade que solicitou: total e separado em consultas e exames. <i>Por eSF</i> = devolvidas ÷ número de equipes de Saúde da Família da UBS (só para a APS). <span class="nota12"></span> Clique no cabeçalho para ordenar e na unidade para ver os procedimentos que ela mais devolve.</p>
 <div class="ctrl">
   <input type="search" id="un-busca" placeholder="Buscar unidade (ex.: UBS 2, PSR, policlínica)">
   <select id="un-nivel"><option value="APS">APS (UBS e PSR)</option><option value="">Todos os níveis</option></select>
@@ -217,6 +220,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
     <option value="taxaC">Mais consultas por eSF</option>
     <option value="e">Mais exames devolvidos</option>
     <option value="taxaE">Mais exames por eSF</option>
+    <option value="taxa12">Maior % de devolvidas (12 meses)</option>
     <option value="nome">Nome (A–Z)</option>
   </select>
   <button id="un-baixar" title="Ranking das unidades filtradas, com os procedimentos de cada uma">Baixar ranking (Excel)</button>
@@ -228,13 +232,14 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 </div>
 
 <div id="dv-pr">
-<p class="nota">Solicitações devolvidas pelo regulador, por procedimento (consulta ou exame), com as unidades que mais devolvem em cada um.</p>
+<p class="nota">Solicitações devolvidas pelo regulador, por procedimento (consulta ou exame), com as unidades que mais devolvem em cada um. <span class="nota12"></span></p>
 <div class="ctrl">
   <input type="search" id="pr-busca" placeholder="Buscar procedimento">
   <select id="pr-tipo"><option value="">Todos os tipos</option></select>
   <select id="pr-nivel"><option value="">Devolvidas de todas as unidades</option></select>
   <select id="pr-ordem">
     <option value="n">Mais devolvidas</option>
+    <option value="taxa12">Maior % de devolvidas (12 meses)</option>
     <option value="nome">Nome (A–Z)</option>
   </select>
   <button id="pr-baixar" title="Resumo dos procedimentos filtrados">Baixar resumo (Excel)</button>
@@ -325,6 +330,27 @@ function escala(s,ab){
 }
 // quadrimestre contém mês aberrante? devolve [{rot, v}] por curva
 function abQuad(f,ab,P,i,c){ const t=ab[c]; return P[i].idx.filter(m=>t.flag[m-ab.ini]).map(m=>({rot:D.meses[m],v:c==="saldo"?f.in[m]-f.out[m]:f[c][m]})); }
+// Legenda do gráfico: cores, linha de tendência e marcação dos meses aberrantes (muda com a visão mensal/quadrimestral)
+function legenda(){
+  const sw=cor=>`<i style="background:${cor}"></i>`;
+  const tra=`<svg width="28" height="12" viewBox="0 0 28 12" aria-hidden="true"><line x1="0" y1="6" x2="28" y2="6" stroke="currentColor" stroke-width="2" stroke-dasharray="5 3"/><circle cx="14" cy="6" r="4" fill="var(--card)" stroke="currentColor" stroke-width="1.6"/></svg>`;
+  const fina=`<svg width="28" height="12" viewBox="0 0 28 12" aria-hidden="true"><line x1="0" y1="9" x2="28" y2="3" stroke="currentColor" stroke-width="1.2" opacity=".8"/></svg>`;
+  const anel=`<svg width="20" height="14" viewBox="0 0 20 14" aria-hidden="true"><circle cx="10" cy="7" r="3" fill="currentColor"/><circle cx="10" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 2"/></svg>`;
+  const M=PER==="m";
+  return `<div class="leg"><span>${sw("var(--in)")}Entrada</span><span>${sw("var(--out)")}Saída</span><span>${sw("var(--saldo)")}Saldo</span>
+    ${M?`<span>${fina}linha fina = tendência</span><span>${tra}tracejado + círculo vazio = mês aberrante (fora da tendência)</span>`
+       :`<span>${tra}tracejado + ponto vazado = quadrimestre incompleto</span><span>${anel}círculo tracejado = quadrimestre com mês aberrante</span>`}
+    <button type="button" class="ajuda" aria-expanded="false" title="O que é um mês aberrante e como ele é identificado">?</button></div>
+   <div class="ajuda-txt" hidden>
+    <p><b>O que é um mês aberrante.</b> É um mês que foge muito do padrão da própria fila: fica <b>mais de 4 vezes a oscilação típica</b> dos últimos 24 meses acima da linha de tendência (no saldo, acima ou abaixo). Costuma ser mutirão, suspensão de agenda ou carga atípica de solicitações, e vale explicá-lo na análise. Quando a saída de um mês é aberrante, o saldo daquele mês também é marcado.</p>
+    <p><b>O que acontece com ele.</b> Continua no gráfico, tracejado e com círculo vazio, mas fica <b>de fora do cálculo da linha de tendência e do R²</b>, para que um pico isolado não puxe a reta. Se passa da escala, é desenhado no limite com o valor real escrito ao lado.</p>
+    <p><b>Como é identificado.</b> A oscilação típica e a reta usada na identificação vêm do estimador de Theil-Sen (mediana das inclinações entre pares de meses, refeita sobre os resíduos); a linha de tendência final e o R² são de mínimos quadrados, calculados sem os aberrantes. Filas pequenas (menos de 12 meses com movimento ou menos de 120 solicitações) não são avaliadas. Sequências de mais de 3 meses seguidos não são marcadas: indicam mudança de patamar, não pico.</p>
+   </div>`;
+}
+document.addEventListener("click",e=>{
+  const b=e.target.closest(".ajuda"); if(!b) return;
+  const t=b.closest(".leg").nextElementSibling; t.hidden=!t.hidden; b.setAttribute("aria-expanded",String(!t.hidden));
+});
 function grafico(f){
   const M=PER==="m", ab=abFila(f), s=serieF(f), {n,saldo,st,mn,mx,X,Y,Yc}=escala(s,M?ab:null), P=s.P, passoX=M?3:1;
   const curvas=[["in",s.in,"var(--in)"],["out",s.out,"var(--out)"],["saldo",saldo,"var(--saldo)"]];
@@ -482,7 +508,7 @@ function item(f){
    </div>
    ${f.alertas.length?`<div class="alertas">${f.alertas.map(a=>`<span class="alerta">⚠ ${esc(a)}</span>`).join("")}</div>`:""}
    <div class="det">
-     <div class="leg"><span><i style="background:var(--in)"></i>Entrada</span><span><i style="background:var(--out)"></i>Saída</span><span><i style="background:var(--saldo)"></i>Saldo</span></div>
+     ${legenda()}
      ${grafico(f)}
      <div class="rolagem"><table class="cores"><tr><th>Prioridade</th><th>Solicitações</th><th>Mais antiga</th><th>Espera da mais antiga (dias)</th><th title="Tempo médio que quem está na fila hoje já esperou">Média na fila hoje (dias)</th><th title="Tempo médio entre a solicitação e o atendimento, nos agendamentos com atendimento nos últimos ${D.atend_dias||90} dias">Média até o atendimento (dias)</th><th>Meta (dias)</th></tr>${linhas}</table></div>
      <p class="nota" style="margin:4px 0 0">“Média na fila hoje” = há quanto tempo, em média, esperam as solicitações que ainda estão na fila. “Média até o atendimento” = tempo entre a solicitação e o atendimento nos agendados com atendimento nos últimos ${D.atend_dias||90} dias (n = quantos; passe o cursor para ver a mediana).</p>
@@ -554,9 +580,14 @@ async function carregarDV(){
     if(n!=="APS") $("un-nivel").insertAdjacentHTML("beforeend",`<option value="${n}">${n==="OUTROS"?"Outras":n}</option>`);
     $("pr-nivel").insertAdjacentHTML("beforeend",`<option value="${n}">Só devolvidas da ${n==="OUTROS"?"outras unidades":n}</option>`);
   });
+  const j=DV.janela12||[];
+  document.querySelectorAll(".nota12").forEach(el=>el.innerHTML=`<i>% devolvidas (12 m)</i> = das solicitações feitas${j.length?` de ${esc(j[0])} a ${esc(j[1])}`:" nos últimos 12 meses completos"}, quantas estão devolvidas hoje (cada solicitação conta uma vez; a que foi agendada depois de uma devolução conta como não devolvida). Na ordenação por esse percentual, só entram na frente quem fez ${MIN12}+ solicitações no período.`);
   prepararSerie(); renderSerie();
   return DV;
 }
+const MIN12=20;   // mínimo de solicitações em 12 meses para a razão de devolvidas valer na ordenação
+const pct12=(d,t)=>t?fmt(d/t*100,1)+"%":"–";
+const ord12=x=>x.t12>=MIN12?x.d12/x.t12:-1;
 // ---------------------------------------------------------------- devolvidas ao longo do tempo
 // DV.serie = [índice da fila em DV.serie_ids, índice da unidade, índice do mês, n]; soma por período com filtros opcionais
 function serieDV({ids=null,uis=null}={}){
@@ -602,16 +633,18 @@ function miniSerie(titulo,opts){
 
 // Agrega por unidade: total, consultas e exames, e a lista de procedimentos de cada uma
 function porUnidade(){
-  const U=DV.unidades.map(([u,nivel,esf])=>({u,nivel,esf:esf??null,n:0,c:0,e:0,procs:[]}));
+  const U=DV.unidades.map(([u,nivel,esf])=>({u,nivel,esf:esf??null,n:0,c:0,e:0,d12:0,t12:0,procs:[],p12:{}}));
   for(const [id,pares] of Object.entries(DV.filas)){
     const t=porId[id]?porId[id].tipo:"";
     for(const [ui,n] of pares){ const x=U[ui]; x.n+=n; if(t==="Consulta") x.c+=n; else if(t==="Exame") x.e+=n; x.procs.push([id,n]); }
   }
+  // últimos 12 meses: [unidade, devolvidas, solicitações] por fila → razão de devolvidas
+  for(const [id,tr] of Object.entries(DV.d12||{})){ if(!porId[id]) continue; for(const [ui,d,t] of tr){ const x=U[ui]; if(!x) continue; x.d12+=d; x.t12+=t; x.p12[id]=[d,t]; } }
   const tot=U.reduce((s,x)=>s+x.n,0)||1;
-  U.forEach(x=>{ const r=k=>x.esf?x[k]/x.esf:null; x.taxa=r("n"); x.taxaC=r("c"); x.taxaE=r("e"); x.pct=x.n/tot*100; x.procs.sort((a,b)=>b[1]-a[1]); });
-  return U.filter(x=>x.n>0);
+  U.forEach(x=>{ const r=k=>x.esf?x[k]/x.esf:null; x.taxa=r("n"); x.taxaC=r("c"); x.taxaE=r("e"); x.taxa12=x.t12?x.d12/x.t12*100:null; x.pct=x.n/tot*100; x.procs.sort((a,b)=>b[1]-a[1]); });
+  return U.filter(x=>x.n>0||x.t12>0);
 }
-const ORD_UN={n:x=>x.n,taxa:x=>x.taxa??-1,c:x=>x.c,taxaC:x=>x.taxaC??-1,e:x=>x.e,taxaE:x=>x.taxaE??-1};
+const ORD_UN={n:x=>x.n,taxa:x=>x.taxa??-1,c:x=>x.c,taxaC:x=>x.taxaC??-1,e:x=>x.e,taxaE:x=>x.taxaE??-1,t12:x=>x.t12,taxa12:ord12};
 let UN_ATUAL={};
 function filtrarUn(){
   const q=norm($("un-busca").value.trim()), nv=$("un-nivel").value, o=$("un-ordem").value;
@@ -622,21 +655,21 @@ function filtrarUn(){
 function linhaUn(x,pos){
   const t=v=>v!=null?fmt(v,1):"–";
   return `<tr class="u" data-u="${esc(x.u)}" tabindex="0" title="Clique para ver os procedimentos"><td>${pos||""}</td><td>${esc(x.u)}<small>${x.nivel==="OUTROS"?"Outras":x.nivel}</small></td><td>${x.esf??"–"}</td>
-    <td class="sep"><b>${fmt(x.n)}</b></td><td>${t(x.taxa)}</td><td class="sep">${fmt(x.c)}</td><td>${t(x.taxaC)}</td><td class="sep">${fmt(x.e)}</td><td>${t(x.taxaE)}</td><td class="sep">${fmt(x.procs.length)}</td></tr>`;
+    <td class="sep"><b>${fmt(x.n)}</b></td><td>${t(x.taxa)}</td><td class="sep">${fmt(x.c)}</td><td>${t(x.taxaC)}</td><td class="sep">${fmt(x.e)}</td><td>${t(x.taxaE)}</td><td class="sep">${fmt(x.t12)}</td><td title="${fmt(x.d12)} devolvidas entre as ${fmt(x.t12)} solicitações dos últimos 12 meses">${pct12(x.d12,x.t12)}</td><td class="sep">${fmt(x.procs.length)}</td></tr>`;
 }
 function detalheUn(x){
-  const procs=x.procs.map(([id,n])=>{const f=porId[id]; return `<tr><td>${f?`<a class="irfila" href="#f-${id}">${esc(f.p)}</a>`:id}</td><td>${esc(f?f.tipo:"")}</td><td>${fmt(n)}</td><td>${fmt(n/x.n*100,1)}%</td><td>${x.esf?fmt(n/x.esf,1):"–"}</td></tr>`;}).join("");
+  const procs=x.procs.map(([id,n])=>{const f=porId[id], q=x.p12[id]||[0,0]; return `<tr><td>${f?`<a class="irfila" href="#f-${id}">${esc(f.p)}</a>`:id}</td><td>${esc(f?f.tipo:"")}</td><td>${fmt(n)}</td><td>${fmt(n/x.n*100,1)}%</td><td>${x.esf?fmt(n/x.esf,1):"–"}</td><td title="${fmt(q[0])} devolvidas entre ${fmt(q[1])} solicitações nos últimos 12 meses">${pct12(q[0],q[1])}</td></tr>`;}).join("");
   const ui=DV.unidades.findIndex(u=>u[0]===x.u);
-  return `<tr class="sub"><td colspan="10">${DV.serie?miniSerie("Devolvidas da unidade",{uis:new Set([ui])}):""}<div class="rolagem"><table class="tab"><tr><th>Procedimento</th><th>Tipo</th><th>Devolvidas</th><th>% da unidade</th><th>Por eSF</th></tr>${procs}</table></div>
+  return `<tr class="sub"><td colspan="12">${DV.serie?miniSerie("Devolvidas da unidade",{uis:new Set([ui])}):""}<div class="rolagem"><table class="tab"><tr><th>Procedimento</th><th>Tipo</th><th>Devolvidas</th><th>% da unidade</th><th>Por eSF</th><th>% devolvidas (12 m)</th></tr>${procs}</table></div>
     <div class="dv-acoes"><button data-dev-un="${esc(x.u)}">Baixar devolvidas desta unidade (Excel)</button><small class="status"></small></div></td></tr>`;
 }
-const CAB_UN=[["n","Devolvidas"],["taxa","por eSF"],["c","Devolvidas"],["taxaC","por eSF"],["e","Devolvidos"],["taxaE","por eSF"]];
+const CAB_UN=[["n","Devolvidas"],["taxa","por eSF"],["c","Devolvidas"],["taxaC","por eSF"],["e","Devolvidos"],["taxaE","por eSF"],["t12","Solicitações"],["taxa12","% devolvidas"]];
 function renderUn(){
   const L=filtrarUn(), o=$("un-ordem").value, rank=o!=="nome";
   const abertas=[...document.querySelectorAll("#un-lista tr.u.aberta")].map(tr=>tr.dataset.u);   // linhas abertas continuam abertas
-  const th=(k,t,extra="")=>`<th data-ord="${k}"${o===k?' aria-sort="descending"':""}${k==="c"||k==="e"?' class="sep"':""} ${extra}>${t}</th>`;
+  const th=(k,t,extra="")=>`<th data-ord="${k}"${o===k?' aria-sort="descending"':""}${k==="c"||k==="e"||k==="t12"?' class="sep"':""} ${extra}>${t}</th>`;
   $("un-lista").innerHTML=L.length?`<table class="tab rank"><thead>
-    <tr><th rowspan="2">#</th>${th("nome","Unidade solicitante",'rowspan="2"')}<th rowspan="2">eSF</th><th colspan="2" class="sep">Total</th><th colspan="2" class="sep">Consultas</th><th colspan="2" class="sep">Exames</th><th rowspan="2" class="sep">Procedi-<br>mentos</th></tr>
+    <tr><th rowspan="2">#</th>${th("nome","Unidade solicitante",'rowspan="2"')}<th rowspan="2">eSF</th><th colspan="2" class="sep">Total</th><th colspan="2" class="sep">Consultas</th><th colspan="2" class="sep">Exames</th><th colspan="2" class="sep" title="Solicitações feitas pela unidade nos últimos 12 meses completos e quantas delas estão devolvidas hoje">Últimos 12 meses</th><th rowspan="2" class="sep">Procedi-<br>mentos</th></tr>
     <tr>${CAB_UN.map(([k,t])=>th(k,t)).join("")}</tr></thead><tbody>${L.map((x,i)=>linhaUn(x,rank?i+1:0)).join("")}</tbody></table>`:'<p style="padding:12px">Nenhuma unidade encontrada.</p>';
   UN_ATUAL=Object.fromEntries(L.map(x=>[x.u,x]));
   abertas.forEach(u=>{ const tr=document.querySelector(`#un-lista tr.u[data-u="${CSS.escape(u)}"]`); if(tr) alternarUn(tr); });
@@ -648,19 +681,21 @@ function porProcedimento(nivel){
     const f=porId[id]; if(!f) continue;
     const us=pares.filter(([ui])=>!nivel||DV.unidades[ui][1]===nivel);
     const n=us.reduce((s,[,q])=>s+q,0); if(!n) continue;
-    L.push({f,n,aps:pares.filter(([ui])=>DV.unidades[ui][1]==="APS").reduce((s,[,q])=>s+q,0),total:pares.reduce((s,[,q])=>s+q,0),us});
+    let d12=0,t12=0; const u12={};
+    for(const [ui,d,t] of (DV.d12||{})[id]||[]){ if(nivel&&DV.unidades[ui][1]!==nivel) continue; d12+=d; t12+=t; u12[ui]=[d,t]; }
+    L.push({f,n,aps:pares.filter(([ui])=>DV.unidades[ui][1]==="APS").reduce((s,[,q])=>s+q,0),total:pares.reduce((s,[,q])=>s+q,0),us,d12,t12,u12});
   }
   return L;
 }
 function filtrarPr(){
   const q=norm($("pr-busca").value.trim()), t=$("pr-tipo").value, o=$("pr-ordem").value;
   const L=porProcedimento($("pr-nivel").value).filter(x=>(!q||norm(x.f.p).includes(q))&&(!t||x.f.tipo===t));
-  L.sort(o==="nome"?(a,b)=>a.f.p.localeCompare(b.f.p,"pt"):(a,b)=>b.n-a.n);
+  L.sort(o==="nome"?(a,b)=>a.f.p.localeCompare(b.f.p,"pt"):o==="taxa12"?(a,b)=>ord12(b)-ord12(a)||b.n-a.n:(a,b)=>b.n-a.n);
   return L;
 }
 function itemPr(x,pos){
   const nivelPr=$("pr-nivel").value;
-  const us=x.us.map(([ui,n])=>{const [u,nv,esf]=DV.unidades[ui]; return `<tr><td>${esc(u)}</td><td>${nv==="OUTROS"?"Outras":nv}</td><td>${fmt(n)}</td><td>${esf?fmt(n/esf,1):"–"}</td><td>${fmt(n/x.n*100,1)}%</td></tr>`;}).join("");
+  const us=x.us.map(([ui,n])=>{const [u,nv,esf]=DV.unidades[ui], q=x.u12[ui]||[0,0]; return `<tr><td>${esc(u)}</td><td>${nv==="OUTROS"?"Outras":nv}</td><td>${fmt(n)}</td><td>${esf?fmt(n/esf,1):"–"}</td><td>${fmt(n/x.n*100,1)}%</td><td title="${fmt(q[0])} devolvidas entre ${fmt(q[1])} solicitações nos últimos 12 meses">${pct12(q[0],q[1])}</td></tr>`;}).join("");
   return `<div class="fila" tabindex="0" data-pid="${x.f.id}">
     <div class="lin dv">
       <div class="nome">${pos?pos+"º · ":""}${esc(x.f.p)}<small>${esc(x.f.tipo||"")}</small></div>
@@ -668,8 +703,9 @@ function itemPr(x,pos){
       <div class="num"><b>${fmt(x.aps)}</b><small>da APS</small></div>
       <div class="num"><b>${fmt(x.aps/x.total*100,0)}%</b><small>da APS</small></div>
       <div class="num"><b>${fmt(x.f.fila)}</b><small>na fila</small></div>
+      <div class="num" title="${fmt(x.d12)} devolvidas entre ${fmt(x.t12)} solicitações nos últimos 12 meses"><b>${pct12(x.d12,x.t12)}</b><small>devolvidas (12 m)</small></div>
     </div>
-    <div class="det">${DV.serie?miniSerie("Devolvidas do procedimento"+(nivelPr?" ("+nivelPr+")":""),{ids:new Set([x.f.id]),uis:nivelPr?new Set(unidadesDo(nivelPr).map(([,i])=>i)):null}):""}<div class="rolagem"><table class="tab"><tr><th>Unidade solicitante</th><th>Nível</th><th>Devolvidas</th><th>Por eSF</th><th>% do procedimento</th></tr>${us}</table></div>
+    <div class="det">${DV.serie?miniSerie("Devolvidas do procedimento"+(nivelPr?" ("+nivelPr+")":""),{ids:new Set([x.f.id]),uis:nivelPr?new Set(unidadesDo(nivelPr).map(([,i])=>i)):null}):""}<div class="rolagem"><table class="tab"><tr><th>Unidade solicitante</th><th>Nível</th><th>Devolvidas</th><th>Por eSF</th><th>% do procedimento</th><th>% devolvidas (12 m)</th></tr>${us}</table></div>
       <div class="dv-acoes"><a class="irfila" href="#f-${x.f.id}">Abrir a fila no painel</a> <button data-dev-p="${x.f.id}">Baixar devolvidas deste procedimento (Excel)</button><small class="status"></small></div></div>
   </div>`;
 }
@@ -683,25 +719,26 @@ function renderPr(){
 }
 async function baixarResumoUn(){
   await xlsx(); const L=filtrarUn(), wb=XLSX.utils.book_new(), r1=v=>v!=null?Math.round(v*10)/10:"";
-  const ws=XLSX.utils.aoa_to_sheet([["Posição","Unidade solicitante","Nível","eSF","Devolvidas","Devolvidas por eSF","Consultas devolvidas","Consultas por eSF","Exames devolvidos","Exames por eSF","Procedimentos","% do total da região"],
-    ...L.map((x,i)=>[i+1,x.u,x.nivel,x.esf??"",x.n,r1(x.taxa),x.c,r1(x.taxaC),x.e,r1(x.taxaE),x.procs.length,r1(x.pct)])]);
-  ws["!cols"]=[8,40,10,6,11,18,20,18,18,16,14,20].map(w=>({wch:w}));
+  const ws=XLSX.utils.aoa_to_sheet([["Posição","Unidade solicitante","Nível","eSF","Devolvidas","Devolvidas por eSF","Consultas devolvidas","Consultas por eSF","Exames devolvidos","Exames por eSF","Solicitações (12 m)","Devolvidas (12 m)","% devolvidas (12 m)","Procedimentos","% do total da região"],
+    ...L.map((x,i)=>[i+1,x.u,x.nivel,x.esf??"",x.n,r1(x.taxa),x.c,r1(x.taxaC),x.e,r1(x.taxaE),x.t12,x.d12,r1(x.taxa12),x.procs.length,r1(x.pct)])]);
+  ws["!cols"]=[8,40,10,6,11,18,20,18,18,16,17,16,18,14,20].map(w=>({wch:w}));
   XLSX.utils.book_append_sheet(wb,ws,"Ranking");
-  const linhas=[]; L.forEach(x=>x.procs.forEach(([id,n])=>linhas.push([x.u,x.nivel,porId[id]?porId[id].p:id,porId[id]?porId[id].tipo:"",n,r1(x.n?n/x.n*100:0),x.esf?r1(n/x.esf):""])));
-  const w2=XLSX.utils.aoa_to_sheet([["Unidade solicitante","Nível","Procedimento","Tipo","Devolvidas","% da unidade","Por eSF"],...linhas]); w2["!cols"]=[40,10,55,12,11,13,9].map(w=>({wch:w}));
+  const linhas=[]; L.forEach(x=>x.procs.forEach(([id,n])=>{const q=x.p12[id]||[0,0]; linhas.push([x.u,x.nivel,porId[id]?porId[id].p:id,porId[id]?porId[id].tipo:"",n,r1(x.n?n/x.n*100:0),x.esf?r1(n/x.esf):"",q[1],q[0],q[1]?r1(q[0]/q[1]*100):""]);}));
+  const w2=XLSX.utils.aoa_to_sheet([["Unidade solicitante","Nível","Procedimento","Tipo","Devolvidas","% da unidade","Por eSF","Solicitações (12 m)","Devolvidas (12 m)","% devolvidas (12 m)"],...linhas]); w2["!cols"]=[40,10,55,12,11,13,9,17,16,18].map(w=>({wch:w}));
   XLSX.utils.book_append_sheet(wb,w2,"Unidade x procedimento");
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Filtro",`${$("un-nivel").options[$("un-nivel").selectedIndex].text} · ordem: ${$("un-ordem").options[$("un-ordem").selectedIndex].text} · busca: ${$("un-busca").value||"(nenhuma)"}`],["Por eSF","devolvidas ÷ número de eSF da UBS (referência RH APS Norte 06/2026); só para a APS"]])),"Leia-me");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Filtro",`${$("un-nivel").options[$("un-nivel").selectedIndex].text} · ordem: ${$("un-ordem").options[$("un-ordem").selectedIndex].text} · busca: ${$("un-busca").value||"(nenhuma)"}`],["Por eSF","devolvidas ÷ número de eSF da UBS (referência RH APS Norte 06/2026); só para a APS"],["% devolvidas (12 m)",`das solicitações feitas pela unidade de ${(DV.janela12||["",""])[0]} a ${(DV.janela12||["",""])[1]} (pela data da solicitação), quantas estão devolvidas hoje; cada solicitação conta uma vez e a que foi agendada depois de uma devolução conta como não devolvida`]])),"Leia-me");
   XLSX.writeFile(wb,`Devolvidas por unidade - Região Norte (${D.data.split("-").reverse().join("-")}).xlsx`);
 }
 async function baixarResumoPr(){
   await xlsx(); const L=filtrarPr(), wb=XLSX.utils.book_new();
-  const ws=XLSX.utils.aoa_to_sheet([["Posição","Procedimento","Tipo","Devolvidas (filtro)","Devolvidas da APS","Devolvidas – total","Na fila"],...L.map((x,i)=>[i+1,x.f.p,x.f.tipo,x.n,x.aps,x.total,x.f.fila])]);
-  ws["!cols"]=[{wch:8},{wch:55},{wch:12},{wch:17},{wch:17},{wch:17},{wch:9}];
+  const r1=v=>v!=null?Math.round(v*10)/10:"";
+  const ws=XLSX.utils.aoa_to_sheet([["Posição","Procedimento","Tipo","Devolvidas (filtro)","Devolvidas da APS","Devolvidas – total","Na fila","Solicitações (12 m, filtro)","Devolvidas (12 m, filtro)","% devolvidas (12 m)"],...L.map((x,i)=>[i+1,x.f.p,x.f.tipo,x.n,x.aps,x.total,x.f.fila,x.t12,x.d12,x.t12?r1(x.d12/x.t12*100):""])]);
+  ws["!cols"]=[{wch:8},{wch:55},{wch:12},{wch:17},{wch:17},{wch:17},{wch:9},{wch:22},{wch:22},{wch:18}];
   XLSX.utils.book_append_sheet(wb,ws,"Procedimentos");
-  const linhas=[]; L.forEach(x=>x.us.forEach(([ui,n])=>{const [u,nv,esf]=DV.unidades[ui]; linhas.push([x.f.p,x.f.tipo,u,nv,n,esf?Math.round(n/esf*10)/10:""]);}));
-  const w2=XLSX.utils.aoa_to_sheet([["Procedimento","Tipo","Unidade solicitante","Nível","Devolvidas","Por eSF"],...linhas]); w2["!cols"]=[{wch:55},{wch:12},{wch:40},{wch:10},{wch:11},{wch:9}];
+  const linhas=[]; L.forEach(x=>x.us.forEach(([ui,n])=>{const [u,nv,esf]=DV.unidades[ui], q=x.u12[ui]||[0,0]; linhas.push([x.f.p,x.f.tipo,u,nv,n,esf?Math.round(n/esf*10)/10:"",q[1],q[0],q[1]?r1(q[0]/q[1]*100):""]);}));
+  const w2=XLSX.utils.aoa_to_sheet([["Procedimento","Tipo","Unidade solicitante","Nível","Devolvidas","Por eSF","Solicitações (12 m)","Devolvidas (12 m)","% devolvidas (12 m)"],...linhas]); w2["!cols"]=[{wch:55},{wch:12},{wch:40},{wch:10},{wch:11},{wch:9},{wch:17},{wch:16},{wch:18}];
   XLSX.utils.book_append_sheet(wb,w2,"Procedimento x unidade");
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Filtro",`${$("pr-tipo").value||"todos os tipos"} · ${$("pr-nivel").options[$("pr-nivel").selectedIndex].text} · busca: ${$("pr-busca").value||"(nenhuma)"}`]])),"Leia-me");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Filtro",`${$("pr-tipo").value||"todos os tipos"} · ${$("pr-nivel").options[$("pr-nivel").selectedIndex].text} · busca: ${$("pr-busca").value||"(nenhuma)"}`],["% devolvidas (12 m)",`das solicitações do procedimento feitas de ${(DV.janela12||["",""])[0]} a ${(DV.janela12||["",""])[1]} pelas unidades do filtro, quantas estão devolvidas hoje`]])),"Leia-me");
   XLSX.writeFile(wb,`Devolvidas por procedimento - Região Norte (${D.data.split("-").reverse().join("-")}).xlsx`);
 }
 async function comStatus(st, fn){
