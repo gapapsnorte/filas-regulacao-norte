@@ -20,29 +20,30 @@
   --bg:#12161c;--card:#1b2129;--txt:#e6e9ee;--muted:#9aa4b2;--line:#2c3440;--accent:#6ea8ff;
   --in:#e6e9ee;--out:#3ccf8e;--saldo:#ff6b5e;--alerta-bg:#3a2a12;--alerta-txt:#ffc27a;--aviso-bg:#3d1b1b;--aviso-txt:#ffb3b3;}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 40px}
+html{font-size:14px}
+body{margin:0;background:var(--bg);color:var(--txt);font:13px/1.3 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:14px 14px 28px}
 header h1{font-size:1.45rem;margin:0}
 header p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
 .piloto{display:inline-block;background:var(--accent);color:#fff;border-radius:999px;padding:1px 9px;font-size:.75rem;font-weight:600;margin-left:6px;vertical-align:middle}
 .aviso{background:var(--aviso-bg);color:var(--aviso-txt);border-radius:10px;padding:10px 14px;margin-top:12px;font-size:.9rem}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:18px 0}
-.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
-.kpi b{display:block;font-size:1.5rem;font-variant-numeric:tabular-nums}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin:12px 0}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+.kpi b{display:block;font-size:1.3rem;font-variant-numeric:tabular-nums}
 .kpi span{color:var(--muted);font-size:.82rem}
 button.kpi{font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%}
 button.kpi:hover{border-color:var(--accent);box-shadow:0 1px 6px rgba(0,0,0,.08)}
 button.kpi:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 button.kpi span::after{content:" ›";color:var(--accent)}
-.abas{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:0 0 14px;flex-wrap:wrap}
-.abas button{border:1px solid transparent;border-bottom:none;background:none;color:var(--muted);padding:9px 14px;border-radius:8px 8px 0 0;font-size:.92rem;cursor:pointer;margin-bottom:-1px}
+.abas{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:0 0 10px;flex-wrap:wrap}
+.abas button{border:1px solid transparent;border-bottom:none;background:none;color:var(--muted);padding:6px 12px;border-radius:8px 8px 0 0;font-size:.9rem;cursor:pointer;margin-bottom:-1px}
 .abas button[aria-selected="true"]{background:var(--card);border-color:var(--line);color:var(--txt);font-weight:600}
-.ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
-.ctrl input[type=search]{flex:1 1 240px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt);font-size:.95rem}
-.ctrl select,.ctrl button{padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt);font-size:.9rem;cursor:pointer}
+.ctrl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+.ctrl input[type=search]{flex:1 1 240px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt);font-size:.9rem}
+.ctrl select,.ctrl button{padding:5px 7px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt);font-size:.9rem;cursor:pointer}
 .ctrl .cont{color:var(--muted);font-size:.85rem;margin-left:auto}
-.lista{display:flex;flex-direction:column;gap:8px}
-.fila{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer}
+.lista{display:flex;flex-direction:column;gap:5px}
+.fila{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 12px;cursor:pointer}
 .fila:hover,.fila:focus-visible{border-color:var(--accent);outline:none}
 .fila.destaque{box-shadow:0 0 0 2px var(--accent)}
 .lin{display:grid;grid-template-columns:minmax(0,2.6fr) 80px minmax(0,2.2fr) 130px 120px;gap:12px;align-items:center}
@@ -56,10 +57,10 @@ button.kpi span::after{content:" ›";color:var(--accent)}
 .chip{display:inline-flex;gap:4px;align-items:center;border-radius:6px;padding:2px 7px;font-size:.78rem;font-variant-numeric:tabular-nums;color:#111}
 .chip.vermelho{background:var(--vermelho);color:#fff}.chip.amarelo{background:var(--amarelo)}.chip.verde{background:var(--verde)}
 .chip.azul{background:var(--azul)}.chip.semrisco{background:var(--semrisco)}
-.alertas{margin-top:6px;display:flex;flex-wrap:wrap;gap:5px}
+.alertas{margin-top:3px;display:flex;flex-wrap:wrap;gap:4px}
 .tag{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:0 7px;font-size:.7rem;color:var(--muted);white-space:nowrap}
 .tag.ok{border-color:var(--out);color:var(--out)}
-.sim-wrap{margin-top:12px}.sim-abrir{width:100%;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font:inherit;font-weight:600;cursor:pointer;color:var(--txt)}.sim-abrir:hover{border-color:var(--accent)}
+.sim-wrap{margin-top:8px}.sim-abrir{width:100%;text-align:left;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font:inherit;font-weight:600;cursor:pointer;color:var(--txt)}.sim-abrir:hover{border-color:var(--accent)}
 .sim{margin-top:6px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);cursor:default}.sim[hidden]{display:none}
 .plano{margin-top:12px;padding:10px 12px;border:1px dashed var(--line);border-radius:8px;background:var(--card)}.plano h5{margin:0 0 6px;font-size:.92rem;display:flex;align-items:center;gap:8px}
 .plano input[type=number]{width:72px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--bg);color:var(--txt)}.plano label{color:var(--txt)}.plano-txt{font-size:.9rem;margin:8px 0 0;line-height:1.5}
@@ -77,11 +78,11 @@ button.kpi span::after{content:" ›";color:var(--accent)}
 .sim-res .bom b{color:var(--out)}.sim-res .ruim b{color:var(--saldo)}
 .sim svg{max-width:560px;display:block}
 .alerta{background:var(--alerta-bg);color:var(--alerta-txt);border-radius:6px;padding:2px 8px;font-size:.78rem}
-.det{display:none;margin-top:10px;border-top:1px solid var(--line);padding-top:10px;cursor:default}
+.det{display:none;margin-top:6px;border-top:1px solid var(--line);padding-top:6px;cursor:default}
 .fila.aberta .det{display:block}
-.leg{display:flex;gap:14px;font-size:.8rem;color:var(--muted);margin:4px 0}
+.leg{display:flex;gap:10px;font-size:.78rem;color:var(--muted);margin:2px 0}
 .leg i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:4px}
-.leg{flex-wrap:wrap;align-items:center;row-gap:4px}.leg svg{vertical-align:middle;margin-right:4px;color:var(--muted)}
+.leg{flex-wrap:wrap;align-items:center;row-gap:2px}.leg svg{vertical-align:middle;margin-right:4px;color:var(--muted)}
 .ajuda{border:1px solid var(--line);background:var(--card);color:var(--accent);border-radius:50%;width:22px;height:22px;font-size:.8rem;font-weight:700;cursor:pointer;line-height:1;padding:0}
 .ajuda-txt{font-size:.82rem;line-height:1.45;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:2px 0 8px;max-width:760px}.ajuda-txt p{margin:4px 0}
 .graf{position:relative;max-width:760px}
@@ -100,14 +101,14 @@ button.kpi span::after{content:" ›";color:var(--accent)}
 .tip{position:absolute;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:7px;padding:6px 9px;font-size:.8rem;box-shadow:0 2px 8px rgba(0,0,0,.15);white-space:nowrap;font-variant-numeric:tabular-nums}
 .tip b{display:block;margin-bottom:2px}
 .tip i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
-table.cores,table.tab{border-collapse:collapse;font-size:.85rem;margin-top:8px}
-table.cores td,table.cores th,table.tab td,table.tab th{padding:4px 10px;border-bottom:1px solid var(--line);text-align:right}
+table.cores,table.tab{border-collapse:collapse;font-size:.82rem;margin-top:4px}
+table.cores td,table.cores th,table.tab td,table.tab th{padding:2px 8px;border-bottom:1px solid var(--line);text-align:right}
 table.cores td:first-child,table.cores th:first-child,table.tab td:first-child,table.tab th:first-child{text-align:left}
 table.tab{width:100%}
 table.tab td:nth-child(2),table.tab th:nth-child(2){text-align:left}
 .rolagem{max-height:360px;overflow:auto}
 .acima{color:var(--saldo);font-weight:600}
-.gerar{margin-top:12px;padding:12px;border:1px dashed var(--line);border-radius:10px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;cursor:default}
+.gerar{margin-top:8px;padding:8px 10px;border:1px dashed var(--line);border-radius:10px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;cursor:default}
 .gerar label{font-size:.85rem;color:var(--muted);display:flex;gap:6px;align-items:center;flex:1 1 240px}
 .gerar input{flex:1;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--txt)}
 .botoes{display:flex;gap:6px;flex-wrap:wrap}
@@ -115,7 +116,7 @@ table.tab td:nth-child(2),table.tab th:nth-child(2){text-align:left}
 .botoes button.sec{background:transparent;color:var(--accent)}
 .botoes button:disabled{opacity:.5;cursor:wait}
 .gerar .status,.dv-acoes .status{flex-basis:100%;color:var(--muted);font-size:.85rem}
-.dv-acoes{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.dv-acoes{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
 .dv-acoes button{padding:7px 12px;border-radius:7px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-weight:600;cursor:pointer}
 .visao{display:flex;gap:6px;align-items:center;margin-bottom:12px;font-size:.88rem;color:var(--muted)}
 .visao button{padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--txt);font-size:.88rem;cursor:pointer}
@@ -123,7 +124,11 @@ table.tab td:nth-child(2),table.tab th:nth-child(2){text-align:left}
 .rank-wrap{overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:10px}
 table.rank{width:100%;min-width:820px;margin:0;font-size:.88rem}
 table.rank th{color:var(--muted);font-weight:600;white-space:nowrap;vertical-align:bottom;background:var(--card)}
-table.rank th[data-ord]{cursor:pointer}
+table.rank th[data-ord],.pr-cab button,table.tab.ord th{cursor:pointer}
+table.tab.ord th[aria-sort]::after,table.rank th[aria-sort]::after,.pr-cab button[aria-sort]::after{content:" ▼";font-size:.7em}
+table.tab.ord th[aria-sort=ascending]::after,table.rank th[aria-sort=ascending]::after,.pr-cab button[aria-sort=ascending]::after{content:" ▲"}
+table.tab.ord th:hover,.pr-cab button:hover{color:var(--accent)}
+.pr-cab .lin{padding:2px 14px 0}.pr-cab button{font:inherit;font-size:.8rem;font-weight:600;color:var(--muted);background:none;border:none;padding:4px 0;text-align:right}.pr-cab button:first-child{text-align:left}
 table.rank th[data-ord]:hover,table.rank th[aria-sort]{color:var(--accent)}
 table.rank th[aria-sort]::after{content:" ▾"}
 table.rank thead tr:first-child th{text-align:center;border-bottom:none;padding-bottom:0}
@@ -138,7 +143,8 @@ table.rank td.sep,table.rank th.sep{border-left:1px solid var(--line)}
 table.rank tr.sub td{background:var(--bg);text-align:left;padding:8px 14px 12px}
 table.rank tr.sub table.tab{background:var(--card)}
 a.irfila{color:var(--accent)}
-.nota{color:var(--muted);font-size:.83rem;margin:0 0 10px}
+.nota{color:var(--muted);font-size:.8rem;margin:0 0 6px}
+.det p{margin:2px 0 0}.det .nota{margin:2px 0 0}   /* legendas e notas coladas ao item de que falam */
 footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid var(--line);padding-top:12px}
 .mais[hidden]{display:none}
 .mais{display:block;margin:14px auto 0;padding:9px 18px;border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:8px;cursor:pointer}
@@ -258,6 +264,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
   <span class="cont" id="pr-cont"></span>
 </div>
 <div class="dv-acoes"><small class="status" id="pr-status"></small></div>
+<div class="pr-cab" id="pr-cab"></div>
 <div class="lista" id="pr-lista"></div>
 <button class="mais" id="pr-mais" hidden>Mostrar mais</button>
 </div>
@@ -360,13 +367,16 @@ function escala(s,ab){
 // quadrimestre contém mês aberrante? devolve [{rot, v}] por curva
 function abQuad(f,ab,P,i,c){ const t=ab[c]; return P[i].idx.filter(m=>t.flag[m-ab.ini]).map(m=>({rot:D.meses[m],v:c==="saldo"?f.in[m]-f.out[m]:f[c][m]})); }
 // Legenda do gráfico: cores, linha de tendência e marcação dos meses aberrantes (muda com a visão mensal/quadrimestral)
-function legenda(){
+function legenda(f){
+  // média mensal de cada curva nos meses mostrados (na visão por quadrimestre também é por mês)
+  const ix=[...new Set(periodos().flatMap(p=>p.idx))], mm=a=>ix.reduce((t,i)=>t+(a[i]||0),0)/Math.max(1,ix.length);
+  const mEnt=f?mm(f.in):null, mSai=f?mm(f.out):null, mSal=f?mEnt-mSai:null;
   const sw=cor=>`<i style="background:${cor}"></i>`;
   const tra=`<svg width="28" height="12" viewBox="0 0 28 12" aria-hidden="true"><line x1="0" y1="6" x2="28" y2="6" stroke="currentColor" stroke-width="2" stroke-dasharray="5 3"/><circle cx="14" cy="6" r="4" fill="var(--card)" stroke="currentColor" stroke-width="1.6"/></svg>`;
   const fina=`<svg width="28" height="12" viewBox="0 0 28 12" aria-hidden="true"><line x1="0" y1="9" x2="28" y2="3" stroke="currentColor" stroke-width="1.2" opacity=".8"/></svg>`;
   const anel=`<svg width="20" height="14" viewBox="0 0 20 14" aria-hidden="true"><circle cx="10" cy="7" r="3" fill="currentColor"/><circle cx="10" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 2"/></svg>`;
   const M=PER==="m";
-  return `<div class="leg"><span>${sw("var(--in)")}Entrada</span><span>${sw("var(--out)")}Saída</span><span>${sw("var(--saldo)")}Saldo</span>
+  return `<div class="leg">${f?`<span>${sw("var(--in)")}Entrada (média <b>${fmt(mEnt,1)}</b>/mês)</span><span>${sw("var(--out)")}Saída (média <b>${fmt(mSai,1)}</b>/mês)</span><span>${sw("var(--saldo)")}Saldo (média <b>${mSal>0?"+":""}${fmt(mSal,1)}</b>/mês)</span>`:`<span>${sw("var(--in)")}Entrada</span><span>${sw("var(--out)")}Saída</span><span>${sw("var(--saldo)")}Saldo</span>`}
     ${M?`<span>${fina}linha fina = tendência</span><span>${tra}tracejado + círculo vazio = mês aberrante (fora da tendência)</span>`
        :`<span>${tra}tracejado + ponto vazado = quadrimestre incompleto</span><span>${anel}círculo tracejado = quadrimestre com mês aberrante</span>`}
     <button type="button" class="ajuda" aria-expanded="false" title="O que é um mês aberrante e como ele é identificado">?</button></div>
@@ -594,11 +604,11 @@ function item(f){
    </div>
    ${f.alertas.length?`<div class="alertas">${f.alertas.map(a=>`<span class="alerta">⚠ ${esc(a)}</span>`).join("")}</div>`:""}
    <div class="det">
-     ${legenda()}
+     ${legenda(f)}
      ${grafico(f)}
      <div class="rolagem"><table class="cores"><tr><th>Prioridade</th><th>Solicitações</th><th>Mais antiga</th><th>Espera da mais antiga (dias)</th><th title="Tempo médio que quem está na fila hoje já esperou">Média na fila hoje (dias)</th><th title="Tempo médio entre a solicitação e o atendimento, nos agendamentos com atendimento nos últimos ${D.atend_dias||90} dias">Média até o atendimento (dias)</th><th>Meta (dias)</th></tr>${linhas}</table></div>
-     <p class="nota" style="margin:4px 0 0">“Média na fila hoje” = há quanto tempo, em média, esperam as solicitações que ainda estão na fila. “Média até o atendimento” = tempo entre a solicitação e o atendimento nos agendados com atendimento nos últimos ${D.atend_dias||90} dias (n = quantos; passe o cursor para ver a mediana).</p>
-     <p style="font-size:.85rem;color:var(--muted)">Devolvidas: ${fmt(f.devolvidas)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Sem meta de tempo de espera definida em normativa da SES-DF para este procedimento"}</p>
+     <p class="nota" style="margin:2px 0 0">“Média na fila hoje” = há quanto tempo, em média, esperam as solicitações que ainda estão na fila. “Média até o atendimento” = tempo entre a solicitação e o atendimento nos agendados com atendimento nos últimos ${D.atend_dias||90} dias (n = quantos; passe o cursor para ver a mediana).</p>
+     <p style="font-size:.8rem;color:var(--muted);margin:2px 0 0">Devolvidas: ${fmt(f.devolvidas)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Sem meta de tempo de espera definida em normativa da SES-DF para este procedimento"}</p>
      ${f.fila>0?simHtml(f):""}
      <div class="gerar" data-id="${f.id}" data-p="${esc(f.p)}">
        <b>Gerar análise completa</b>
@@ -731,12 +741,15 @@ function porUnidade(){
   U.forEach(x=>{ const r=k=>x.esf?x[k]/x.esf:null; x.taxa=r("n"); x.taxaC=r("c"); x.taxaE=r("e"); x.taxa12=x.t12?x.d12/x.t12*100:null; x.pct=x.n/tot*100; x.procs.sort((a,b)=>b[1]-a[1]); });
   return U.filter(x=>x.n>0||x.t12>0);
 }
-const ORD_UN={n:x=>x.n,taxa:x=>x.taxa??-1,c:x=>x.c,taxaC:x=>x.taxaC??-1,e:x=>x.e,taxaE:x=>x.taxaE??-1,t12:x=>x.t12,taxa12:ord12};
+const ORD_UN={esf:x=>x.esf??-1,nproc:x=>x.procs.length,n:x=>x.n,taxa:x=>x.taxa??-1,c:x=>x.c,taxaC:x=>x.taxaC??-1,e:x=>x.e,taxaE:x=>x.taxaE??-1,t12:x=>x.t12,taxa12:ord12};
 let UN_ATUAL={};
+let unOrd={k:null,dir:-1}, prOrd={k:null,dir:-1};   // coluna clicada no cabeçalho (dir -1 = decrescente); null = vale o seletor
+const ordUn=()=>unOrd.k||$("un-ordem").value, ordPr=()=>prOrd.k||$("pr-ordem").value;
+function cliqueOrd(st,k,padrao){ if(st.k===k) st.dir=-st.dir; else { st.k=k; st.dir=padrao; } }
 function filtrarUn(){
-  const q=norm($("un-busca").value.trim()), nv=$("un-nivel").value, o=$("un-ordem").value;
-  const L=porUnidade().filter(x=>(!q||norm(x.u).includes(q))&&(!nv||x.nivel===nv));
-  L.sort(o==="nome"?(a,b)=>a.u.localeCompare(b.u,"pt",{numeric:true}):(a,b)=>ORD_UN[o](b)-ORD_UN[o](a)||b.n-a.n);
+  const q=norm($("un-busca").value.trim()), nv=$("un-nivel").value, o=ordUn();
+  const L=porUnidade().filter(x=>(!q||norm(x.u).includes(q))&&(!nv||x.nivel===nv)), d=unOrd.k?unOrd.dir:-1;
+  L.sort(o==="nome"?(a,b)=>(unOrd.k?unOrd.dir:1)*a.u.localeCompare(b.u,"pt",{numeric:true}):(a,b)=>d*-(ORD_UN[o](b)-ORD_UN[o](a))||b.n-a.n);
   return L;
 }
 function linhaUn(x,pos){
@@ -747,16 +760,16 @@ function linhaUn(x,pos){
 function detalheUn(x){
   const procs=x.procs.map(([id,n])=>{const f=porId[id], q=x.p12[id]||[0,0]; return `<tr><td>${f?`<a class="irfila" href="#f-${id}">${esc(f.p)}</a>`:id}</td><td>${esc(f?f.tipo:"")}</td><td>${fmt(n)}</td><td>${fmt(n/x.n*100,1)}%</td><td>${x.esf?fmt(n/x.esf,1):"–"}</td><td title="${fmt(q[0])} devolvidas entre ${fmt(q[1])} solicitações nos últimos 12 meses">${pct12(q[0],q[1])}</td></tr>`;}).join("");
   const ui=DV.unidades.findIndex(u=>u[0]===x.u);
-  return `<tr class="sub"><td colspan="12">${DV.serie?miniSerie("Devolvidas da unidade",{uis:new Set([ui])}):""}<div class="rolagem"><table class="tab"><tr><th>Procedimento</th><th>Tipo</th><th>Devolvidas</th><th>% da unidade</th><th>Por eSF</th><th>% devolvidas (12 m)</th></tr>${procs}</table></div>
+  return `<tr class="sub"><td colspan="12">${DV.serie?miniSerie("Devolvidas da unidade",{uis:new Set([ui])}):""}<div class="rolagem"><table class="tab ord"><tr><th>Procedimento</th><th>Tipo</th><th>Devolvidas</th><th>% da unidade</th><th>Por eSF</th><th>% devolvidas (12 m)</th></tr>${procs}</table></div>
     <div class="dv-acoes"><button data-dev-un="${esc(x.u)}">Baixar devolvidas desta unidade (Excel)</button><small class="status"></small></div></td></tr>`;
 }
 const CAB_UN=[["n","Devolvidas"],["taxa","por eSF"],["c","Devolvidas"],["taxaC","por eSF"],["e","Devolvidos"],["taxaE","por eSF"],["t12","Solicitações"],["taxa12","% devolvidas"]];
 function renderUn(){
-  const L=filtrarUn(), o=$("un-ordem").value, rank=o!=="nome";
+  const L=filtrarUn(), o=ordUn(), rank=o!=="nome", dsc=(unOrd.k?unOrd.dir:-1)<0?"descending":"ascending";
   const abertas=[...document.querySelectorAll("#un-lista tr.u.aberta")].map(tr=>tr.dataset.u);   // linhas abertas continuam abertas
-  const th=(k,t,extra="")=>`<th data-ord="${k}"${o===k?' aria-sort="descending"':""}${k==="c"||k==="e"||k==="t12"?' class="sep"':""} ${extra}>${t}</th>`;
+  const th=(k,t,extra="")=>`<th data-ord="${k}"${o===k?` aria-sort="${dsc}"`:""}${k==="c"||k==="e"||k==="t12"?' class="sep"':""} ${extra}>${t}</th>`;
   $("un-lista").innerHTML=L.length?`<table class="tab rank"><thead>
-    <tr><th rowspan="2">#</th>${th("nome","Unidade solicitante",'rowspan="2"')}<th rowspan="2">eSF</th><th colspan="2" class="sep">Total</th><th colspan="2" class="sep">Consultas</th><th colspan="2" class="sep">Exames</th><th colspan="2" class="sep" title="Solicitações feitas pela unidade nos últimos 12 meses completos e quantas delas estão devolvidas hoje">Últimos 12 meses</th><th rowspan="2" class="sep">Procedi-<br>mentos</th></tr>
+    <tr><th rowspan="2">#</th>${th("nome","Unidade solicitante",'rowspan="2"')}<th rowspan="2" data-ord="esf"${o==="esf"?` aria-sort="${dsc}"`:""}>eSF</th><th colspan="2" class="sep">Total</th><th colspan="2" class="sep">Consultas</th><th colspan="2" class="sep">Exames</th><th colspan="2" class="sep" title="Solicitações feitas pela unidade nos últimos 12 meses completos e quantas delas estão devolvidas hoje">Últimos 12 meses</th><th rowspan="2" class="sep" data-ord="nproc"${o==="nproc"?` aria-sort="${dsc}"`:""}>Procedimentos</th></tr>
     <tr>${CAB_UN.map(([k,t])=>th(k,t)).join("")}</tr></thead><tbody>${L.map((x,i)=>linhaUn(x,rank?i+1:0)).join("")}</tbody></table>`:'<p style="padding:12px">Nenhuma unidade encontrada.</p>';
   UN_ATUAL=Object.fromEntries(L.map(x=>[x.u,x]));
   abertas.forEach(u=>{ const tr=document.querySelector(`#un-lista tr.u[data-u="${CSS.escape(u)}"]`); if(tr) alternarUn(tr); });
@@ -775,9 +788,10 @@ function porProcedimento(nivel){
   return L;
 }
 function filtrarPr(){
-  const q=norm($("pr-busca").value.trim()), t=$("pr-tipo").value, o=$("pr-ordem").value;
+  const q=norm($("pr-busca").value.trim()), t=$("pr-tipo").value, o=ordPr(), d=prOrd.k?prOrd.dir:-1;
   const L=porProcedimento($("pr-nivel").value).filter(x=>(!q||norm(x.f.p).includes(q))&&(!t||x.f.tipo===t));
-  L.sort(o==="nome"?(a,b)=>a.f.p.localeCompare(b.f.p,"pt"):o==="taxa12"?(a,b)=>ord12(b)-ord12(a)||b.n-a.n:(a,b)=>b.n-a.n);
+  const V={n:x=>x.n,aps:x=>x.aps,pctaps:x=>x.total?x.aps/x.total:0,fila:x=>x.f.fila,taxa12:ord12};
+  L.sort(o==="nome"?(a,b)=>(prOrd.k?prOrd.dir:1)*a.f.p.localeCompare(b.f.p,"pt"):(a,b)=>d*-(V[o](b)-V[o](a))||b.n-a.n);
   return L;
 }
 function itemPr(x,pos){
@@ -792,12 +806,13 @@ function itemPr(x,pos){
       <div class="num"><b>${fmt(x.f.fila)}</b><small>na fila</small></div>
       <div class="num" title="${fmt(x.d12)} devolvidas entre ${fmt(x.t12)} solicitações nos últimos 12 meses"><b>${pct12(x.d12,x.t12)}</b><small>devolvidas (12 m)</small></div>
     </div>
-    <div class="det">${DV.serie?miniSerie("Devolvidas do procedimento"+(nivelPr?" ("+nivelPr+")":""),{ids:new Set([x.f.id]),uis:nivelPr?new Set(unidadesDo(nivelPr).map(([,i])=>i)):null}):""}<div class="rolagem"><table class="tab"><tr><th>Unidade solicitante</th><th>Nível</th><th>Devolvidas</th><th>Por eSF</th><th>% do procedimento</th><th>% devolvidas (12 m)</th></tr>${us}</table></div>
+    <div class="det">${DV.serie?miniSerie("Devolvidas do procedimento"+(nivelPr?" ("+nivelPr+")":""),{ids:new Set([x.f.id]),uis:nivelPr?new Set(unidadesDo(nivelPr).map(([,i])=>i)):null}):""}<div class="rolagem"><table class="tab ord"><tr><th>Unidade solicitante</th><th>Nível</th><th>Devolvidas</th><th>Por eSF</th><th>% do procedimento</th><th>% devolvidas (12 m)</th></tr>${us}</table></div>
       <div class="dv-acoes"><a class="irfila" href="#f-${x.f.id}">Abrir a fila no painel</a> <button data-dev-p="${x.f.id}">Baixar devolvidas deste procedimento (Excel)</button><small class="status"></small></div></div>
   </div>`;
 }
 function renderPr(){
-  const L=filtrarPr(), rank=$("pr-ordem").value!=="nome";
+  const L=filtrarPr(), o=ordPr(), rank=o!=="nome", dsc=(prOrd.k?prOrd.dir:-1)<0?"descending":"ascending", ab=k=>o===k?` aria-sort="${dsc}"`:"";
+  $("pr-cab").innerHTML=`<div class="lin dv"><button type="button" data-pord="nome"${ab("nome")}>Procedimento</button><button type="button" data-pord="n"${ab("n")}>Devolvidas</button><button type="button" data-pord="aps"${ab("aps")}>Da APS (n)</button><button type="button" data-pord="pctaps"${ab("pctaps")}>Da APS (%)</button><button type="button" data-pord="fila"${ab("fila")}>Na fila</button><button type="button" data-pord="taxa12"${ab("taxa12")}>Devolvidas (12 m)</button></div>`;
   const abertos=[...document.querySelectorAll("#pr-lista .fila.aberta")].map(c=>c.dataset.pid);
   $("pr-lista").innerHTML=L.slice(0,visPr).map((x,i)=>itemPr(x,rank?i+1:0)).join("")||"<p>Nenhum procedimento encontrado.</p>";
   abertos.forEach(id=>{ const c=document.querySelector(`#pr-lista .fila[data-pid="${id}"]`); if(c) c.classList.add("aberta"); });
@@ -972,8 +987,8 @@ const PRONTO=fetch("dados.json",{cache:"no-store"}).then(r=>{if(!r.ok) throw new
   $("aviso").hidden=false; $("aviso").textContent="Erro ao carregar dados.json ("+err.message+"). Tente recarregar a página; se persistir, a atualização automática falhou.";
 });
 ["busca","tipo","alerta","ordem"].forEach(id=>$(id).addEventListener("input",()=>{vis=60;render();}));
-["un-busca","un-nivel","un-ordem"].forEach(id=>$(id).addEventListener("input",()=>DV&&renderUn()));
-["pr-busca","pr-tipo","pr-nivel","pr-ordem"].forEach(id=>$(id).addEventListener("input",()=>{visPr=60;DV&&renderPr();}));
+["un-busca","un-nivel","un-ordem"].forEach(id=>$(id).addEventListener("input",()=>{ if(id==="un-ordem") unOrd={k:null,dir:-1}; DV&&renderUn(); }));
+["pr-busca","pr-tipo","pr-nivel","pr-ordem"].forEach(id=>$(id).addEventListener("input",()=>{ if(id==="pr-ordem") prOrd={k:null,dir:-1}; visPr=60;DV&&renderPr();}));
 $("sv-nivel").addEventListener("input",()=>{atualizarUnSerie();renderSerie();});
 ["sv-un","sv-medida"].forEach(id=>$(id).addEventListener("input",renderSerie));
 $("sv-tipo").addEventListener("input",()=>{ if($("sv-tipo").value){ $("sv-proc").value=""; $("sv-proc-txt").value=""; $("sv-proc-x").hidden=true; } renderSerie(); });
@@ -1004,7 +1019,7 @@ function alternarUn(tr){
 }
 $("un-lista").addEventListener("click",e=>{
   if(e.target.closest("a")) return;
-  const h=e.target.closest("th[data-ord]"); if(h){ $("un-ordem").value=h.dataset.ord; renderUn(); return; }
+  const h=e.target.closest("th[data-ord]"); if(h){ const k=h.dataset.ord; cliqueOrd(unOrd,k,k==="nome"?1:-1); if([...$("un-ordem").options].some(o=>o.value===k)) $("un-ordem").value=k; renderUn(); return; }
   const b=e.target.closest("button[data-dev-un]");
   if(b){ comStatus(b.parentElement.querySelector(".status"),()=>window.baixarDevolvidas({unidades:[b.dataset.devUn],titulo:"Devolvidas - "+b.dataset.devUn},porId)); return; }
   if(e.target.closest("tr.sub")) return;
@@ -1022,6 +1037,18 @@ function alternar(e,lista){
   if(e.target.closest(".det")) return;
   const c=e.target.closest(".fila"); if(c) c.classList.toggle("aberta");
 }
+$("pr-cab").addEventListener("click",e=>{ const b=e.target.closest("button[data-pord]"); if(!b) return; const k=b.dataset.pord; cliqueOrd(prOrd,k,k==="nome"?1:-1); if([...$("pr-ordem").options].some(o=>o.value===k)) $("pr-ordem").value=k; visPr=60; renderPr(); });
+// tabelas internas das devolvidas: clicar no cabeçalho ordena as linhas (1º clique: maior→menor ou A→Z; 2º: inverte)
+document.addEventListener("click",e=>{
+  const th=e.target.closest("table.tab.ord th"); if(!th) return;
+  const tb=th.closest("table"), ths=[...th.parentElement.children], c=ths.indexOf(th), linhas=[...tb.querySelectorAll("tr")].filter(r=>r!==th.parentElement);
+  const num=t=>{ const m=t.replace(/\./g,"").replace(",",".").match(/-?\d+(\.\d+)?/); return t.trim()==="–"?-1:m?parseFloat(m[0]):null; };
+  const val=r=>r.children[c].textContent.trim(), numerica=linhas.every(r=>num(val(r))!==null);
+  const dir=th.getAttribute("aria-sort")==="descending"?1:th.getAttribute("aria-sort")==="ascending"?-1:(numerica?-1:1);
+  linhas.sort((a,b)=>dir*(numerica?num(val(a))-num(val(b)):val(a).localeCompare(val(b),"pt",{numeric:true})));
+  ths.forEach(t=>t.removeAttribute("aria-sort")); th.setAttribute("aria-sort",dir<0?"descending":"ascending");
+  linhas.forEach(r=>r.parentElement.appendChild(r));
+});
 $("pr-lista").addEventListener("click",e=>alternar(e));
 $("lista").addEventListener("click",async e=>{
   const g=e.target.closest(".gerar");

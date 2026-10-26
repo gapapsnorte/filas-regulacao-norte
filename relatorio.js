@@ -252,7 +252,7 @@
       t.fig2 += acima.length ? " Em relação às metas do protocolo, a espera máxima ultrapassa a meta em " + acima.map(x => `${x.cor.toLowerCase()} (${fmt(x.dias)} dias; meta de ${x.meta})`).join(", ") + "." : "";
       t.fig2 += ok.length ? ` Dentro da meta: ${ok.map(x => x.cor.toLowerCase()).join(", ")}.` : "";
     }
-    t.fig3 = "Os principais grupos de CID são " + [...r.cids].sort((a, b) => b.n - a.n).filter(x => x.n).map(x => `${x.grupo} (${fmt(x.pct)}%)`).join(", ") + ".";
+    t.fig3 = "Os principais grupos de CID são " + [...r.cids].sort((a, b) => b.n - a.n).filter(x => x.n).map(x => `${x.grupo} (${fmt(x.n)} solicitações; ${fmt(x.pct)}%)`).join(", ") + ".";
     const top = [...r.ubs].sort((a, b) => b.n - a.n).slice(0, 3);
     const tx = r.ubs.filter(x => x.taxa != null).sort((a, b) => b.taxa - a.taxa).slice(0, 3);
     t.fig4 = r.totDev ? `Das ${fmt(r.totDev)} solicitações devolvidas, ${fmt(r.niveis[0].n)} (${r.niveis[0].pct}%) vieram da APS.` +
@@ -409,7 +409,7 @@
   // versão clara da cor do grupo (78% de branco) para o fundo das linhas de categoria da Figura 3.2
   const tom = hex => { const n = parseInt(hex.slice(1), 16), f = c => Math.round(255 - (255 - c) * 0.22); return [f(n >> 16), f((n >> 8) & 255), f(n & 255)]; };
   const tomHex = hex => tom(hex).map(v => v.toString(16).padStart(2, "0")).join("").toUpperCase();
-  const graficoCids = r => pizza(r.cids.map(x => x.n), r.cids.map(x => x.grupo), coresCids(r), (v, t) => `${Math.round(v / t * 100)}%`);
+  const graficoCids = r => pizza(r.cids.map(x => x.n), r.cids.map(x => x.grupo), coresCids(r), (v, t) => `${fmt(v)} (${Math.round(v / t * 100)}%)`);
   function graficoNiveis(r) {
     const base = {APS: "#70AD47", DIRASE: "#2F5597", HRS: "#FF0000", HRPL: "#C00000", UPA: "#FFC000", OUTROS: "#7F7F7F"};
     const extra = ["#7030A0", "#00B0F0", "#A5A5A5", "#264478"]; let k = 0;
