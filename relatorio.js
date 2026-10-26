@@ -425,8 +425,9 @@
     let y = 18, W = 297, M = 20;
     const texto = (t, tam = 12, opt = {}) => {
       doc.setFont("times", opt.negrito ? "bold" : "normal"); doc.setFontSize(tam);
-      const ls = doc.splitTextToSize(t, W - 2 * M), h = tam * 0.42;
-      if (y + ls.length * h > (W > 250 ? 200 : 285)) { novaPag(); }
+      let ls = doc.splitTextToSize(t, W - 2 * M);
+      const h = tam * 0.42;
+      if (y + ls.length * h > (W > 250 ? 200 : 285)) { novaPag(); doc.setFont("times", opt.negrito ? "bold" : "normal"); doc.setFontSize(tam); ls = doc.splitTextToSize(t, W - 2 * M); }   // refaz a quebra: a página nova é retrato (largura menor)
       ls.forEach(l => {
         if (opt.realce) { doc.setFillColor(255, 255, 0); doc.rect(opt.centro ? (W - doc.getTextWidth(l)) / 2 : M, y - h * 0.8, doc.getTextWidth(l), h + 0.6, "F"); }
         doc.text(l, opt.centro ? W / 2 : M, y, {align: opt.centro ? "center" : "left"}); y += h;
@@ -444,8 +445,8 @@
     imagem(graficoSerie(r), 250, 109.1);
     rodape(N.n1); rascunho(r.textos.fig1);
 
-    novaPag();
-    texto(N.f2, 12, {depois: 3});
+    if (W > 250) novaPag(); else y += 3;   // se o texto da Figura 1 já passou para a página retrato, a Figura 2 segue nela
+    garantir(70); texto(N.f2, 12, {depois: 3});
     const corFill = {Vermelho: [255, 0, 0], Amarelo: [255, 255, 0], Verde: [146, 208, 80], Azul: [0, 176, 240]};
     doc.autoTable({
       startY: y, margin: {left: M, right: M}, theme: "grid", styles: {font: "helvetica", fontSize: 10, halign: "center", textColor: 0, lineColor: 120, lineWidth: 0.2},

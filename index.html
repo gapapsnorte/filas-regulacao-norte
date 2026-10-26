@@ -30,6 +30,10 @@ header p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
 .kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
 .kpi b{display:block;font-size:1.5rem;font-variant-numeric:tabular-nums}
 .kpi span{color:var(--muted);font-size:.82rem}
+button.kpi{font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%}
+button.kpi:hover{border-color:var(--accent);box-shadow:0 1px 6px rgba(0,0,0,.08)}
+button.kpi:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.kpi span::after{content:" ›";color:var(--accent)}
 .abas{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:0 0 14px;flex-wrap:wrap}
 .abas button{border:1px solid transparent;border-bottom:none;background:none;color:var(--muted);padding:9px 14px;border-radius:8px 8px 0 0;font-size:.92rem;cursor:pointer;margin-bottom:-1px}
 .abas button[aria-selected="true"]{background:var(--card);border-color:var(--line);color:var(--txt);font-weight:600}
@@ -167,6 +171,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
   <select id="tipo"><option value="">Todos os tipos</option></select>
   <select id="alerta">
     <option value="">Com ou sem alerta</option>
+    <option value="com-fila">Só com solicitações aguardando</option>
     <option value="qualquer">Só com alertas</option>
     <option value="nenhum">Só sem alertas</option>
     <option value="sem-meta">Sem meta normativa</option>
@@ -175,7 +180,6 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
     <option value="esperando">Espera acima da meta</option>
     <option value="parada">Fila parada</option>
     <option value="semsaida">Sem saída há mais de 1 ano</option>
-    <option value="espera">Com fila de espera (aguardando pactuação)</option>
   </select>
   <select id="ordem">
     <option value="fila">Maior fila</option>
@@ -595,7 +599,6 @@ function item(f){
      <div class="rolagem"><table class="cores"><tr><th>Prioridade</th><th>Solicitações</th><th>Mais antiga</th><th>Espera da mais antiga (dias)</th><th title="Tempo médio que quem está na fila hoje já esperou">Média na fila hoje (dias)</th><th title="Tempo médio entre a solicitação e o atendimento, nos agendamentos com atendimento nos últimos ${D.atend_dias||90} dias">Média até o atendimento (dias)</th><th>Meta (dias)</th></tr>${linhas}</table></div>
      <p class="nota" style="margin:4px 0 0">“Média na fila hoje” = há quanto tempo, em média, esperam as solicitações que ainda estão na fila. “Média até o atendimento” = tempo entre a solicitação e o atendimento nos agendados com atendimento nos últimos ${D.atend_dias||90} dias (n = quantos; passe o cursor para ver a mediana).</p>
      <p style="font-size:.85rem;color:var(--muted)">Devolvidas: ${fmt(f.devolvidas)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Sem meta de tempo de espera definida em normativa da SES-DF para este procedimento"}</p>
-     ${blocoEspera(f)}
      ${f.fila>0?simHtml(f):""}
      <div class="gerar" data-id="${f.id}" data-p="${esc(f.p)}">
        <b>Gerar análise completa</b>
@@ -608,7 +611,7 @@ function item(f){
 function filtrar(){
   const q=norm($("busca").value.trim()), t=$("tipo").value, al=$("alerta").value, o=$("ordem").value;
   let L=D.filas.filter(f=>(!q||norm(f.p).includes(q))&&(!t||f.tipo===t)&&
-    (!al || (al==="qualquer" ? f.alertas.length : al==="nenhum" ? !f.alertas.length : al==="sem-meta" ? !f.meta_normativa : al==="com-meta" ? f.meta_normativa : al==="espera" ? (f.espera&&f.espera.n) : f.alertas.some(a=>TIPO_ALERTA[al].test(a)))));
+    (!al || (al==="com-fila" ? f.fila>0 : al==="qualquer" ? f.alertas.length : al==="nenhum" ? !f.alertas.length : al==="sem-meta" ? !f.meta_normativa : al==="com-meta" ? f.meta_normativa : al==="espera" ? (f.espera&&f.espera.n) : f.alertas.some(a=>TIPO_ALERTA[al].test(a)))));
   const k={fila:f=>-f.fila,espera:f=>-(f.espera_max||0),saldo:f=>-f.saldo12,devolvidas:f=>-f.devolvidas,semsaida:f=>-diasSemSaida(f)};
   L.sort(o==="nome"?(a,b)=>a.p.localeCompare(b.p,"pt"):(a,b)=>k[o](a)-k[o](b)||b.fila-a.fila);
   return L;
@@ -839,6 +842,17 @@ function mostrarVisao(v){
   history.replaceState(null,"",v==="un"?"#aba-un":"#aba-proc");
   if(DV) v==="un"?renderUn():renderPr();
 }
+// cartões de indicadores clicáveis: levam à lista correspondente, com o filtro aplicado
+function irFiltro(alvo){
+  const [aba,f,o]=alvo.split("|");
+  if(aba==="dev"){ history.replaceState(null,"","#aba-dev"); mostrarAba("dev"); window.scrollTo({top:$("aba-dev").offsetTop-60,behavior:"smooth"}); return; }
+  if(aba==="oferta"){ $("of-busca").value=""; $("of-tipo").value=""; $("of-sinal").value=f||""; $("of-ordem").value=o||"espera"; visOf=60; renderOf(); $("of-lista").scrollIntoView({behavior:"smooth",block:"start"}); return; }
+  $("busca").value=""; $("tipo").value=""; $("alerta").value=f||""; $("ordem").value=o||"fila"; vis=60;
+  history.replaceState(null,"",location.pathname); mostrarAba("filas"); render();
+  $("lista").scrollIntoView({behavior:"smooth",block:"start"});
+}
+const kpiHtml=a=>a.map(([b,s,alvo])=>`<button type="button" class="kpi" data-ir="${alvo}"><b>${b}</b><span>${s}</span></button>`).join("");
+document.addEventListener("click",e=>{ const k=e.target.closest("button.kpi[data-ir]"); if(k) irFiltro(k.dataset.ir); });
 async function mostrarAba(a,v){
   abaAtual=a;
   document.querySelectorAll(".abas button").forEach(b=>b.setAttribute("aria-selected",b.dataset.aba===a));
@@ -894,8 +908,8 @@ function renderOf(){
 }
 function kpisOf(){
   const E=D.filas.filter(f=>f.espera&&f.espera.n), tot=E.reduce((s,f)=>s+f.espera.n,0), ant=E.reduce((m,f)=>f.espera.dias!=null&&f.espera.dias>m?f.espera.dias:m,0);
-  $("of-kpis").innerHTML=[[fmt(tot),"solicitações em fila de espera (aguardando pactuação)"],[fmt(E.length),"procedimentos com fila de espera"],[ant?fmt(ant)+" d":"–","espera mais antiga na fila de espera"],
-    [fmt(D.filas.filter(f=>sinais(f).includes("semsaida")).length),"filas sem saída há mais de 1 ano"],[fmt(D.filas.filter(f=>sinais(f).includes("parada")).length),"filas paradas"]].map(([b,t])=>`<div class="kpi"><b>${b}</b><span>${t}</span></div>`).join("");
+  $("of-kpis").innerHTML=kpiHtml([[fmt(tot),"solicitações em fila de espera (aguardando pactuação)","oferta|espera|espera"],[fmt(E.length),"procedimentos com fila de espera","oferta|espera|espera"],[ant?fmt(ant)+" d":"–","espera mais antiga na fila de espera","oferta|espera|antiga"],
+    [fmt(D.filas.filter(f=>sinais(f).includes("semsaida")).length),"filas sem saída há mais de 1 ano","oferta|semsaida|fila"],[fmt(D.filas.filter(f=>sinais(f).includes("parada")).length),"filas paradas","oferta|parada|fila"]]);
 }
 function serieOf(){
   const ds=ESP.dias, box=$("of-graf"), nota=$("of-serie-nota");
@@ -942,14 +956,14 @@ const PRONTO=fetch("dados.json",{cache:"no-store"}).then(r=>{if(!r.ok) throw new
   const idade=(Date.now()-new Date(d.data+"T12:00:00"))/864e5;
   if(idade>2){ $("aviso").hidden=false; $("aviso").textContent=`Atenção: os dados são de ${d.data.split("-").reverse().join("/")} (${Math.floor(idade)} dias). A atualização automática pode ter falhado.`; }
   const ativos=d.filas.filter(f=>f.fila>0);
-  $("kpis").innerHTML=[
-    [fmt(ativos.length),"filas com solicitações aguardando"],
-    [fmt(ativos.reduce((s,f)=>s+f.fila,0)),"solicitações na fila (pendentes + reenviadas)"],
-    [fmt(d.filas.filter(f=>f.alertas.length).length),"filas com alertas"],
-    [fmt(d.filas.filter(f=>f.alertas.some(a=>TIPO_ALERTA.semsaida.test(a))).length),"filas sem saída há mais de 1 ano"],
-    [fmt(d.filas.reduce((s,f)=>s+f.devolvidas,0)),"solicitações devolvidas"],
-    [fmt(d.filas.reduce((s,f)=>s+(f.espera?f.espera.n:0),0)),"em fila de espera (aguardando pactuação)"]
-  ].map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join("");
+  $("kpis").innerHTML=kpiHtml([
+    [fmt(ativos.length),"filas com solicitações aguardando","filas|com-fila|fila"],
+    [fmt(ativos.reduce((s,f)=>s+f.fila,0)),"solicitações na fila (pendentes + reenviadas)","filas|com-fila|fila"],
+    [fmt(d.filas.filter(f=>f.alertas.length).length),"filas com alertas","filas|qualquer|fila"],
+    [fmt(d.filas.filter(f=>f.alertas.some(a=>TIPO_ALERTA.semsaida.test(a))).length),"filas sem saída há mais de 1 ano","filas|semsaida|semsaida"],
+    [fmt(d.filas.reduce((s,f)=>s+f.devolvidas,0)),"solicitações devolvidas","dev"],
+    [fmt(d.filas.reduce((s,f)=>s+(f.espera?f.espera.n:0),0)),"em fila de espera (aguardando pactuação)","oferta|espera|espera"]
+  ]);
   const tipos=[...new Set(d.filas.map(f=>f.tipo).filter(Boolean))].sort();
   ["tipo","pr-tipo","of-tipo"].forEach(id=>tipos.forEach(t=>$(id).insertAdjacentHTML("beforeend",`<option>${esc(t)}</option>`)));
   render(); lerHash();
