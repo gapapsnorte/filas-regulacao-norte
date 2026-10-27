@@ -293,14 +293,14 @@ def serie_devolvidas(b, janela, pos_u, nomes):
     uma vez, na sua devolução mais recente (o Mapa Social guarda, para algumas, mais de uma data)."""
     idx = {k: i for i, k in enumerate(janela)}
     ult = {}
-    for p, cod, dt, st, risco, cid, u, ddev, _ in b["det_sol"]["rows"]:
+    for p, cod, _dt, st, _risco, _cid, u, ddev, _ in b["det_sol"]["rows"]:
         if not _valido(p) or st != DEVOL or not _valido(ddev) or not _valido(u):
             continue
         d = _br(ddev)
         if (p, cod) not in ult or d > ult[(p, cod)][0]:
             ult[(p, cod)] = (d, u)
     cel, ids = defaultdict(int), {}
-    for (p, cod), (d, u) in ult.items():
+    for (p, _cod), (d, u) in ult.items():
         k = (d.year, d.month)
         if k not in idx:
             continue
@@ -325,7 +325,7 @@ def estatisticas_cores(b, hoje):
     lim_fim = date(hoje.year, hoje.month, 1)  # primeiro dia do mês atual (exclusivo)
     corte_at = hoje - timedelta(days=ATEND_DIAS)
     acc = defaultdict(lambda: defaultdict(lambda: {"fila": [], "atend": [], "ent": 0, "sai": 0}))
-    vistos = set()
+    vistos, entradas = set(), set()   # entradas: solicitações já contadas na entrada, para nenhuma contar duas vezes
     for p, cod, dt, st, risco, *_ in b["det_sol"]["rows"]:
         if not _valido(p) or (p, cod) in vistos or not _valido(dt):
             continue
@@ -334,10 +334,11 @@ def estatisticas_cores(b, hoje):
         d = _br(dt)
         if st in (PEND, REENV):
             acc[p][cor]["fila"].append((hoje - d).days)
-        if ini <= d < lim_fim and st in (PEND, REENV):
-            acc[p][cor]["ent"] += 1
-    vistos, entradas = set(), set()
-    for p, cod, dsol, dag, st, risco, *_ in b["det_ag"]["rows"]:
+            if ini <= d < lim_fim:
+                entradas.add((p, cod))
+                acc[p][cor]["ent"] += 1
+    vistos = set()
+    for p, cod, dsol, dag, _st, risco, *_ in b["det_ag"]["rows"]:
         if not _valido(p) or not _valido(dag) or (p, cod, dag) in vistos:
             continue
         vistos.add((p, cod, dag))
@@ -478,6 +479,13 @@ def _destino(st):
     return "outro"
 
 
+def _indice(lista, v):
+    """Posição de v na lista; acrescenta ao fim se ainda não estiver (listas p/u do registro)."""
+    if v not in lista:
+        lista.append(v)
+    return lista.index(v)
+
+
 def historico_devolvidas(dev_det, det, hoje, anterior=None):
     """Registro diário da resolução das devolvidas (devolvidas_reg.json, versionado em main; o workflow faz o commit).
     Compara as devolvidas de hoje com as da publicação anterior (detalhe/devolvidas.json no site): códigos que
@@ -510,9 +518,8 @@ def historico_devolvidas(dev_det, det, hoje, anterior=None):
             status[sl[0]] = sl[2]
         for ag in d["a"]:
             status.setdefault(ag[0], "AGENDADA")
-    idx = lambda lista, v: lista.index(v) if v in lista else (lista.append(v) or len(lista) - 1)
-    entradas = [[idx(reg["p"], p), idx(reg["u"], u), cod, dd] for cod, (p, u, dd) in atual.items() if cod not in antes]
-    saidas = [[idx(reg["p"], p), idx(reg["u"], u), cod, dd, _destino(status.get(cod))] for cod, (p, u, dd) in antes.items() if cod not in atual]
+    entradas = [[_indice(reg["p"], p), _indice(reg["u"], u), cod, dd] for cod, (p, u, dd) in atual.items() if cod not in antes]
+    saidas = [[_indice(reg["p"], p), _indice(reg["u"], u), cod, dd, _destino(status.get(cod))] for cod, (p, u, dd) in antes.items() if cod not in atual]
     hoje_s = hoje.isoformat()
     dia = next((d for d in reg["dias"] if d["data"] == hoje_s), None)
     if dia is None:
@@ -538,8 +545,8 @@ def precisa_atualizar(hoje):
     linhas = r.get("ultima", {}).get("rows") or [["-"]]
     recarga, ultima = r.get("_reload", ""), linhas[0][0]
     try:
-        with urllib.request.urlopen(PUBLICADO + "dados.json", timeout=60) as r:
-            pub = json.loads(r.read().decode("utf-8"))
+        with urllib.request.urlopen(PUBLICADO + "dados.json", timeout=60) as resp:
+            pub = json.loads(resp.read().decode("utf-8"))
     except Exception as e:  # sem painel publicado legível: atualiza
         print("Painel publicado ilegível (%s); atualizando." % e)
         return True

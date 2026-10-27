@@ -37,23 +37,15 @@
   }
 
   function nomeCurto(p) {
-    let t = p.trim().replace(/^(CONSULTA|EXAME|PROCEDIMENTO) EM /i, "").replace(/\s*-\s*/g, " - ");
+    const t = p.trim().replace(/^(CONSULTA|EXAME|PROCEDIMENTO) EM /i, "").replace(/\s*-\s*/g, " - ");
     const minus = new Set(["e", "de", "da", "do", "das", "dos", "em", "com", "sem", "para", "a", "o"]);
     return t.toLowerCase().split(/\s+/).map((w, i) => (i && minus.has(w)) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
   }
 
-  // Tendência robusta (Theil-Sen): inclinação = mediana das inclinações entre todos os pares de meses;
-  // intercepto = mediana de y − a·x. Meses atípicos (picos de mutirão, suspensões) quase não puxam a reta.
   function mediana(v) {
     if (!v.length) return 0;
     const s = [...v].sort((p, q) => p - q), m = s.length >> 1;
     return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
-  }
-  function tendencia(y) {
-    const n = y.length, incl = [];
-    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) incl.push((y[j] - y[i]) / (j - i));
-    const a = mediana(incl), b = mediana(y.map((v, i) => v - a * i));
-    return {a, b};
   }
   // ---- Meses aberrantes e tendência corrigida (definido com a Rebeca em 24/10/2026) ----------------------
   // Janela: últimos 24 meses. Theil-Sen iterativo (só para ACHAR os aberrantes): mede o afastamento de cada mês à própria reta, a escala é a
@@ -64,6 +56,7 @@
   // A reta final e o R² são de mínimos quadrados (como no Excel) calculados SEM os aberrantes (decisão de 24/10/2026).
   // Manter em sincronia com analise.py (aberrantes / analisar_aberrantes).
   const ABERR = {k: 4, janela: 24, minMeses: 12, minTotal: 120, maxSeq: 3};
+  // Theil-Sen sobre os meses não marcados: inclinação = mediana das inclinações entre pares; intercepto = mediana de y − a·x
   function tsAjuste(y, flag) {
     const xs = [], ys = [];
     y.forEach((v, i) => { if (!flag[i]) { xs.push(i); ys.push(v); } });
@@ -186,7 +179,7 @@
     // dentro do grupo, por frequência. O % acumulado segue a ordem em que a tabela é lida.
     const top = ord.slice(0, 15), somaGrupo = {};
     top.forEach(c => somaGrupo[c.g] = (somaGrupo[c.g] || 0) + c.n);
-    top.sort((a, b) => (a.g === "OUTROS CIDS") - (b.g === "OUTROS CIDS") || somaGrupo[b.g] - somaGrupo[a.g] || (a.g < b.g ? -1 : a.g > b.g ? 1 : 0) || b.n - a.n);
+    top.sort((a, b) => (a.g === "OUTROS CIDS") - (b.g === "OUTROS CIDS") || somaGrupo[b.g] - somaGrupo[a.g] || cmp(a.g, b.g) || b.n - a.n);
     top.forEach((cat, i) => {
       acum += cat.n;
       const desc = cat.desc || `${cat.k} - ${(cat.subs[0].txt.split(" - ").slice(1).join(" - ") || "")} (categoria)`;
@@ -249,9 +242,8 @@
       `Nos últimos 12 meses, o saldo regulatório foi positivo em ${us.filter(x => x > 0).length} meses, somando ${fmt(us.reduce((a, b) => a + b, 0))} solicitações a mais do que as agendadas no período. ` +
       `Nos últimos ${nj} meses, a tendência (reta de mínimos quadrados calculada sem os meses aberrantes, identificados pelo método de Theil-Sen) indica variação média de ${fmt(ai * 12, 1)} solicitações/mês por ano no INPUT e de ${fmt(ao * 12, 1)} solicitações/mês por ano no OUTPUT.`;
     const ext = [];
-    for (const [k, a] of [["INPUT", s.in], ["OUTPUT", s.out], ["SALDO REGULATÓRIO", s.saldo]]) {
-      const f = ab[k === "INPUT" ? "in" : k === "OUTPUT" ? "out" : "saldo"].flag;
-      f.forEach((x, i) => { if (x) ext.push(`${k} de ${s.meses[ab.ini + i]} (${fmt(a[ab.ini + i])})`); });
+    for (const [k, a, chave] of [["INPUT", s.in, "in"], ["OUTPUT", s.out, "out"], ["SALDO REGULATÓRIO", s.saldo, "saldo"]]) {
+      ab[chave].flag.forEach((x, i) => { if (x) ext.push(`${k} de ${s.meses[ab.ini + i]} (${fmt(a[ab.ini + i])})`); });
     }
     if (ext.length) t.fig1 += " Meses aberrantes (mais de 4 vezes a oscilação típica em relação à tendência; mantidos no gráfico e descontados da linha de tendência), a explicar (mutirão, suspensão de agenda etc.): " + ext.join("; ") + ".";
     const tot = r.risco.reduce((a, x) => a + x.n, 0);
@@ -302,8 +294,7 @@
       tc: `Figura 3.2 – Detalhamento das categorias de CID mais frequentes nas solicitações pendentes em ${r.nome}`,
       ntc: [FONTE, `Nota: Dados extraídos em ${e}. Percentuais em relação às ${fmt(r.totFila)} solicitações pendentes e reenviadas.` +
         " As 15 categorias do CID (3 caracteres) mais frequentes aparecem em negrito; abaixo de cada uma, recuadas, as subcategorias registradas." +
-        (r.restoCids.qt ? ` As demais ${fmt(r.restoCids.qt)} categorias somam ${fmt(r.restoCids.n)} solicitações (${fmt(r.restoCids.n / Math.max(r.totFila, 1) * 100, 1)}%).` : "") +
-""],
+        (r.restoCids.qt ? ` As demais ${fmt(r.restoCids.qt)} categorias somam ${fmt(r.restoCids.n)} solicitações (${fmt(r.restoCids.n / Math.max(r.totFila, 1) * 100, 1)}%).` : "")],
       t1: `Tabela 1 – Distribuição das solicitações devolvidas de ${r.nome} na APS, por UBS`,
       nt1: [FONTE, nt],
       rascunho: "[Rascunho para revisão] ",
@@ -432,7 +423,7 @@
   }
 
   // ------------------------------------------------------------------------------ PDF
-  // chrome = cabeçalho e rodapé institucionais em todas as páginas (teste de 28/10/2026, ativado com ?layout=inst); o resto é idêntico
+  // chrome = cabeçalho e rodapé institucionais em todas as páginas (padrão desde 28/10/2026; false gera o documento sem eles)
   async function gerarPdf(r, chrome = true) {
     for (const u of LIBS.pdf) await lib(u);
     const {jsPDF} = window.jspdf, N = notas(r);
@@ -556,9 +547,10 @@
       new D.TableRow({children: [cel("TOTAL", {...o9, al: L_}), cel(fmt(r.totAps), {...o9, al: R_}), cel("100,00%", {...o9, al: R_}), cel(fmt(r.esfTotal), {...o9, al: R_}), cel(fmt(r.totAps / r.esfTotal, 2), {...o9, al: R_, fill: "FFFFCC"}),
         cel(r.t12Aps ? fmt(r.t12Aps) : "", {...o9, al: R_}), cel(r.t12Aps ? fmt(r.d12Aps / r.t12Aps * 100, 1) + "%" : "", {...o9, al: R_})]}),
     ]});
+    const cgw = corGrupo(r);   // cor de cada grupo da Figura 3.1, para o fundo das linhas de categoria da Figura 3.2
     const tCid = new D.Table({alignment: D.AlignmentType.CENTER, columnWidths: [3700, 1400, 800, 1000, 2200], rows: [
       new D.TableRow({tableHeader: true, children: ["CID", "Solicitações", "%", "% acum.", "Grupo na Figura 3.1"].map(t => cel(t, {fonte: "Times New Roman", tam: 10, negrito: true}))}),
-      ...r.topCids.map(x => { const cgw = corGrupo(r); const o = {...o9, negrito: x.cat, fill: x.cat ? (cgw[x.g] ? tomHex(cgw[x.g]) : "F2F2F2") : undefined};
+      ...r.topCids.map(x => { const o = {...o9, negrito: x.cat, fill: x.cat ? (cgw[x.g] ? tomHex(cgw[x.g]) : "F2F2F2") : undefined};
         return new D.TableRow({children: [cel(x.cat ? x.c : "      " + x.c, {...o, al: L_}), cel(fmt(x.n), {...o, al: R_}),
           cel(fmt(x.pct, 1) + "%", {...o, al: R_}), cel(x.acum != null ? fmt(x.acum, 1) + "%" : "", {...o, al: R_}), cel(x.g, {...o, al: L_})]}); }),
     ]});
@@ -619,10 +611,10 @@
   // analises/<id>.json não traz a média/mediana de espera por prioridade (cor_stats): vem do dados.json
   async function carregarAnalise(id, cache) {
     const d = await (await fetch(`analises/${id}.json`, cache ? {cache} : undefined)).json();
-    try { const dj = await (await fetch("dados.json", cache ? {cache} : undefined)).json(); d.cor_stats = (dj.filas.find(x => x.id === id) || {}).cor_stats || null; } catch (e) { d.cor_stats = null; }
+    try { const dj = await (await fetch("dados.json", cache ? {cache} : undefined)).json(); d.cor_stats = (dj.filas.find(x => x.id === id) || {}).cor_stats || null; } catch { d.cor_stats = null; }
     // % de devolvidas nos últimos 12 meses por unidade (Tabela 1): devolvidas.json, d12[id] = [[índice da unidade, devolvidas, solicitações], ...]
     try { const dv = await (await fetch("devolvidas.json", cache ? {cache} : undefined)).json(); const u = {};
-      (dv.d12 && dv.d12[id] || []).forEach(([ui, dd_, tt]) => { u[dv.unidades[ui][0]] = [dd_, tt]; }); d.dev12 = {janela: dv.janela12 || null, u}; } catch (e) { d.dev12 = null; }
+      (dv.d12 && dv.d12[id] || []).forEach(([ui, dd_, tt]) => { u[dv.unidades[ui][0]] = [dd_, tt]; }); d.dev12 = {janela: dv.janela12 || null, u}; } catch { d.dev12 = null; }
     return d;
   }
   window.gerarAnalise = async function (id, formato, nome) {
