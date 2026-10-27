@@ -14,7 +14,8 @@
   const CORES = [["vermelho", "Vermelho", "FF0000"], ["amarelo", "Amarelo", "FFFF00"], ["verde", "Verde", "92D050"],
     ["azul", "Azul", "00B0F0"]];
   const FONTE = "Fonte: Mapa Social do Distrito Federal.";
-  const MIN12 = 20;   // mínimo de solicitações em 12 meses para o % de devolvidas entrar no ranking/texto
+  const MIN12 = 20;   // mínimo de solicitações em 12 meses para o % de devolvidas entrar no ranking/texto (abaixo disso sai em cinza)
+  const CAB_ESQ = "SES-DF  ·  SRSNO  ·  DIRAPS Norte  ·  GAPAPS Norte", CAB_DIR = "Análise de Filas de Regulação – Região Norte";
   const carregadas = {};
   let REF = null;
 
@@ -284,12 +285,12 @@
     if (r.notas.ausentes.length) nt += " O Mapa Social não apresenta solicitações deste procedimento da(s) " + r.notas.ausentes.join(", ") + ".";
     if (r.notas.semDev.length) nt += " UBS sem solicitações devolvidas: " + r.notas.semDev.join(", ") + ".";
     nt += ` UBS ordenadas da que mais devolve por eSF para a que menos devolve. Total de eSF da Região Norte: ${r.esfTotal}.`;
-    if (r.janela12) nt += ` "% devolvidas (12 m)" = das solicitações deste procedimento feitas pela UBS de ${r.janela12[0]} a ${r.janela12[1]} (pela data da solicitação), quantas estão devolvidas hoje; cada solicitação conta uma vez e a que foi reenviada e agendada conta como não devolvida, por isso o percentual é um piso.` +
+    if (r.janela12) nt += ` "% devolvidas (12 m)" = das solicitações deste procedimento feitas pela UBS de ${r.janela12[0]} a ${r.janela12[1]} (pela data da solicitação), quantas estão devolvidas hoje; cada solicitação conta uma vez e a que foi reenviada e agendada conta como não devolvida, por isso o percentual é um piso. Janela de 12 meses para refletir a prática atual da unidade; percentuais de UBS com menos de ${MIN12} solicitações do procedimento no período aparecem em cinza. A coluna "Solicitações por eSF", em amarelo, é o critério de ordenação.` +
       (r.notas.semDev12.length ? ` UBS com ${MIN12} ou mais solicitações no período e nenhuma devolvida: ${r.notas.semDev12.join(", ")}.` : "");
     return {
       titulo: `Análise da fila de ${/^CONSULTA/i.test(r.p) ? "Consulta em " : ""}${r.nome} - Região Norte`,
       f1: `Figura 1 – Comportamento da fila de ${r.nome}`,
-      n1: [FONTE, `Nota: Dados extraídos em ${e}, referentes ao período de ${MESES_EXT[MESES.indexOf(m0)]} de 20${a0} a ${MESES_EXT[MESES.indexOf(m1)]} de 20${a1}. ` +
+      n1: [FONTE, `Nota: Dados extraídos em ${e}, referentes ao período de ${MESES_EXT[MESES.indexOf(m0)]} de 20${a0} a ${MESES_EXT[MESES.indexOf(m1)]} de 20${a1} (a série começa em janeiro de cinco anos antes do ano corrente, como no modelo de análise). ` +
         `As linhas de tendência (mínimos quadrados) cobrem os últimos ${n - r.aberr.ini} meses e são calculadas sem os meses aberrantes (identificados pelo método de Theil-Sen: mais de 4 vezes a oscilação típica em relação à tendência; no saldo, acima ou abaixo, e sempre que a saída do mês for aberrante); o R² ao lado de cada linha considera só os meses não aberrantes, ` +
         "que permanecem no gráfico em tracejado e com círculo vazio. Quando o valor ultrapassa a escala, o ponto é desenhado no limite do eixo, com o valor real escrito ao lado (nesses meses a altura não é fiel). Meses anteriores à janela não foram avaliados."],
       f2: `Figura 2 – Tempo de espera por prioridade em ${r.nome}`, n2,
@@ -432,7 +433,7 @@
 
   // ------------------------------------------------------------------------------ PDF
   // chrome = cabeçalho e rodapé institucionais em todas as páginas (teste de 28/10/2026, ativado com ?layout=inst); o resto é idêntico
-  async function gerarPdf(r, chrome = false) {
+  async function gerarPdf(r, chrome = true) {
     for (const u of LIBS.pdf) await lib(u);
     const {jsPDF} = window.jspdf, N = notas(r);
     const doc = new jsPDF({orientation: "landscape", unit: "mm", format: "a4"});
@@ -465,7 +466,7 @@
     const corFill = {Vermelho: [255, 0, 0], Amarelo: [255, 255, 0], Verde: [146, 208, 80], Azul: [0, 176, 240]};
     doc.autoTable({
       startY: y, margin: {left: M, right: M}, theme: "grid", styles: {font: "helvetica", fontSize: 10, halign: "center", textColor: 0, lineColor: 120, lineWidth: 0.2},
-      head: [["Atualizado", r.extracao.toLocaleDateString("pt-BR"), "", "", ""], ["Classificação", "Mais antiga", "Solicitações", "Espera média (dias)", "Espera mediana (dias)"]],
+      head: [["Classificação", "Mais antiga", "Solicitações", "Espera média (dias)", "Espera mediana (dias)"]],
       headStyles: {fillColor: 255, textColor: 0, fontStyle: "bold"},
       body: r.risco.map(x => [x.cor, x.antiga, x.n ? fmt(x.n) : "", x.media != null && x.n ? fmt(x.media) : "", x.mediana != null && x.n ? fmt(x.mediana) : ""]),
       foot: [["TOTAL", "", fmt(r.risco.reduce((a, x) => a + x.n, 0)), "", ""]],
@@ -503,6 +504,8 @@
       body: r.ubs.map(x => [x.u, fmt(x.n), fmt(x.pct, 2) + "%", x.esf != null ? fmt(x.esf) : "", x.taxa != null ? fmt(x.taxa, 2) : "", x.t12 != null ? fmt(x.t12) : "", x.pct12 != null ? fmt(x.pct12, 1) + "%" : ""]),
       foot: [["TOTAL", fmt(r.totAps), "100,00%", fmt(r.esfTotal), fmt(r.totAps / r.esfTotal, 2), r.t12Aps ? fmt(r.t12Aps) : "", r.t12Aps ? fmt(r.d12Aps / r.t12Aps * 100, 1) + "%" : ""]],
       footStyles: {fillColor: 255, textColor: 0, fontStyle: "normal", halign: "right"}, showFoot: "lastPage",
+      didParseCell: h => { if (h.column.index === 4 && h.section !== "head") h.cell.styles.fillColor = [255, 255, 204];   // critério de ordenação em amarelo claro
+        if (h.section === "body" && h.column.index === 6 && (r.ubs[h.row.index].t12 || 0) < MIN12) h.cell.styles.textColor = 140; },
     });
     y = doc.lastAutoTable.finalY + 4;
     rodape(N.nt1); rascunho(r.textos.fig4);
@@ -511,8 +514,8 @@
       for (let i = 1; i <= np; i++) {
         doc.setPage(i); const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight(), mm = pw > 250 ? 20 : 25;
         doc.setFont("times", "normal"); doc.setFontSize(9); doc.setTextColor(60);
-        doc.text("SES-DF  ·  SRSNO  ·  DIRAPS Norte  ·  GAPAPS Norte", mm, 10);
-        doc.text("Análise de Filas de Regulação – Região Norte", pw - mm, 10, {align: "right"});
+        doc.text(CAB_ESQ, mm, 10);
+        doc.text(CAB_DIR, pw - mm, 10, {align: "right"});
         doc.setDrawColor(120); doc.setLineWidth(0.3); doc.line(mm, 12.5, pw - mm, 12.5);
         doc.line(mm, ph - 11, pw - mm, ph - 11);
         doc.setFontSize(8.5);
@@ -522,7 +525,7 @@
       doc.setTextColor(0);
       if (typeof doc.putTotalPages === "function") doc.putTotalPages("{total}");
     }
-    doc.save(N.titulo + (chrome ? " (teste cabeçalho e rodapé)" : "") + ".pdf");
+    doc.save(N.titulo + ".pdf");
   }
 
   // ------------------------------------------------------------------------------ Word
@@ -537,11 +540,10 @@
     const rodape = ls => ls.map((l, i) => par(l, {tam: 9, depois: i === ls.length - 1 ? 12 : 0}));
     const rascunho = t => par([run(N.rascunho, {tam: 11, negrito: true, realce: true}), run(t, {tam: 11, realce: true})], {just: true, depois: 12});
     const cel = (t, o = {}) => new D.TableCell({children: [new D.Paragraph({alignment: o.al ?? D.AlignmentType.CENTER,
-      children: [new D.TextRun({text: t, font: o.fonte || "Calibri", size: (o.tam || 11) * 2, bold: o.negrito})]})],
+      children: [new D.TextRun({text: t, font: o.fonte || "Calibri", size: (o.tam || 11) * 2, bold: o.negrito, color: o.cor})]})],
       shading: o.fill ? {type: D.ShadingType.CLEAR, color: "auto", fill: o.fill} : undefined, width: o.w ? {size: o.w, type: D.WidthType.DXA} : undefined});
     const fill = Object.fromEntries(CORES.map(([, rot, f]) => [rot, f]));
     const tRisco = new D.Table({alignment: D.AlignmentType.CENTER, rows: [
-      new D.TableRow({children: [cel("Atualizado", {negrito: true, al: D.AlignmentType.LEFT}), cel(r.extracao.toLocaleDateString("pt-BR"), {negrito: true}), cel(""), cel(""), cel("")]}),
       new D.TableRow({children: ["Classificação", "Mais antiga", "Solicitações", "Espera média (dias)", "Espera mediana (dias)"].map(t => cel(t, {negrito: true}))}),
       ...r.risco.map(x => new D.TableRow({children: [x.cor, x.antiga, x.n ? fmt(x.n) : "", x.media != null && x.n ? fmt(x.media) : "", x.mediana != null && x.n ? fmt(x.mediana) : ""].map(t => cel(t, {fill: fill[x.cor]}))})),
       new D.TableRow({children: [cel("TOTAL", {negrito: true, al: D.AlignmentType.LEFT}), cel(""), cel(fmt(r.risco.reduce((a, x) => a + x.n, 0)), {negrito: true}), cel(""), cel("")]}),
@@ -550,8 +552,8 @@
     const tUbs = new D.Table({alignment: D.AlignmentType.CENTER, columnWidths: [2350, 1150, 1150, 1050, 1150, 1100, 1100], rows: [
       new D.TableRow({tableHeader: true, children: ["UNIDADE", "Número de solicitações", "Percentual da APS", "Quantidade de eSF", "Solicitações por eSF", "Solicitações (12 m)", "% devolvidas (12 m)"].map(t => cel(t, {fonte: "Times New Roman", tam: 9, negrito: true}))}),
       ...r.ubs.map(x => new D.TableRow({children: [cel(x.u, {...o9, al: L_}), cel(fmt(x.n), {...o9, al: R_}), cel(fmt(x.pct, 2) + "%", {...o9, al: R_}),
-        cel(x.esf != null ? fmt(x.esf) : "", {...o9, al: R_}), cel(x.taxa != null ? fmt(x.taxa, 2) : "", {...o9, al: R_}), cel(x.t12 != null ? fmt(x.t12) : "", {...o9, al: R_}), cel(x.pct12 != null ? fmt(x.pct12, 1) + "%" : "", {...o9, al: R_})]})),
-      new D.TableRow({children: [cel("TOTAL", {...o9, al: L_}), cel(fmt(r.totAps), {...o9, al: R_}), cel("100,00%", {...o9, al: R_}), cel(fmt(r.esfTotal), {...o9, al: R_}), cel(fmt(r.totAps / r.esfTotal, 2), {...o9, al: R_}),
+        cel(x.esf != null ? fmt(x.esf) : "", {...o9, al: R_}), cel(x.taxa != null ? fmt(x.taxa, 2) : "", {...o9, al: R_, fill: "FFFFCC"}), cel(x.t12 != null ? fmt(x.t12) : "", {...o9, al: R_}), cel(x.pct12 != null ? fmt(x.pct12, 1) + "%" : "", {...o9, al: R_, cor: (x.t12 || 0) < MIN12 ? "8C8C8C" : undefined})]})),
+      new D.TableRow({children: [cel("TOTAL", {...o9, al: L_}), cel(fmt(r.totAps), {...o9, al: R_}), cel("100,00%", {...o9, al: R_}), cel(fmt(r.esfTotal), {...o9, al: R_}), cel(fmt(r.totAps / r.esfTotal, 2), {...o9, al: R_, fill: "FFFFCC"}),
         cel(r.t12Aps ? fmt(r.t12Aps) : "", {...o9, al: R_}), cel(r.t12Aps ? fmt(r.d12Aps / r.t12Aps * 100, 1) + "%" : "", {...o9, al: R_})]}),
     ]});
     const tCid = new D.Table({alignment: D.AlignmentType.CENTER, columnWidths: [3700, 1400, 800, 1000, 2200], rows: [
@@ -560,10 +562,20 @@
         return new D.TableRow({children: [cel(x.cat ? x.c : "      " + x.c, {...o, al: L_}), cel(fmt(x.n), {...o, al: R_}),
           cel(fmt(x.pct, 1) + "%", {...o, al: R_}), cel(x.acum != null ? fmt(x.acum, 1) + "%" : "", {...o, al: R_}), cel(x.g, {...o, al: L_})]}); }),
     ]});
+    // cabeçalho e rodapé institucionais (padrão desde 28/10/2026); w = largura útil da página em DXA, para o texto à direita
+    const ext = r.extracao.toLocaleDateString("pt-BR"), tab = () => (typeof D.Tab === "function" ? new D.Tab() : "\t");
+    const linha = (lado, cor = "808080") => ({[lado]: {style: D.BorderStyle.SINGLE, size: 4, color: cor, space: 2}});
+    const cab = w => new D.Header({children: [new D.Paragraph({tabStops: [{type: D.TabStopType.RIGHT, position: w}], border: linha("bottom"),
+      children: [new D.TextRun({text: CAB_ESQ, font: "Times New Roman", size: 18}), new D.TextRun({font: "Times New Roman", size: 18, children: [tab(), CAB_DIR]})]})]});
+    const rod = w => new D.Footer({children: [new D.Paragraph({tabStops: [{type: D.TabStopType.RIGHT, position: w}], border: linha("top"),
+      children: [new D.TextRun({text: `${N.titulo}  ·  dados extraídos em ${ext}  ·  versão piloto`, font: "Times New Roman", size: 17}),
+        new D.TextRun({font: "Times New Roman", size: 17, children: [tab(), "Página ", D.PageNumber.CURRENT, " de ", D.PageNumber.TOTAL_PAGES]})]})]});
     const doc = new D.Document({sections: [
-      {properties: {page: {size: {orientation: D.PageOrientation.LANDSCAPE, width: 16838, height: 11906}, margin: {top: 1000, bottom: 1000, left: 1134, right: 1134}}},
+      {properties: {page: {size: {orientation: D.PageOrientation.LANDSCAPE, width: 16838, height: 11906}, margin: {top: 1134, bottom: 1134, left: 1134, right: 1134, header: 500, footer: 500}}},
+        headers: {default: cab(14570)}, footers: {default: rod(14570)},
         children: [par(N.titulo, {negrito: true, centro: true, depois: 18}), par(N.f1, {depois: 4}), img(graficoSerie(r), 940, 410), ...rodape(N.n1), rascunho(r.textos.fig1)]},
-      {properties: {page: {size: {orientation: D.PageOrientation.PORTRAIT, width: 11906, height: 16838}, margin: {top: 1134, bottom: 1134, left: 1417, right: 1417}}},
+      {properties: {page: {size: {orientation: D.PageOrientation.PORTRAIT, width: 11906, height: 16838}, margin: {top: 1247, bottom: 1247, left: 1417, right: 1417, header: 500, footer: 500}}},
+        headers: {default: cab(9072)}, footers: {default: rod(9072)},
         children: [par(N.f2, {depois: 6}), tRisco, ...rodape(N.n2), rascunho(r.textos.fig2),
           par(N.f3, {depois: 4}), img(graficoCids(r), 540, 388), ...rodape(N.n3), new D.Paragraph({pageBreakBefore: true, spacing: {after: 120}, children: [run(N.tc)]}), tCid, ...rodape(N.ntc), rascunho(r.textos.fig3),
           par(N.f4, {depois: 4}), img(graficoNiveis(r), 540, 388), ...rodape(N.n4),
@@ -617,7 +629,7 @@
     if (!REF) REF = await (await fetch("referencias.json", {cache: "no-store"})).json();
     const d = await carregarAnalise(id, "no-store");
     const r = calcular(d, nome);
-    await ({pdf: r_ => gerarPdf(r_, /[?&]layout=inst/.test(location.search)), word: gerarWord, excel: gerarExcel})[formato](r);   // ?layout=inst = teste com cabeçalho e rodapé
+    await ({pdf: gerarPdf, word: gerarWord, excel: gerarExcel})[formato](r);
     return r;
   };
   // ------------------------------------------------------------------------------ dados detalhados (linhas do Mapa Social)
