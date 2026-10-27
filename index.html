@@ -499,6 +499,50 @@ function planoHtml(f){
    </div>
    <p class="plano-txt"></p></div>`;
 }
+// Equalização: oferta regular = entrada; a fila se estabiliza onde espera = meta normativa (lei de Little: espera = fila ÷ saída)
+// Só para quem tem meta normativa; a meta usada é a da cor menos prioritária com solicitações na fila e meta definida (cada cor só é agendada depois das mais prioritárias).
+function metaEqui(f){ const m=(window._analiseMeta&&window._analiseMeta(f.p))||{}; for(const c of ["azul","verde","amarelo","vermelho"]) if(f.cores[c]&&f.cores[c].n>0&&m[c]) return {cor:c,dias:m[c]}; return null; }
+function equiHtml(f){
+  return `<div class="plano equi"><h5>Equalização: oferta regular igual à entrada <button type="button" class="ajuda" aria-expanded="false" title="Como a equalização é calculada">?</button></h5>
+   <div class="ajuda-txt" hidden>
+    <p><b>Ideia.</b> A fila para de crescer quando o que se oferta por mês é igual ao que entra por mês. O tamanho em que ela se estabiliza depende do tempo de espera que se aceita: fila de equilíbrio = entrada × meta de espera ÷ 30,4 (lei de Little, a mesma aproximação do simulador acima).</p>
+    <p><b>Duas fases.</b> (1) Transição: enquanto a fila está acima do nível de equilíbrio, oferta-se a entrada mais o excedente dividido pelo prazo. (2) Regime: oferta igual à entrada, que mantém a fila no nível de equilíbrio.</p>
+    <p><b>Meta usada.</b> Apenas a meta normativa do procedimento (SES-DF), quando existe; sem meta, não se atribui espera-alvo. Com mais de uma cor na fila, vale a meta da cor menos prioritária que tem meta, porque ela só é agendada depois das mais prioritárias. A meta normativa é uma mediana e a conta usa a espera média da fila toda; a espera da cor menos prioritária tende a ser maior que a média.</p>
+    <p><b>Entrada.</b> Média dos últimos 12 meses completos, mantida constante (sem extrapolar tendência). A demanda costuma subir quando a fila anda, o que esta conta não prevê.</p>
+   </div>
+   <div class="sim-grid">
+    <div><label>Prazo para chegar ao equilíbrio: <input type="number" class="e-prazo" min="1" max="60" value="12"> meses</label></div>
+   </div>
+   <p class="equi-txt plano-txt"></p><div class="equi-graf"></div></div>`;
+}
+function atualizarEqui(box){
+  const eq=box.querySelector(".equi"); if(!eq) return;
+  const f=porId[box.dataset.id], b=baseSim(f), E=b.ent, S=b.sai, L0=b.fila, mt=metaEqui(f);
+  const P=Math.min(60,Math.max(1,Math.round(+eq.querySelector(".e-prazo").value)||12));
+  const Et=()=>E, up=v=>fmt(Math.ceil(v-1e-9)), txt=[];
+  txt.push(`Na média dos últimos 12 meses entram <b>${fmt(E,1)}</b> e saem <b>${fmt(S,1)}</b> por mês.`);
+  const graf=eq.querySelector(".equi-graf");
+  if(!mt){
+    txt.push(`Para a fila deixar de crescer, a oferta regular precisa ser de ≈ <b>${up(E)}</b> agendamentos/mês${S+0.05<E?`, ou seja, ${up(E-S)} a mais do que saem hoje`:`; o ritmo atual já basta`}. Este procedimento não tem meta normativa de tempo de espera, por isso não se calcula fila nem espera de equilíbrio.`);
+    graf.innerHTML=""; eq.querySelector(".equi-txt").innerHTML=txt.join(" "); return; }
+  const Lst=()=>E*mt.dias/DIAS_MES, LP=Lst(P), exc=Math.max(0,L0-LP), extra=exc/P;
+  txt.push(`Meta normativa usada: <b>${fmt(mt.dias)} dias</b> (cor ${mt.cor}). Fila de equilíbrio: <b>${fmt(Math.round(LP))}</b> solicitações; hoje há <b>${fmt(L0)}</b>.`);
+  if(extra>0.05) txt.push(`Durante os ${P} meses de transição: oferta de ≈ <b>${up(Et(0)+extra)}</b> agendamentos/mês (a entrada mais ${up(extra)} para consumir o excedente de ${fmt(Math.round(exc))}; hoje saem ${fmt(S,1)}). Depois: ≈ <b>${up(Et(P))}</b>/mês, igual à entrada, mantém a fila em torno de ${fmt(Math.round(LP))} e a espera na meta.`);
+  else txt.push(`A fila já está no nível de equilíbrio ou abaixo dele: basta manter a oferta igual à entrada, ≈ <b>${up(E)}</b> agendamentos/mês${S+0.05<E?` (hoje saem ${fmt(S,1)}, ${up(E-S)} a menos)`:""}.`);
+  const H=Math.max(24,P+12), pts=[L0]; let L=L0;
+  for(let t=0;t<H;t++){ L=Math.max(0,L+Et(t)-(Et(t)+(t<P?extra:0))); pts.push(L); }
+  const alvo=pts.map((_,t)=>Lst(t)), W=560,Hh=150,pl=44,pr=8,pt=8,pb=20, mx=Math.max(1,...pts,...alvo), X=i=>pl+i/H*(W-pl-pr), Y=v=>pt+(1-v/mx)*(Hh-pt-pb);
+  const li=(a,c,d)=>`<polyline fill="none" stroke="${c}" stroke-width="2" ${d?'stroke-dasharray="5 4"':""} points="${a.map((v,i)=>X(i)+","+Y(v)).join(" ")}"/>`;
+  const marcas=[...new Set([0,P,H])];
+  graf.innerHTML=`<svg viewBox="0 0 ${W} ${Hh}" width="100%" role="img" aria-label="Fila ao longo da transição até o equilíbrio">
+    <line x1="${pl}" x2="${W-pr}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--line)"/><text x="${pl-6}" y="${Y(0)+3}" font-size="10" text-anchor="end" fill="var(--muted)">0</text>
+    <text x="${pl-6}" y="${Y(mx)+10}" font-size="10" text-anchor="end" fill="var(--muted)">${fmt(Math.round(mx))}</text>
+    <line x1="${X(P)}" x2="${X(P)}" y1="${pt}" y2="${Y(0)}" stroke="var(--line)" stroke-dasharray="2 3"/>
+    ${marcas.map(i=>`<text x="${X(i)}" y="${Hh-5}" font-size="10" text-anchor="${i===H?"end":"middle"}" fill="var(--muted)">${i===0?"hoje":"+"+i+" m"}</text>`).join("")}
+    ${li(alvo,"var(--muted)",true)}${li(pts,"var(--accent)",false)}</svg>
+    <div class="leg"><span><i style="background:var(--accent)"></i>Fila projetada com a oferta da equalização</span><span><i style="background:var(--muted)"></i>Fila de equilíbrio (espera = meta)</span></div>`;
+  eq.querySelector(".equi-txt").innerHTML=txt.join(" ");
+}
 function simHtml(f){
   const b=baseSim(f), maxD=Math.max(20,Math.ceil(Math.max(b.sai,b.ent)*1.5/10)*10), passo=Math.max(1,Math.round(maxD/300));
   const eMax=b.espera?Math.min(3650,Math.max(30,Math.ceil(b.espera/10)*10)):180;
@@ -513,6 +557,7 @@ function simHtml(f){
       <input type="range" class="s-esp" min="1" max="${eMax}" step="1" value="${b.espera?Math.min(eMax,Math.round(b.espera)):eMax}" ${b.espera?"":"disabled"}></div>
    </div>
    ${planoHtml(f)}
+   ${equiHtml(f)}
    <div class="sim-res"></div><div class="sim-cor"></div><div class="sim-graf"></div>
    <small class="nota">Premissas: saída = agendamentos do Mapa Social (inclui cancelados e faltas, o que pode superestimar a capacidade real); a estimativa não separa prioridades — vermelhos são agendados antes e esperam menos, azuis esperam mais; não é o “tempo médio” do Mapa Social (que usa os agendamentos dos últimos 15 dias). Não considera custo, vagas físicas nem mudança na demanda.</small></div></div>`;
 }
@@ -569,8 +614,10 @@ function atualizarSim(box,origem){
     ${[0,6,12,18,24].map(i=>`<text x="${X(i)}" y="${H-5}" font-size="10" text-anchor="middle" fill="var(--muted)">${i===0?"hoje":"+"+i+" m"}</text>`).join("")}
     ${li(p0,"var(--muted)",true)}${li(p1,"var(--accent)",false)}</svg>
     <div class="leg"><span><i style="background:var(--muted)"></i>Sem oferta adicional</span><span><i style="background:var(--accent)"></i>Com a oferta simulada · fila de solicitações projetada</span></div>`;
+  atualizarEqui(box);
 }
 document.addEventListener("input",e=>{ const box=e.target.closest&&e.target.closest(".sim"); if(!box) return;
+  if(e.target.closest(".equi")){ atualizarEqui(box); return; }
   const k=e.target.classList; atualizarSim(box,k.contains("s-esp")?"esp":k.contains("s-cor")?"cor":(k.contains("p-prazo")||k.contains("p-mutirao")||k.contains("p-meta"))?"plano":"delta"); });
 
 // ---------------------------------------------------------------- aba Filas
