@@ -571,11 +571,11 @@
       children: [new D.TextRun({text: `${N.titulo}  ·  dados extraídos em ${ext}  ·  versão piloto`, font: "Times New Roman", size: 17}),
         new D.TextRun({font: "Times New Roman", size: 17, children: [tab(), "Página ", D.PageNumber.CURRENT, " de ", D.PageNumber.TOTAL_PAGES]})]})]});
     const doc = new D.Document({sections: [
-      {properties: {page: {size: {orientation: D.PageOrientation.LANDSCAPE, width: 16838, height: 11906}, margin: {top: 1134, bottom: 1134, left: 1134, right: 1134, header: 500, footer: 500}}},
-        headers: {default: cab(14570)}, footers: {default: rod(14570)},
+      {properties: {page: {size: {orientation: D.PageOrientation.LANDSCAPE, width: 11906, height: 16838}, margin: {top: 1134, bottom: 1134, left: 1134, right: 1134, header: 500, footer: 500}}},
+        headers: {default: cab(14450)}, footers: {default: rod(14450)},
         children: [par(N.titulo, {negrito: true, centro: true, depois: 18}), par(N.f1, {depois: 4}), img(graficoSerie(r), 940, 410), ...rodape(N.n1), rascunho(r.textos.fig1)]},
       {properties: {page: {size: {orientation: D.PageOrientation.PORTRAIT, width: 11906, height: 16838}, margin: {top: 1247, bottom: 1247, left: 1417, right: 1417, header: 500, footer: 500}}},
-        headers: {default: cab(9072)}, footers: {default: rod(9072)},
+        headers: {default: cab(8950)}, footers: {default: rod(8950)},
         children: [par(N.f2, {depois: 6}), tRisco, ...rodape(N.n2), rascunho(r.textos.fig2),
           par(N.f3, {depois: 4}), img(graficoCids(r), 540, 388), ...rodape(N.n3), new D.Paragraph({pageBreakBefore: true, spacing: {after: 120}, children: [run(N.tc)]}), tCid, ...rodape(N.ntc), rascunho(r.textos.fig3),
           par(N.f4, {depois: 4}), img(graficoNiveis(r), 540, 388), ...rodape(N.n4),
