@@ -15,6 +15,8 @@ Gera:
                             inclui as solicitações em fila de espera, com esse status)
   detalhe/devolvidas.json   todas as devolvidas da região, linha a linha
   atraso.json               histórico do atraso do Mapa Social (uma medição por dia); fica no branch main, versionado
+  devolvidas_reg.json       registro diário da resolução das devolvidas (códigos que entraram e que saíram do status
+                            devolvida, comparando com a publicação anterior); versionado em main como atraso.json
 """
 import hashlib
 import json
@@ -462,6 +464,74 @@ def historico_espera(dados, hoje):
     return {"dias": dias}
 
 
+def _destino(st):
+    if not st:
+        return "ausente"
+    if "REENVIADA" in st:
+        return "reenviada"
+    if "AGENDADA" in st:
+        return "agendada"
+    if "FILA DE ESPERA" in st:
+        return "fila de espera"
+    if "PENDENTE" in st:
+        return "pendente"
+    return "outro"
+
+
+def historico_devolvidas(dev_det, det, hoje, anterior=None):
+    """Registro diário da resolução das devolvidas (devolvidas_reg.json, versionado em main; o workflow faz o commit).
+    Compara as devolvidas de hoje com as da publicação anterior (detalhe/devolvidas.json no site): códigos que
+    ENTRARAM no status devolvida e códigos que SAÍRAM dele, com o destino (reenviada, agendada, pendente, fila de
+    espera ou ausente do Mapa Social). O Mapa Social só mostra a situação atual; este registro é a linha de base
+    para medir quantas devoluções cada unidade corrige e em quanto tempo. Procedimentos e unidades ficam em listas
+    (p, u) e as linhas usam os índices: entradas [pi, ui, código, data da devolução], saídas [..., destino]."""
+    arq = PAINEL / "devolvidas_reg.json"
+    try:
+        reg = json.loads(arq.read_text(encoding="utf-8"))
+        assert isinstance(reg.get("dias"), list)
+    except (OSError, ValueError, AssertionError) as e:
+        print("devolvidas_reg.json ausente ou ilegível (%s); começando o registro hoje." % e)
+        reg = {"inicio": hoje.isoformat(), "estoque_inicial": len(dev_det["r"]), "p": [], "u": [], "dias": []}
+    if anterior is None:
+        try:
+            with urllib.request.urlopen(PUBLICADO + "detalhe/devolvidas.json", timeout=180) as r:
+                anterior = json.loads(r.read().decode("utf-8"))
+        except Exception as e:   # sem comparação hoje: o registro fica como está (nada é inventado)
+            print("Registro de devolvidas: não li a publicação anterior (%s); dia sem comparação." % e)
+            return reg
+    if not anterior.get("r") or not anterior.get("p"):
+        print("Registro de devolvidas: publicação anterior sem devolvidas; dia sem comparação.")
+        return reg
+    atual = {r[1]: (dev_det["p"][r[0]], r[5], r[6]) for r in dev_det["r"]}
+    antes = {r[1]: (anterior["p"][r[0]], r[5], r[6]) for r in anterior["r"]}
+    status = {}
+    for d in det.values():
+        for sl in d["s"]:
+            status[sl[0]] = sl[2]
+        for ag in d["a"]:
+            status.setdefault(ag[0], "AGENDADA")
+    idx = lambda lista, v: lista.index(v) if v in lista else (lista.append(v) or len(lista) - 1)
+    entradas = [[idx(reg["p"], p), idx(reg["u"], u), cod, dd] for cod, (p, u, dd) in atual.items() if cod not in antes]
+    saidas = [[idx(reg["p"], p), idx(reg["u"], u), cod, dd, _destino(status.get(cod))] for cod, (p, u, dd) in antes.items() if cod not in atual]
+    hoje_s = hoje.isoformat()
+    dia = next((d for d in reg["dias"] if d["data"] == hoje_s), None)
+    if dia is None:
+        dia = {"data": hoje_s, "anterior": anterior.get("data"), "estoque": len(atual), "entradas": [], "saidas": []}
+        reg["dias"].append(dia)
+    else:   # segunda coleta do mesmo dia: acrescenta o que mudou desde a anterior, sem repetir códigos
+        dia["estoque"] = len(atual)
+    for chave, novos in (("entradas", entradas), ("saidas", saidas)):
+        vistos = {x[2] for x in dia[chave]}
+        dia[chave].extend(x for x in novos if x[2] not in vistos)
+    reg["dias"].sort(key=lambda d: d["data"])
+    dest = defaultdict(int)
+    for x in dia["saidas"]:
+        dest[x[4]] += 1
+    print("Registro de devolvidas: %d no estoque, %d entradas e %d saídas hoje (%s); %d dias registrados" % (
+        len(atual), len(dia["entradas"]), len(dia["saidas"]), ", ".join("%s %d" % kv for kv in sorted(dest.items())) or "sem saídas", len(reg["dias"])))
+    return reg
+
+
 def precisa_atualizar(hoje):
     """Compara a última recarga do Mapa Social com a do painel publicado."""
     r = m.consultar([["ultima", [], ["Date(Max(data_solicitacao))"]]], layout=True)
@@ -511,6 +581,7 @@ def main():
     hist = historico_atraso(meta, hoje)
     _grava(PAINEL / "atraso.json", hist)
     _grava(PAINEL / "espera.json", historico_espera(dados, hoje))
+    _grava(PAINEL / "devolvidas_reg.json", historico_devolvidas(dev_det, det, hoje))
     ultimos = [h["atraso_dias"] for h in hist["medicoes"][-7:]]
     for d in (meta, dados, devolvidas):
         d["atraso_ultimos"] = ultimos

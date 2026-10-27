@@ -431,26 +431,28 @@
   }
 
   // ------------------------------------------------------------------------------ PDF
-  async function gerarPdf(r) {
+  // chrome = cabeçalho e rodapé institucionais em todas as páginas (teste de 28/10/2026, ativado com ?layout=inst); o resto é idêntico
+  async function gerarPdf(r, chrome = false) {
     for (const u of LIBS.pdf) await lib(u);
     const {jsPDF} = window.jspdf, N = notas(r);
     const doc = new jsPDF({orientation: "landscape", unit: "mm", format: "a4"});
-    let y = 18, W = 297, M = 20;
+    let y = chrome ? 22 : 18, W = 297, M = 20;
+    const LIM = () => (W > 250 ? 200 : 285) - (chrome ? 6 : 0);
     const texto = (t, tam = 12, opt = {}) => {
       doc.setFont("times", opt.negrito ? "bold" : "normal"); doc.setFontSize(tam);
       let ls = doc.splitTextToSize(t, W - 2 * M);
       const h = tam * 0.42;
-      if (y + ls.length * h > (W > 250 ? 200 : 285)) { novaPag(); doc.setFont("times", opt.negrito ? "bold" : "normal"); doc.setFontSize(tam); ls = doc.splitTextToSize(t, W - 2 * M); }   // refaz a quebra: a página nova é retrato (largura menor)
+      if (y + ls.length * h > LIM()) { novaPag(); doc.setFont("times", opt.negrito ? "bold" : "normal"); doc.setFontSize(tam); ls = doc.splitTextToSize(t, W - 2 * M); }   // refaz a quebra: a página nova é retrato (largura menor)
       ls.forEach(l => {
         if (opt.realce) { doc.setFillColor(255, 255, 0); doc.rect(opt.centro ? (W - doc.getTextWidth(l)) / 2 : M, y - h * 0.8, doc.getTextWidth(l), h + 0.6, "F"); }
         doc.text(l, opt.centro ? W / 2 : M, y, {align: opt.centro ? "center" : "left"}); y += h;
       });
       y += opt.depois ?? 1;
     };
-    const novaPag = () => { doc.addPage("a4", "portrait"); W = 210; M = 25; y = 22; };
-    const imagem = (url, larg, alt) => { if (y + alt > (W > 250 ? 200 : 285)) novaPag(); doc.addImage(url, "PNG", (W - larg) / 2, y, larg, alt, undefined, "FAST"); y += alt + 3; };   // sem "FAST" o PNG vai descomprimido (PDF de ~18 MB)
+    const novaPag = () => { doc.addPage("a4", "portrait"); W = 210; M = 25; y = chrome ? 25 : 22; };
+    const imagem = (url, larg, alt) => { if (y + alt > LIM()) novaPag(); doc.addImage(url, "PNG", (W - larg) / 2, y, larg, alt, undefined, "FAST"); y += alt + 3; };   // sem "FAST" o PNG vai descomprimido (PDF de ~18 MB)
     const rodape = ls => { ls.forEach((l, i) => texto(l, 9, {depois: i === ls.length - 1 ? 5 : 0})); };
-    const garantir = h => { if (y + h > (W > 250 ? 200 : 285)) novaPag(); };  // mantém título junto da figura/tabela
+    const garantir = h => { if (y + h > LIM()) novaPag(); };  // mantém título junto da figura/tabela
     const rascunho = t => texto(N.rascunho + t, 11, {realce: true, depois: 7});
 
     texto(N.titulo, 12, {negrito: true, centro: true, depois: 6});
@@ -504,161 +506,23 @@
     });
     y = doc.lastAutoTable.finalY + 4;
     rodape(N.nt1); rascunho(r.textos.fig4);
-    doc.save(N.titulo + ".pdf");
-  }
-
-  // ------------------------------------------------------------------------------ PDF – layout institucional (prévia, 27/10/2026)
-  // Ativado com ?layout=inst no endereço do painel. Mesmo conteúdo e mesma numeração de figuras; muda só a apresentação:
-  // faixa institucional, bloco de identificação, síntese, seções numeradas, tabela de prioridades em tons pastel,
-  // textos sugeridos em caixa (em vez de realce amarelo) e rodapé com paginação.
-  const INST = {dk: [59, 31, 92], ac: [106, 63, 160], ac5: [125, 91, 166], lt: [239, 233, 247], tx: [29, 36, 48], mu: [91, 101, 117], ln: [205, 198, 215]};
-  async function gerarPdfInst(r) {
-    for (const u of LIBS.pdf) await lib(u);
-    const {jsPDF} = window.jspdf, N = notas(r), ext = r.extracao.toLocaleDateString("pt-BR");
-    const doc = new jsPDF({orientation: "landscape", unit: "mm", format: "a4"});
-    let W = 297, H = 210, M = 18, y = 26;
-    const limite = () => H - 18;
-    const fonte = (fam, est, tam, cor) => { doc.setFont(fam, est); doc.setFontSize(tam); doc.setTextColor(...cor); };
-    const novaPag = () => { doc.addPage("a4", "portrait"); W = 210; H = 297; M = 20; y = 26; };
-    const novaPagPaisagem = () => { doc.addPage("a4", "landscape"); W = 297; H = 210; M = 18; y = 26; };
-    const garantir = h => { if (y + h > limite()) novaPag(); };
-    // parágrafo; opt: fam, est, tam, cor, centro, depois, x, larg
-    const texto = (t, opt = {}) => {
-      const tam = opt.tam || 10.5, larg = opt.larg || (W - 2 * M), x = opt.x ?? M, h = tam * 0.42;
-      fonte(opt.fam || "helvetica", opt.est || "normal", tam, opt.cor || INST.tx);
-      let ls = doc.splitTextToSize(t, larg);
-      if (y + ls.length * h > limite()) { novaPag(); fonte(opt.fam || "helvetica", opt.est || "normal", tam, opt.cor || INST.tx); ls = doc.splitTextToSize(t, opt.larg || (W - 2 * M)); }
-      ls.forEach(l => { doc.text(l, opt.centro ? W / 2 : x, y, {align: opt.centro ? "center" : "left"}); y += h; });
-      y += opt.depois ?? 1.5;
-    };
-    const secao = (t, h = 40) => { garantir(h); fonte("helvetica", "bold", 12.5, INST.dk); doc.text(t, M, y); doc.setDrawColor(...INST.ac); doc.setLineWidth(0.5); doc.line(M, y + 1.8, W - M, y + 1.8); y += 8; };
-    const legenda = t => texto(t, {est: "bold", tam: 10.5, depois: 2.5});
-    const notas_ = ls => { ls.forEach((l, i) => texto(l, {tam: 8.3, cor: INST.mu, depois: i === ls.length - 1 ? 4 : 0.3})); };
-    const imagem = (url, larg, alt) => { garantir(alt + 2); doc.addImage(url, "PNG", (W - larg) / 2, y, larg, alt, undefined, "FAST"); y += alt + 3; };
-    // texto sugerido: caixa clara com barra roxa à esquerda e rótulo
-    const sugerido = (t, rot = "Texto sugerido – revisar antes de publicar") => {
-      fonte("helvetica", "normal", 10, INST.tx);
-      const larg = W - 2 * M - 8, ls = doc.splitTextToSize(t, larg), hh = ls.length * 4.2 + 9;
-      garantir(hh + 2); fonte("helvetica", "normal", 10, INST.tx);
-      doc.setFillColor(...INST.lt); doc.roundedRect(M, y - 2, W - 2 * M, hh, 1.5, 1.5, "F");
-      doc.setFillColor(...INST.ac); doc.rect(M, y - 2, 1.4, hh, "F");
-      fonte("helvetica", "bold", 7.5, INST.ac5); doc.text(rot.toUpperCase(), M + 5, y + 1.6);
-      fonte("helvetica", "normal", 10, INST.tx); let yy = y + 6.4;
-      ls.forEach(l => { doc.text(l, M + 5, yy); yy += 4.2; });
-      y += hh + 4;
-    };
-    const tabela = (opts) => { doc.autoTable({
-      margin: {left: M, right: M}, theme: "grid",
-      styles: {font: "helvetica", fontSize: 9, textColor: INST.tx, lineColor: INST.ln, lineWidth: 0.2, cellPadding: 1.2},
-      headStyles: {fillColor: INST.lt, textColor: INST.dk, fontStyle: "bold", halign: "center"},
-      footStyles: {fillColor: [248, 246, 251], textColor: INST.dk, fontStyle: "bold"}, showFoot: "lastPage",
-      ...opts, startY: y}); y = doc.lastAutoTable.finalY + 4; };
-
-    // ---- capa/abertura (página paisagem, como no modelo): faixa, título, identificação, síntese
-    fonte("helvetica", "bold", 17, INST.dk); doc.text(N.titulo.replace(/^Análise da fila de /, "Análise da fila de "), M, y); y += 7;
-    fonte("helvetica", "normal", 10.5, INST.mu); doc.text(`Regulação ambulatorial · Região Norte do Distrito Federal · dados do Mapa Social extraídos em ${ext}`, M, y); y += 7;
-    const tot = r.risco.reduce((a, x) => a + x.n, 0), n = r.serie.meses.length;
-    const [m0, a0] = r.serie.meses[0].split("/"), [m1, a1] = r.serie.meses[n - 1].split("/");
-    const ident = [["Procedimento", r.p], ["Tipo", /^CONSULTA/i.test(r.p) ? "Consulta especializada" : "Exame / procedimento"],
-      ["Período", `${MESES_EXT[MESES.indexOf(m0)]} de 20${a0} a ${MESES_EXT[MESES.indexOf(m1)]} de 20${a1} (${n} meses)`],
-      ["Extração", `${ext} · solicitações registradas até ${r.solicAte} (${r.atraso} em relação ao SISREG)`],
-      ["Fonte", "Mapa Social do Distrito Federal (MPDFT), painel público de regulação; sem dados de identificação de usuários"],
-      ["Elaboração", "GAPAPS Norte – painel de filas de regulação (versão piloto); metodologia padronizada de análise de filas"]];
-    const idW = (W - 2 * M) * 0.56, syW = W - 2 * M - idW - 6, y0 = y;
-    doc.setFillColor(...INST.lt); doc.roundedRect(M, y0, idW, 46, 1.5, 1.5, "F");
-    let yy = y0 + 6;
-    ident.forEach(([k, v]) => { fonte("helvetica", "bold", 8.2, INST.ac5); doc.text(k.toUpperCase(), M + 4, yy);
-      fonte("helvetica", "normal", 9, INST.tx); const ls = doc.splitTextToSize(v, idW - 32); ls.forEach(l => { doc.text(l, M + 28, yy); yy += 3.9; }); yy += 1.2; });
-    // síntese (texto sugerido, calculado)
-    const rk = r.risco.filter(x => x.n), ab = r.aberr, u12 = r.serie.saldo.slice(-12), media = a => a.reduce((p, q) => p + q, 0) / Math.max(a.length, 1);
-    const sint = [
-      `Fila: ${fmt(tot)} solicitações aguardam (${rk.map(x => `${x.cor.toLowerCase()} ${fmt(x.n)}`).join(", ")}).` + (rk.some(x => x.mediana != null) ? ` Mediana de espera: ${rk.filter(x => x.mediana != null).map(x => `${x.cor.toLowerCase()} ${fmt(x.mediana)} d${x.meta ? ` (meta ${x.meta})` : ""}`).join(", ")}.` : ""),
-      `Fluxo: entrada média de ${fmt(media(r.serie.in.slice(-12)), 1)}/mês e saída de ${fmt(media(r.serie.out.slice(-12)), 1)}/mês nos últimos 12 meses; saldo positivo em ${u12.filter(v => v > 0).length} desses meses. Tendência: entrada ${ab.in.a >= 0 ? "+" : ""}${fmt(ab.in.a, 1)}/mês e saída ${ab.out.a >= 0 ? "+" : ""}${fmt(ab.out.a, 1)}/mês por mês.`,
-      `Perfil clínico: ${[...r.cids].sort((a, b) => b.n - a.n).filter(x => x.n && x.grupo !== "OUTROS CIDS").slice(0, 2).map(x => `${x.grupo} (${fmt(x.pct)}%)`).join(" e ")}.`,
-      `Devolvidas: ${fmt(r.totDev)} solicitações; ${r.niveis[0].pct}% da APS.` + (r.ubs.length ? ` Mais devoluções por eSF: ${[...r.ubs].filter(x => x.taxa != null).slice(0, 2).map(x => `${x.u} (${fmt(x.taxa, 1)})`).join(", ")}.` : ""),
-    ];
-    const sx = M + idW + 6;
-    doc.setFillColor(255, 255, 255); doc.setDrawColor(...INST.ac); doc.setLineWidth(0.4); doc.roundedRect(sx, y0, syW, 46, 1.5, 1.5, "FD");
-    doc.setFillColor(...INST.ac); doc.rect(sx, y0, syW, 6.5, "F"); fonte("helvetica", "bold", 9, [255, 255, 255]); doc.text("SÍNTESE  ·  texto sugerido, revisar", sx + 3, y0 + 4.4);
-    yy = y0 + 11; fonte("helvetica", "normal", 8.6, INST.tx);
-    sint.forEach(t => { const ls = doc.splitTextToSize(t, syW - 9); doc.setFillColor(...INST.ac); doc.circle(sx + 4.2, yy - 1.1, 0.8, "F"); ls.forEach(l => { doc.text(l, sx + 7, yy); yy += 3.7; }); yy += 0.8; });
-    y = y0 + 54;
-    // como ler este documento (duas colunas)
-    secao("Como ler este documento", 10);
-    const col = (W - 2 * M - 8) / 2, leitura = [
-      ["1. Comportamento da fila (Figura 1)", "Entrada de solicitações, saída (agendamentos) e saldo, mês a mês, com a linha de tendência e os meses aberrantes assinalados. Saldo positivo = a fila cresce."],
-      ["2. Tempo de espera por prioridade (Figura 2)", "Quantos aguardam em cada classificação de risco, desde quando, e a espera média e mediana; quando há meta normativa, a mediana é comparada com ela."],
-      ["3. Perfil clínico (Figuras 3.1 e 3.2)", "Grupos de CID das solicitações pendentes e o detalhamento das categorias mais frequentes, para orientar protocolos e matriciamento."],
-      ["4. Solicitações devolvidas (Figura 4 e Tabela 1)", "De onde vêm as devoluções do regulador, por nível de atenção e por UBS, em números absolutos, por equipe de Saúde da Família e em relação ao que cada UBS solicitou nos últimos 12 meses."],
-    ];
-    let yl = y, yr = y;
-    leitura.forEach(([t, d], i) => { const x = i % 2 ? M + col + 8 : M; let yy2 = i % 2 ? yr : yl;
-      fonte("helvetica", "bold", 9.2, INST.dk); doc.text(t, x, yy2); yy2 += 4.2;
-      fonte("helvetica", "normal", 8.6, INST.tx); const ls = doc.splitTextToSize(d, col); ls.forEach(l => { doc.text(l, x, yy2); yy2 += 3.7; }); yy2 += 3;
-      if (i % 2) yr = yy2; else yl = yy2; });
-    y = Math.max(yl, yr);
-    texto("Os parágrafos em caixa clara são textos sugeridos, gerados automaticamente a partir dos dados: devem ser revisados e complementados pela análise qualitativa antes da publicação. Metodologia: manual de análise de filas da Região Norte (modelo da Cirurgia Geral), reproduzida pelo painel.", {tam: 8.6, cor: INST.mu});
-
-    // ---- 1. Figura 1 (página paisagem própria)
-    novaPagPaisagem(); secao("1. Comportamento da fila", 10);
-    legenda(N.f1);
-    imagem(graficoSerie(r), 236, 103);
-    notas_(N.n1); sugerido(r.textos.fig1);
-
-    // ---- 2. Figura 2
-    novaPag(); secao("2. Tempo de espera por prioridade", 10);
-    legenda(N.f2);
-    const pastel = {Vermelho: [244, 204, 204], Amarelo: [255, 242, 178], Verde: [217, 234, 211], Azul: [207, 226, 243]};
-    tabela({
-      styles: {font: "helvetica", fontSize: 9.5, halign: "center", textColor: INST.tx, lineColor: INST.ln, lineWidth: 0.2, cellPadding: 1.6},
-      head: [["Classificação", "Mais antiga", "Solicitações", "Espera média (dias)", "Espera mediana (dias)", "Meta (dias)"]],
-      body: r.risco.map(x => [x.cor, x.antiga, x.n ? fmt(x.n) : "", x.media != null && x.n ? fmt(x.media) : "", x.mediana != null && x.n ? fmt(x.mediana) : "", x.meta ? fmt(x.meta) : "–"]),
-      foot: [["TOTAL", "", fmt(tot), "", "", ""]],
-      didParseCell: h => { if (h.section === "body") { h.cell.styles.fillColor = pastel[h.row.raw[0]]; if (h.column.index === 4 && r.risco[h.row.index].acima) h.cell.styles.fontStyle = "bold"; } },
-    });
-    notas_(N.n2.concat(r.meta ? ["Em negrito, a mediana que ultrapassa a meta do protocolo."] : [])); sugerido(r.textos.fig2);
-
-    // ---- 3. CIDs
-    secao("3. Perfil clínico das solicitações pendentes", 125); legenda(N.f3);
-    imagem(graficoCids(r), 125, 89.8); notas_(N.n3);
-    garantir(45); legenda(N.tc);
-    const cg31 = corGrupo(r);
-    tabela({
-      styles: {font: "helvetica", fontSize: 8.3, textColor: INST.tx, lineColor: INST.ln, lineWidth: 0.2, cellPadding: 0.9},
-      columnStyles: {0: {halign: "left", cellWidth: 74}, 1: {halign: "right"}, 2: {halign: "right"}, 3: {halign: "right"}, 4: {halign: "left"}},
-      head: [["CID", "Solicitações", "%", "% acum.", "Grupo na Figura 3.1"]],
-      body: r.topCids.map(x => [x.cat ? x.c : "      " + x.c, fmt(x.n), fmt(x.pct, 1) + "%", x.acum != null ? fmt(x.acum, 1) + "%" : "", x.g]),
-      didParseCell: h => { const x = r.topCids[h.row.index]; if (h.section === "body" && x.cat) { h.cell.styles.fontStyle = "bold"; h.cell.styles.fillColor = cg31[x.g] ? tom(cg31[x.g]) : [242, 242, 242]; } },
-    });
-    notas_(N.ntc); sugerido(r.textos.fig3);
-
-    // ---- 4. Devolvidas
-    secao("4. Solicitações devolvidas", 125); legenda(N.f4);
-    imagem(graficoNiveis(r), 125, 89.8); notas_(N.n4);
-    garantir(45); legenda(N.t1);
-    tabela({
-      styles: {font: "helvetica", fontSize: 8.5, textColor: INST.tx, lineColor: INST.ln, lineWidth: 0.2, cellPadding: 0.9},
-      columnStyles: {0: {halign: "left", cellWidth: 42}, 1: {halign: "right"}, 2: {halign: "right"}, 3: {halign: "right"}, 4: {halign: "right"}, 5: {halign: "right"}, 6: {halign: "right"}},
-      head: [["UNIDADE", "Devolvidas", "% da APS", "eSF", "Devolvidas por eSF", "Solicitações (12 m)", "% devolvidas (12 m)"]],
-      body: r.ubs.map(x => [x.u, fmt(x.n), fmt(x.pct, 2) + "%", x.esf != null ? fmt(x.esf) : "", x.taxa != null ? fmt(x.taxa, 2) : "", x.t12 != null ? fmt(x.t12) : "", x.pct12 != null ? fmt(x.pct12, 1) + "%" : ""]),
-      foot: [["TOTAL", fmt(r.totAps), "100,00%", fmt(r.esfTotal), fmt(r.totAps / r.esfTotal, 2), r.t12Aps ? fmt(r.t12Aps) : "", r.t12Aps ? fmt(r.d12Aps / r.t12Aps * 100, 1) + "%" : ""]],
-    });
-    notas_(N.nt1); sugerido(r.textos.fig4);
-
-    // ---- faixa superior e rodapé em todas as páginas
-    const np = doc.getNumberOfPages(), tot_ = "{total}";
-    for (let i = 1; i <= np; i++) {
-      doc.setPage(i); const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight(), mm = i === 1 ? 18 : 20;
-      doc.setFillColor(...INST.dk); doc.rect(0, 0, pw, 11, "F");
-      fonte("helvetica", "bold", 8.5, [255, 255, 255]); doc.text("SES-DF  ·  SRSNO  ·  DIRAPS Norte  ·  GAPAPS Norte", mm, 7);
-      fonte("helvetica", "normal", 8.5, [214, 200, 236]); doc.text("Análise de Filas de Regulação – Região Norte", pw - mm, 7, {align: "right"});
-      doc.setDrawColor(...INST.ln); doc.setLineWidth(0.3); doc.line(mm, ph - 12, pw - mm, ph - 12);
-      fonte("helvetica", "normal", 7.8, INST.mu);
-      doc.text(`${N.titulo}  ·  extração ${ext}  ·  versão piloto`, mm, ph - 8);
-      doc.text(`Página ${i} de ${tot_}`, pw - mm, ph - 8, {align: "right"});
+    if (chrome) {
+      const np = doc.getNumberOfPages(), ext = r.extracao.toLocaleDateString("pt-BR");
+      for (let i = 1; i <= np; i++) {
+        doc.setPage(i); const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight(), mm = pw > 250 ? 20 : 25;
+        doc.setFont("times", "normal"); doc.setFontSize(9); doc.setTextColor(60);
+        doc.text("SES-DF  ·  SRSNO  ·  DIRAPS Norte  ·  GAPAPS Norte", mm, 10);
+        doc.text("Análise de Filas de Regulação – Região Norte", pw - mm, 10, {align: "right"});
+        doc.setDrawColor(120); doc.setLineWidth(0.3); doc.line(mm, 12.5, pw - mm, 12.5);
+        doc.line(mm, ph - 11, pw - mm, ph - 11);
+        doc.setFontSize(8.5);
+        doc.text(`${N.titulo}  ·  dados extraídos em ${ext}  ·  versão piloto`, mm, ph - 7);
+        doc.text(`Página ${i} de {total}`, pw - mm, ph - 7, {align: "right"});
+      }
+      doc.setTextColor(0);
+      if (typeof doc.putTotalPages === "function") doc.putTotalPages("{total}");
     }
-    if (typeof doc.putTotalPages === "function") doc.putTotalPages(tot_);
-    doc.save(N.titulo + " (layout institucional).pdf");
+    doc.save(N.titulo + (chrome ? " (teste cabeçalho e rodapé)" : "") + ".pdf");
   }
 
   // ------------------------------------------------------------------------------ Word
@@ -753,7 +617,7 @@
     if (!REF) REF = await (await fetch("referencias.json", {cache: "no-store"})).json();
     const d = await carregarAnalise(id, "no-store");
     const r = calcular(d, nome);
-    await ({pdf: /[?&]layout=inst/.test(location.search) ? gerarPdfInst : gerarPdf, word: gerarWord, excel: gerarExcel})[formato](r);   // ?layout=inst = prévia do layout institucional
+    await ({pdf: r_ => gerarPdf(r_, /[?&]layout=inst/.test(location.search)), word: gerarWord, excel: gerarExcel})[formato](r);   // ?layout=inst = teste com cabeçalho e rodapé
     return r;
   };
   // ------------------------------------------------------------------------------ dados detalhados (linhas do Mapa Social)
