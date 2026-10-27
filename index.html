@@ -309,7 +309,8 @@ const NIVEIS = ["APS","DIRASE","HRS","HRPL","UPA","OUTROS"];
 let D, DV = null, vis = 60, visPr = 60, ultimaLista = [], ESF = {};
 const $ = id => document.getElementById(id);
 const porId = {};
-const atrasoTxt = () => D.atraso_dias == null ? "atraso de 6 a 7 dias" : D.atraso_dias === 0 ? "sem atraso" : D.atraso_dias === 1 ? "atraso de 1 dia" : `atraso de ${D.atraso_dias} dias`;
+const atrasoTxt = () => { const u=(D.atraso_ultimos||[]).filter(x=>x!=null), mn=Math.min(...u), mx=Math.max(...u); return u.length>1&&mn!==mx ? `atraso de ${mn} a ${mx} ${mx===1?"dia":"dias"} (últimas ${u.length} medições)` : atrasoUnico(); };
+const atrasoUnico = () => D.atraso_dias == null ? "atraso de 6 a 7 dias" : D.atraso_dias === 0 ? "sem atraso" : D.atraso_dias === 1 ? "atraso de 1 dia" : `atraso de ${D.atraso_dias} dias`;
 const diasSemSaida = f => f.fila > 0 ? (f.ult_ag ? Math.floor((new Date(D.data) - new Date(f.ult_ag)) / 864e5) : 1e6) : -1;
 
 // ---------------------------------------------------------------- período dos gráficos (mês ou quadrimestre)
@@ -375,7 +376,7 @@ function legenda(f){
   const fina=`<svg width="28" height="12" viewBox="0 0 28 12" aria-hidden="true"><line x1="0" y1="9" x2="28" y2="3" stroke="currentColor" stroke-width="1.2" opacity=".8"/></svg>`;
   const anel=`<svg width="20" height="14" viewBox="0 0 20 14" aria-hidden="true"><circle cx="10" cy="7" r="3" fill="currentColor"/><circle cx="10" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 2"/></svg>`;
   const M=PER==="m";
-  return `<div class="leg">${f?`<span>${sw("var(--in)")}Entrada (média <b>${fmt(mEnt,1)}</b>/mês)</span><span>${sw("var(--out)")}Saída (média <b>${fmt(mSai,1)}</b>/mês)</span><span>${sw("var(--saldo)")}Saldo (média <b>${mSal>0?"+":""}${fmt(mSal,1)}</b>/mês)</span>`:`<span>${sw("var(--in)")}Entrada</span><span>${sw("var(--out)")}Saída</span><span>${sw("var(--saldo)")}Saldo</span>`}
+  return `<div class="leg">${f?`<span>${sw("var(--in)")}Entrada (média 24 m: <b>${fmt(mEnt,1)}</b>/mês)</span><span>${sw("var(--out)")}Saída (média 24 m: <b>${fmt(mSai,1)}</b>/mês)</span><span>${sw("var(--saldo)")}Saldo (média 24 m: <b>${mSal>0?"+":""}${fmt(mSal,1)}</b>/mês)</span>`:`<span>${sw("var(--in)")}Entrada</span><span>${sw("var(--out)")}Saída</span><span>${sw("var(--saldo)")}Saldo</span>`}
     ${M?`<span>${fina}linha fina = tendência</span><span>${tra}tracejado + círculo vazio = mês aberrante (fora da tendência)</span>`
        :`<span>${tra}tracejado + ponto vazado = quadrimestre incompleto</span><span>${anel}círculo tracejado = quadrimestre com mês aberrante</span>`}
     <button type="button" class="ajuda" aria-expanded="false" title="O que é um mês aberrante e como ele é identificado">?</button></div>
@@ -505,7 +506,7 @@ function simHtml(f){
    <div class="sim" data-id="${f.id}" hidden><h4>Simulador de oferta × tempo de espera</h4>
    <p class="nota">Estimativa para a fila inteira do procedimento, com a entrada e a saída médias dos últimos 12 meses mantidas. Mova uma barra e a outra acompanha.</p>
    <div class="sim-grid">
-    <div><label>Destinar a oferta adicional a: <select class="s-cor"><option value="">todas as cores (proporcional à saída atual)</option>${COR.filter(c=>f.cores[c]).map(c=>`<option value="${c}">somente ${c}</option>`).join("")}</select></label></div>
+    <div><label>Destinar a oferta adicional a: <select class="s-cor"><option value="">todas as cores (proporcional à fila de cada cor)</option>${COR.filter(c=>f.cores[c]).map(c=>`<option value="${c}">somente ${c}</option>`).join("")}</select></label></div>
     <div><label>Oferta adicional: <b class="v-delta">0</b> agendamentos/mês <span class="v-pct"></span></label>
       <input type="range" class="s-delta" min="0" max="${maxD}" step="${passo}" value="0"></div>
     <div><label>Tempo de espera estimado<span class="v-foco"></span>: <b class="v-esp">–</b></label>
@@ -538,7 +539,7 @@ function atualizarSim(box,origem){
   // texto do plano
   const txt=[]; if(b.fila<=0) txt.push("Não há solicitações aguardando."); else {
     const cresce=b.ent-b.sai;
-    txt.push(`Hoje entram <b>${fmt(b.ent,1)}</b> e saem <b>${fmt(b.sai,1)}</b> por mês${cresce>0.05?` (a fila cresce ${fmt(cresce,1)}/mês)`:cresce<-0.05?` (a fila já cai ${fmt(-cresce,1)}/mês)`:""}; <b>${fmt(b.fila)}</b> aguardam${cor?` na cor ${cor}`:""}.`);
+    txt.push(`Na média dos últimos 12 meses, entram <b>${fmt(b.ent,1)}</b> e saem <b>${fmt(b.sai,1)}</b> por mês${cresce>0.05?` (a fila cresce ${fmt(cresce,1)}/mês)`:cresce<-0.05?` (a fila já cai ${fmt(-cresce,1)}/mês)`:""}; <b>${fmt(b.fila)}</b> aguardam${cor?` na cor ${cor}`:""}.`);
     const alvo=metaC?`trazer a espera para dentro da meta de ${fmt(metaC)} dias`:"zerar a fila";
     txt.push(`Para ${alvo} em <b>${P}</b> meses${M?`, com mutirão de <b>${fmt(M)}</b> vagas no 1º mês${M>=b.fila?" (que já cobre toda a fila)":""}`:""}: `+
       (plz.N>0.05?`<b>+${fmt(Math.ceil(plz.N))}</b> agendamentos a mais por mês (total de ≈ ${fmt(Math.ceil(b.sai+plz.N))}/mês) durante os ${P} meses.`:`o ritmo atual já basta${M?" junto com o mutirão":""}; nenhuma vaga a mais por mês.`));
@@ -552,14 +553,14 @@ function atualizarSim(box,origem){
     cel("saldo mensal com a oferta",(liq>=0?"−":"+")+fmt(Math.abs(liq))+" /mês",liq>0?"bom":liq<0?"ruim":"")+
     cel("fila em 12 meses"+(M?" (com o mutirão)":""),fmt(p1[12])+(p0[12]!==p1[12]?` (sem oferta: ${fmt(p0[12])})`:""))+
     cel("meses para zerar a fila"+(M?" (com o mutirão)":""),zero!=null?fmt(zero)+(zero0&&zero0!==zero?` (sem oferta: ${fmt(zero0)})`:zero0?"":" (sem oferta: não zera)"):(b.fila?"não zera":"–"),zero!=null?"bom":b.fila?"ruim":"");
-  // efeito em cada cor: a oferta vai toda para a cor escolhida, ou é repartida na proporção da saída atual de cada cor
+  // efeito em cada cor: a oferta vai toda para a cor escolhida, ou é repartida na proporção da fila de cada cor
   const cores=COR.filter(c=>f.cores[c]), bs=cores.map(c=>baseCor(f,c)), somaS=bs.reduce((t,x)=>t+x.sai,0), somaF=bs.reduce((t,x)=>t+x.fila,0)||1;
-  const parte=bc=>somaS>0?bc.sai/somaS:bc.fila/somaF;   // sem saída em nenhuma cor, reparte pela fila
+  const parte=bc=>bc.fila/somaF;   // reparte na proporção da fila de cada cor (a cor sem saída também recebe oferta)
   const linhasC=cores.map((c,i)=>{ const bc=bs[i], dc=cor?(c===cor?delta:0):delta*parte(bc), sc=bc.sai+dc, e0=bc.espera, e1=sc>0?bc.fila/sc*DIAS_MES:null;
     const mc=cor?(c===cor?M:0):M*parte(bc), pr=projSim(bc,dc,24,mc), lc=Math.max(0,bc.fila-mc), z=bc.fila>0?(lc<=0?1:sc>bc.ent?Math.ceil(lc/(sc-bc.ent)):null):null;
     return `<tr><td>${c}</td><td>${fmt(bc.fila)}</td><td>${fmt(bc.ent,1)}</td><td>${fmt(bc.sai,1)}</td><td>${dc?"+"+fmt(dc,1):"–"}</td><td>${dias10(e0)}</td><td><b>${dias10(e1)}</b></td><td>${fmt(pr[12])}</td><td>${z!=null?fmt(z)+" m":(bc.fila?"não zera":"–")}</td></tr>`; }).join("");
   box.querySelector(".sim-cor").innerHTML=`<div class="rolagem"><table class="cores"><tr><th>Cor</th><th>Na fila</th><th>Entrada/mês</th><th>Saída/mês</th><th>Oferta</th><th>Espera estimada hoje (dias)</th><th>Com a oferta (dias)</th><th>Fila em 12 meses</th><th>Zera em</th></tr>${linhasC}</table></div>
-    <small class="nota">Entrada e saída por cor = médias dos últimos 12 meses completos, medidas nas solicitações e nos agendamentos de cada cor. “Sem saída” = nenhum atendimento dessa cor no período. Com “todas as cores”, a oferta é repartida na proporção da saída atual de cada cor (ou da fila, se nenhuma cor tiver saída).</small>`;
+    <small class="nota">Entrada e saída por cor = médias dos últimos 12 meses completos, medidas nas solicitações e nos agendamentos de cada cor. “Sem saída” = nenhum atendimento dessa cor no período. Com “todas as cores”, a oferta é repartida na proporção da fila de cada cor; para dirigir a oferta a uma cor específica, escolha-a acima.</small>`;
   const W=560,H=150,pl=44,pr=8,pt=8,pb=20, mx=Math.max(1,...p0,...p1), X=i=>pl+i/24*(W-pl-pr), Y=v=>pt+(1-v/mx)*(H-pt-pb);
   const li=(a,c,d)=>`<polyline fill="none" stroke="${c}" stroke-width="2" ${d?'stroke-dasharray="5 4"':""} points="${a.map((v,i)=>X(i)+","+Y(v)).join(" ")}"/>`;
   box.querySelector(".sim-graf").innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Projeção da fila em 24 meses">
@@ -607,7 +608,7 @@ function item(f){
      ${grafico(f)}
      <div class="rolagem"><table class="cores"><tr><th>Prioridade</th><th>Solicitações</th><th>Mais antiga</th><th>Espera da mais antiga (dias)</th><th title="Tempo médio que quem está na fila hoje já esperou">Média na fila hoje (dias)</th><th title="Tempo médio entre a solicitação e o atendimento, nos agendamentos com atendimento nos últimos ${D.atend_dias||90} dias">Média até o atendimento (dias)</th><th>Meta (dias)</th></tr>${linhas}</table></div>
      <p class="nota" style="margin:2px 0 0">“Média na fila hoje” = há quanto tempo, em média, esperam as solicitações que ainda estão na fila. “Média até o atendimento” = tempo entre a solicitação e o atendimento nos agendados com atendimento nos últimos ${D.atend_dias||90} dias (n = quantos; passe o cursor para ver a mediana).</p>
-     <p style="font-size:.8rem;color:var(--muted);margin:2px 0 0">Devolvidas: ${fmt(f.devolvidas)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Sem meta de tempo de espera definida em normativa da SES-DF para este procedimento"}</p>
+     <p style="font-size:.8rem;color:var(--muted);margin:2px 0 0">Devolvidas (todas as de hoje, sem recorte de período): ${fmt(f.devolvidas)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Sem meta de tempo de espera definida em normativa da SES-DF para este procedimento"}</p>
      ${f.fila>0?simHtml(f):""}
      <div class="gerar" data-id="${f.id}" data-p="${esc(f.p)}">
        <b>Gerar análise completa</b>
@@ -740,7 +741,7 @@ function porUnidade(){
   U.forEach(x=>{ const r=k=>x.esf?x[k]/x.esf:null; x.taxa=r("n"); x.taxaC=r("c"); x.taxaE=r("e"); x.taxa12=x.t12?x.d12/x.t12*100:null; x.pct=x.n/tot*100; x.procs.sort((a,b)=>b[1]-a[1]); });
   return U.filter(x=>x.n>0||x.t12>0);
 }
-const ORD_UN={esf:x=>x.esf??-1,nproc:x=>x.procs.length,n:x=>x.n,taxa:x=>x.taxa??-1,c:x=>x.c,taxaC:x=>x.taxaC??-1,e:x=>x.e,taxaE:x=>x.taxaE??-1,t12:x=>x.t12,taxa12:ord12};
+const ORD_UN={esf:x=>x.esf??-1,n:x=>x.n,taxa:x=>x.taxa??-1,c:x=>x.c,taxaC:x=>x.taxaC??-1,e:x=>x.e,taxaE:x=>x.taxaE??-1,t12:x=>x.t12,taxa12:ord12};
 let UN_ATUAL={};
 let unOrd={k:null,dir:-1}, prOrd={k:null,dir:-1};   // coluna clicada no cabeçalho (dir -1 = decrescente); null = vale o seletor
 const ordUn=()=>unOrd.k||$("un-ordem").value, ordPr=()=>prOrd.k||$("pr-ordem").value;
@@ -754,12 +755,12 @@ function filtrarUn(){
 function linhaUn(x,pos){
   const t=v=>v!=null?fmt(v,1):"–";
   return `<tr class="u" data-u="${esc(x.u)}" tabindex="0" title="Clique para ver os procedimentos"><td>${pos||""}</td><td>${esc(x.u)}<small>${x.nivel==="OUTROS"?"Outras":x.nivel}</small></td><td>${x.esf??"–"}</td>
-    <td class="sep"><b>${fmt(x.n)}</b></td><td>${t(x.taxa)}</td><td class="sep">${fmt(x.c)}</td><td>${t(x.taxaC)}</td><td class="sep">${fmt(x.e)}</td><td>${t(x.taxaE)}</td><td class="sep">${fmt(x.t12)}</td><td title="${fmt(x.d12)} devolvidas entre as ${fmt(x.t12)} solicitações dos últimos 12 meses">${pct12(x.d12,x.t12)}</td><td class="sep">${fmt(x.procs.length)}</td></tr>`;
+    <td class="sep"><b>${fmt(x.n)}</b></td><td>${t(x.taxa)}</td><td class="sep">${fmt(x.c)}</td><td>${t(x.taxaC)}</td><td class="sep">${fmt(x.e)}</td><td>${t(x.taxaE)}</td><td class="sep">${fmt(x.t12)}</td><td title="${fmt(x.d12)} devolvidas entre as ${fmt(x.t12)} solicitações dos últimos 12 meses">${pct12(x.d12,x.t12)}</td></tr>`;
 }
 function detalheUn(x){
   const procs=x.procs.map(([id,n])=>{const f=porId[id], q=x.p12[id]||[0,0]; return `<tr><td>${f?`<a class="irfila" href="#f-${id}">${esc(f.p)}</a>`:id}</td><td>${esc(f?f.tipo:"")}</td><td>${fmt(n)}</td><td>${fmt(n/x.n*100,1)}%</td><td>${x.esf?fmt(n/x.esf,1):"–"}</td><td title="${fmt(q[0])} devolvidas entre ${fmt(q[1])} solicitações nos últimos 12 meses">${pct12(q[0],q[1])}</td></tr>`;}).join("");
   const ui=DV.unidades.findIndex(u=>u[0]===x.u);
-  return `<tr class="sub"><td colspan="12">${DV.serie?miniSerie("Devolvidas da unidade",{uis:new Set([ui])}):""}<div class="rolagem"><table class="tab ord"><tr><th>Procedimento</th><th>Tipo</th><th>Devolvidas</th><th>% da unidade</th><th>Por eSF</th><th>% devolvidas (12 m)</th></tr>${procs}</table></div>
+  return `<tr class="sub"><td colspan="11">${DV.serie?miniSerie("Devolvidas da unidade",{uis:new Set([ui])}):""}<div class="rolagem"><table class="tab ord"><tr><th>Procedimento</th><th>Tipo</th><th>Devolvidas</th><th>% da unidade</th><th>Por eSF</th><th>% devolvidas (12 m)</th></tr>${procs}</table></div>
     <div class="dv-acoes"><button data-dev-un="${esc(x.u)}">Baixar devolvidas desta unidade (Excel)</button><small class="status"></small></div></td></tr>`;
 }
 const CAB_UN=[["n","Devolvidas"],["taxa","por eSF"],["c","Devolvidas"],["taxaC","por eSF"],["e","Devolvidos"],["taxaE","por eSF"],["t12","Solicitações"],["taxa12","% devolvidas"]];
@@ -768,7 +769,7 @@ function renderUn(){
   const abertas=[...document.querySelectorAll("#un-lista tr.u.aberta")].map(tr=>tr.dataset.u);   // linhas abertas continuam abertas
   const th=(k,t,extra="")=>`<th data-ord="${k}"${o===k?` aria-sort="${dsc}"`:""}${k==="c"||k==="e"||k==="t12"?' class="sep"':""} ${extra}>${t}</th>`;
   $("un-lista").innerHTML=L.length?`<table class="tab rank"><thead>
-    <tr><th rowspan="2">#</th>${th("nome","Unidade solicitante",'rowspan="2"')}<th rowspan="2" data-ord="esf"${o==="esf"?` aria-sort="${dsc}"`:""}>eSF</th><th colspan="2" class="sep">Total</th><th colspan="2" class="sep">Consultas</th><th colspan="2" class="sep">Exames</th><th colspan="2" class="sep" title="Solicitações feitas pela unidade nos últimos 12 meses completos e quantas delas estão devolvidas hoje">Últimos 12 meses</th><th rowspan="2" class="sep" data-ord="nproc"${o==="nproc"?` aria-sort="${dsc}"`:""}>Procedimentos</th></tr>
+    <tr><th rowspan="2">#</th>${th("nome","Unidade solicitante",'rowspan="2"')}<th rowspan="2" data-ord="esf"${o==="esf"?` aria-sort="${dsc}"`:""}>eSF</th><th colspan="2" class="sep">Total</th><th colspan="2" class="sep">Consultas</th><th colspan="2" class="sep">Exames</th><th colspan="2" class="sep" title="Solicitações feitas pela unidade nos últimos 12 meses completos e quantas delas estão devolvidas hoje">Últimos 12 meses</th></tr>
     <tr>${CAB_UN.map(([k,t])=>th(k,t)).join("")}</tr></thead><tbody>${L.map((x,i)=>linhaUn(x,rank?i+1:0)).join("")}</tbody></table>`:'<p style="padding:12px">Nenhuma unidade encontrada.</p>';
   UN_ATUAL=Object.fromEntries(L.map(x=>[x.u,x]));
   abertas.forEach(u=>{ const tr=document.querySelector(`#un-lista tr.u[data-u="${CSS.escape(u)}"]`); if(tr) alternarUn(tr); });
@@ -820,9 +821,9 @@ function renderPr(){
 }
 async function baixarResumoUn(){
   await xlsx(); const L=filtrarUn(), wb=XLSX.utils.book_new(), r1=v=>v!=null?Math.round(v*10)/10:"";
-  const ws=XLSX.utils.aoa_to_sheet([["Posição","Unidade solicitante","Nível","eSF","Devolvidas","Devolvidas por eSF","Consultas devolvidas","Consultas por eSF","Exames devolvidos","Exames por eSF","Solicitações (12 m)","Devolvidas (12 m)","% devolvidas (12 m)","Procedimentos","% do total da região"],
-    ...L.map((x,i)=>[i+1,x.u,x.nivel,x.esf??"",x.n,r1(x.taxa),x.c,r1(x.taxaC),x.e,r1(x.taxaE),x.t12,x.d12,r1(x.taxa12),x.procs.length,r1(x.pct)])]);
-  ws["!cols"]=[8,40,10,6,11,18,20,18,18,16,17,16,18,14,20].map(w=>({wch:w}));
+  const ws=XLSX.utils.aoa_to_sheet([["Posição","Unidade solicitante","Nível","eSF","Devolvidas","Devolvidas por eSF","Consultas devolvidas","Consultas por eSF","Exames devolvidos","Exames por eSF","Solicitações (12 m)","Devolvidas (12 m)","% devolvidas (12 m)","% do total da região"],
+    ...L.map((x,i)=>[i+1,x.u,x.nivel,x.esf??"",x.n,r1(x.taxa),x.c,r1(x.taxaC),x.e,r1(x.taxaE),x.t12,x.d12,r1(x.taxa12),r1(x.pct)])]);
+  ws["!cols"]=[8,40,10,6,11,18,20,18,18,16,17,16,18,20].map(w=>({wch:w}));
   XLSX.utils.book_append_sheet(wb,ws,"Ranking");
   const linhas=[]; L.forEach(x=>x.procs.forEach(([id,n])=>{const q=x.p12[id]||[0,0]; linhas.push([x.u,x.nivel,porId[id]?porId[id].p:id,porId[id]?porId[id].tipo:"",n,r1(x.n?n/x.n*100:0),x.esf?r1(n/x.esf):"",q[1],q[0],q[1]?r1(q[0]/q[1]*100):""]);}));
   const w2=XLSX.utils.aoa_to_sheet([["Unidade solicitante","Nível","Procedimento","Tipo","Devolvidas","% da unidade","Por eSF","Solicitações (12 m)","Devolvidas (12 m)","% devolvidas (12 m)"],...linhas]); w2["!cols"]=[40,10,55,12,11,13,9,17,16,18].map(w=>({wch:w}));
@@ -943,7 +944,7 @@ const PRONTO=fetch("dados.json",{cache:"no-store"}).then(r=>{if(!r.ok) throw new
   const rec=d.recarga_painel?new Date(d.recarga_painel):null;
   $("info").textContent=`atualizado em ${d.gerado_em}${rec&&!isNaN(rec)?" · Mapa Social recarregado em "+rec.toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}):""} · solicitações registradas até ${d.solicitacoes_ate} (${atrasoTxt()})`;
   if(d.atraso_dias!=null){ const u=d.atraso_ultimos||[], a=d.atraso_dias;
-    $("atraso").innerHTML=`<b>Atraso dos dados:</b> ${a===0?`o Mapa Social registra solicitações até ${d.solicitacoes_ate}, o mesmo dia desta coleta (sem atraso em relação ao SISREG); solicitações feitas depois da recarga ainda não aparecem`:`o Mapa Social está ${a} ${a===1?"dia":"dias"} atrás do SISREG (última solicitação registrada: ${d.solicitacoes_ate}). As solicitações mais recentes ainda não aparecem`}, por isso os totais podem diferir do SISREG.${u.length>1?` Atraso medido nas últimas recargas: ${u.join(", ")} dias.`:""}`; }
+    $("atraso").innerHTML=`<b>Atraso dos dados:</b> ${a===0?`o Mapa Social registra solicitações até ${d.solicitacoes_ate}, o mesmo dia desta coleta (sem atraso nesta medição); solicitações feitas depois da recarga ainda não aparecem`:`o Mapa Social está ${a} ${a===1?"dia":"dias"} atrás do SISREG (última solicitação registrada: ${d.solicitacoes_ate}). As solicitações mais recentes ainda não aparecem`}, por isso os totais podem diferir do SISREG.${u.length>1?` Atraso medido nas últimas recargas: ${u.join(", ")} dias.`:""}`; }
   const idade=(Date.now()-new Date(d.data+"T12:00:00"))/864e5;
   if(idade>2){ $("aviso").hidden=false; $("aviso").textContent=`Atenção: os dados são de ${d.data.split("-").reverse().join("/")} (${Math.floor(idade)} dias). A atualização automática pode ter falhado.`; }
   const ativos=d.filas.filter(f=>f.fila>0);
@@ -952,7 +953,7 @@ const PRONTO=fetch("dados.json",{cache:"no-store"}).then(r=>{if(!r.ok) throw new
     [fmt(ativos.reduce((s,f)=>s+f.fila,0)),"solicitações na fila (pendentes + reenviadas)","filas|com-fila|fila"],
     [fmt(d.filas.filter(f=>f.alertas.length).length),"filas com alertas","filas|qualquer|fila"],
     [fmt(d.filas.filter(f=>f.alertas.some(a=>TIPO_ALERTA.semsaida.test(a))).length),"filas sem saída há mais de 1 ano","filas|semsaida|semsaida"],
-    [fmt(d.filas.reduce((s,f)=>s+f.devolvidas,0)),"solicitações devolvidas","dev"],
+    [fmt(d.filas.reduce((s,f)=>s+f.devolvidas,0)),"solicitações devolvidas hoje (todas, sem recorte de período)","dev"],
     [fmt(d.filas.reduce((s,f)=>s+(f.espera?f.espera.n:0),0)),"em fila de espera (aguardando pactuação)","oferta|espera|espera"]
   ]);
   const tipos=[...new Set(d.filas.map(f=>f.tipo).filter(Boolean))].sort();

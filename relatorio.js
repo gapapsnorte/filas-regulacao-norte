@@ -21,7 +21,9 @@
   const dataBr = d => `${d.getDate()} ${MESES[d.getMonth()]}. ${d.getFullYear()}`;
   const dd = s => s ? s.split("-").reverse().join("/") : "";
   const cmp = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
-  const atrasoTxt = d => d.atraso_dias == null ? "atraso de 6 a 7 dias" : d.atraso_dias === 0 ? "sem atraso" : d.atraso_dias === 1 ? "atraso de 1 dia" : `atraso de ${d.atraso_dias} dias`;
+  const atrasoUnico = d => d.atraso_dias == null ? "atraso de 6 a 7 dias" : d.atraso_dias === 0 ? "sem atraso" : d.atraso_dias === 1 ? "atraso de 1 dia" : `atraso de ${d.atraso_dias} dias`;
+  const atrasoTxt = d => { const u = (d.atraso_ultimos || []).filter(x => x != null), mn = Math.min(...u), mx = Math.max(...u);
+    return u.length > 1 && mn !== mx ? `atraso de ${mn} a ${mx} ${mx === 1 ? "dia" : "dias"} (últimas ${u.length} medições)` : atrasoUnico(d); };
 
   function lib(url) {
     if (!carregadas[url]) carregadas[url] = new Promise((ok, erro) => {
@@ -142,7 +144,8 @@
 
     r.risco = CORES.map(([k, rot]) => {
       const c = d.cores[k];
-      return c ? {cor: rot, antiga: dd(c.antiga), n: c.n, dias: c.dias} : {cor: rot, antiga: "", n: 0, dias: null};
+      const cs = (d.cor_stats || {})[k] || {};
+      return c ? {cor: rot, antiga: dd(c.antiga), n: c.n, dias: c.dias, media: cs.fila_media ?? null, mediana: cs.fila_mediana ?? null} : {cor: rot, antiga: "", n: 0, dias: null, media: null, mediana: null};
     });
     if (d.cores["sem risco"]) r.avisos.push(`${d.cores["sem risco"].n} solicitações da fila sem classificação de risco (fora da Figura 2).`);
 
@@ -235,9 +238,9 @@
     const p12 = s.in.slice(0, 12), u12 = s.in.slice(-12), us = s.saldo.slice(-12);
     const v = media(p12) ? (media(u12) / media(p12) - 1) * 100 : 0;
     const ab = r.aberr, ai = ab.in.a, ao = ab.out.a, nj = n - ab.ini;
-    t.fig1 = `Entre ${s.meses[0]} e ${s.meses[n - 1]}, a média mensal de entrada (INPUT) passou de ${fmt(media(p12), 1)} solicitações nos primeiros 12 meses para ${fmt(media(u12), 1)} nos últimos 12 meses (${v >= 0 ? "+" : ""}${fmt(v, 1)}%). ` +
+    t.fig1 = `Entre ${s.meses[0]} e ${s.meses[n - 1]}, a média mensal de entrada (INPUT) passou de ${fmt(media(p12), 1)} solicitações/mês nos primeiros 12 meses para ${fmt(media(u12), 1)} solicitações/mês nos últimos 12 meses (${v >= 0 ? "+" : ""}${fmt(v, 1)}%). ` +
       `Nos últimos 12 meses, o saldo regulatório foi positivo em ${us.filter(x => x > 0).length} meses, somando ${fmt(us.reduce((a, b) => a + b, 0))} solicitações a mais do que as agendadas no período. ` +
-      `Nos últimos ${nj} meses, a tendência (reta de mínimos quadrados calculada sem os meses aberrantes, identificados pelo método de Theil-Sen) indica variação média de ${fmt(ai * 12, 1)} solicitações/mês por ano no INPUT e de ${fmt(ao * 12, 1)} no OUTPUT.`;
+      `Nos últimos ${nj} meses, a tendência (reta de mínimos quadrados calculada sem os meses aberrantes, identificados pelo método de Theil-Sen) indica variação média de ${fmt(ai * 12, 1)} solicitações/mês por ano no INPUT e de ${fmt(ao * 12, 1)} solicitações/mês por ano no OUTPUT.`;
     const ext = [];
     for (const [k, a] of [["INPUT", s.in], ["OUTPUT", s.out], ["SALDO REGULATÓRIO", s.saldo]]) {
       const f = ab[k === "INPUT" ? "in" : k === "OUTPUT" ? "out" : "saldo"].flag;
@@ -265,7 +268,7 @@
   function notas(r) {
     const e = dataBr(r.extracao), s = r.serie, n = s.meses.length;
     const [m0, a0] = s.meses[0].split("/"), [m1, a1] = s.meses[n - 1].split("/");
-    const n2 = [FONTE, `Nota: Dados extraídos em ${e}. Considera as solicitações pendentes e reenviadas; o tempo de espera vai da solicitação mais antiga de cada prioridade até a data da extração. O Mapa Social registra solicitações até ${r.solicAte} (${r.atraso} em relação ao SISREG), por isso os totais podem diferir do SISREG.`];
+    const n2 = [FONTE, `Nota: Dados extraídos em ${e}. Considera as solicitações pendentes e reenviadas; o tempo de espera vai da solicitação mais antiga de cada prioridade até a data da extração; a média e a mediana são do tempo que todas as solicitações pendentes dessa prioridade já esperaram. O Mapa Social registra solicitações até ${r.solicAte} (${r.atraso} em relação ao SISREG), por isso os totais podem diferir do SISREG.`];
     if (r.meta) n2.push("Metas de tempo de espera do protocolo vigente (mediana): " + ["vermelho", "amarelo", "verde", "azul"].filter(c => r.meta[c]).map(c => `${c} até ${r.meta[c]} dias`).join(", ") + `. ${(r.meta.fonte || "").trim().replace(/\.$/, "")}.`);
     if (!r.meta) n2.push("Não há meta de tempo de espera por prioridade definida em normativa da SES-DF para este procedimento (levantamento de 14/10/2026 nos protocolos de acesso e notas técnicas vigentes).");
     if (r.notas.azul) n2.push("*" + r.notas.azul);
@@ -450,10 +453,10 @@
     const corFill = {Vermelho: [255, 0, 0], Amarelo: [255, 255, 0], Verde: [146, 208, 80], Azul: [0, 176, 240]};
     doc.autoTable({
       startY: y, margin: {left: M, right: M}, theme: "grid", styles: {font: "helvetica", fontSize: 10, halign: "center", textColor: 0, lineColor: 120, lineWidth: 0.2},
-      head: [["Atualizado", r.extracao.toLocaleDateString("pt-BR"), "", ""], ["Classificação", "Mais antiga", "Solicitações", "Tempo de espera em DIAS"]],
+      head: [["Atualizado", r.extracao.toLocaleDateString("pt-BR"), "", "", "", ""], ["Classificação", "Mais antiga", "Solicitações", "Tempo de espera em DIAS", "Média na fila (dias)", "Mediana na fila (dias)"]],
       headStyles: {fillColor: 255, textColor: 0, fontStyle: "bold"},
-      body: r.risco.map(x => [x.cor, x.antiga, x.n ? fmt(x.n) : "", x.dias != null ? fmt(x.dias) : ""]),
-      foot: [["TOTAL", "", fmt(r.risco.reduce((a, x) => a + x.n, 0)), ""]],
+      body: r.risco.map(x => [x.cor, x.antiga, x.n ? fmt(x.n) : "", x.dias != null ? fmt(x.dias) : "", x.media != null && x.n ? fmt(x.media) : "", x.mediana != null && x.n ? fmt(x.mediana) : ""]),
+      foot: [["TOTAL", "", fmt(r.risco.reduce((a, x) => a + x.n, 0)), "", "", ""]],
       footStyles: {fillColor: 255, textColor: 0, fontStyle: "bold"}, showFoot: "lastPage",
       didParseCell: h => { if (h.section === "body") h.cell.styles.fillColor = corFill[h.row.raw[0]]; },
     });
@@ -510,11 +513,11 @@
       shading: o.fill ? {type: D.ShadingType.CLEAR, color: "auto", fill: o.fill} : undefined, width: o.w ? {size: o.w, type: D.WidthType.DXA} : undefined});
     const fill = Object.fromEntries(CORES.map(([, rot, f]) => [rot, f]));
     const tRisco = new D.Table({alignment: D.AlignmentType.CENTER, rows: [
-      new D.TableRow({children: [cel("Atualizado", {negrito: true, al: D.AlignmentType.LEFT}), cel(r.extracao.toLocaleDateString("pt-BR"), {negrito: true}), cel(""), cel("")]}),
-      new D.TableRow({children: ["Classificação", "Mais antiga", "Solicitações", "Tempo de espera em DIAS"].map(t => cel(t, {negrito: true}))}),
-      ...r.risco.map(x => new D.TableRow({children: [x.cor, x.antiga, x.n ? fmt(x.n) : "", x.dias != null ? fmt(x.dias) : ""].map(t => cel(t, {fill: fill[x.cor]}))})),
-      new D.TableRow({children: [cel("TOTAL", {negrito: true, al: D.AlignmentType.LEFT}), cel(""), cel(fmt(r.risco.reduce((a, x) => a + x.n, 0)), {negrito: true}), cel("")]}),
-    ], columnWidths: [2040, 2040, 2040, 2600]});
+      new D.TableRow({children: [cel("Atualizado", {negrito: true, al: D.AlignmentType.LEFT}), cel(r.extracao.toLocaleDateString("pt-BR"), {negrito: true}), cel(""), cel(""), cel(""), cel("")]}),
+      new D.TableRow({children: ["Classificação", "Mais antiga", "Solicitações", "Tempo de espera em DIAS", "Média na fila (dias)", "Mediana na fila (dias)"].map(t => cel(t, {negrito: true}))}),
+      ...r.risco.map(x => new D.TableRow({children: [x.cor, x.antiga, x.n ? fmt(x.n) : "", x.dias != null ? fmt(x.dias) : "", x.media != null && x.n ? fmt(x.media) : "", x.mediana != null && x.n ? fmt(x.mediana) : ""].map(t => cel(t, {fill: fill[x.cor]}))})),
+      new D.TableRow({children: [cel("TOTAL", {negrito: true, al: D.AlignmentType.LEFT}), cel(""), cel(fmt(r.risco.reduce((a, x) => a + x.n, 0)), {negrito: true}), cel(""), cel(""), cel("")]}),
+    ], columnWidths: [1500, 1400, 1400, 1700, 1536, 1536]});
     const R_ = D.AlignmentType.RIGHT, L_ = D.AlignmentType.LEFT, o9 = {fonte: "Times New Roman", tam: 9};
     const tUbs = new D.Table({alignment: D.AlignmentType.CENTER, columnWidths: [2950, 1600, 1600, 1500, 1600], rows: [
       new D.TableRow({tableHeader: true, children: ["UNIDADE", "Número de solicitações", "Percentual da APS", "Quantidade de eSF", "Solicitações por eSF"].map(t => cel(t, {fonte: "Times New Roman", tam: 10, negrito: true}))}),
@@ -550,9 +553,9 @@
       ["Gerado pelo painel", location.href.split("#")[0]]], [30, 90]);
     aba("Saldo Regulatório", [["Mês/Ano", "INPUT", "OUTPUT", "SALDO REGULATÓRIO", "Mês aberrante em"], ...r.serie.meses.map((m, i) => [m, r.serie.in[i], r.serie.out[i], r.serie.saldo[i],
       [["INPUT", "in"], ["OUTPUT", "out"], ["SALDO", "saldo"]].filter(([, k]) => i >= r.aberr.ini && r.aberr[k].flag[i - r.aberr.ini]).map(([t]) => t).join("; ")])], [10, 10, 10, 20, 24]);
-    aba("Tempo de espera por risco", [["Classificação", "Mais antiga", "Solicitações", "Tempo de espera em DIAS", "Meta do protocolo (dias)", "Acima da meta?"],
-      ...r.risco.map(x => [x.cor, x.antiga, x.n, x.dias ?? "", x.meta ?? "", x.meta && x.dias != null ? (x.acima ? "Sim" : "Não") : ""]),
-      ["TOTAL", "", r.risco.reduce((a, x) => a + x.n, 0), "", "", ""]], [14, 12, 12, 22, 22, 14]);
+    aba("Tempo de espera por risco", [["Classificação", "Mais antiga", "Solicitações", "Tempo de espera em DIAS", "Média na fila (dias)", "Mediana na fila (dias)", "Meta do protocolo (dias)", "Acima da meta?"],
+      ...r.risco.map(x => [x.cor, x.antiga, x.n, x.dias ?? "", x.n ? x.media ?? "" : "", x.n ? x.mediana ?? "" : "", x.meta ?? "", x.meta && x.dias != null ? (x.acima ? "Sim" : "Não") : ""]),
+      ["TOTAL", "", r.risco.reduce((a, x) => a + x.n, 0), "", "", "", "", ""]], [14, 12, 12, 22, 20, 22, 22, 14]);
     aba("Figura 3.1 CIDs grupos", [["Grupo", "Solicitações", "%"], ...r.cids.map(x => [x.grupo, x.n, x.pct])], [45, 12, 8]);
     aba("Figura 3.2 CIDs detalhe", [["Nível", "CID", "Solicitações", "%", "% acumulado", "Grupo na Figura 3.1"],
       ...r.topCids.map(x => [x.cat ? "Categoria" : "Subcategoria", x.c, x.n, Math.round(x.pct * 10) / 10, x.acum != null ? Math.round(x.acum * 10) / 10 : "", x.g])], [13, 80, 12, 8, 12, 36]);
@@ -572,9 +575,15 @@
     document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
   }
 
+  // analises/<id>.json não traz a média/mediana de espera por prioridade (cor_stats): vem do dados.json
+  async function carregarAnalise(id, cache) {
+    const d = await (await fetch(`analises/${id}.json`, cache ? {cache} : undefined)).json();
+    try { const dj = await (await fetch("dados.json", cache ? {cache} : undefined)).json(); d.cor_stats = (dj.filas.find(x => x.id === id) || {}).cor_stats || null; } catch (e) { d.cor_stats = null; }
+    return d;
+  }
   window.gerarAnalise = async function (id, formato, nome) {
     if (!REF) REF = await (await fetch("referencias.json", {cache: "no-store"})).json();
-    const d = await (await fetch(`analises/${id}.json`, {cache: "no-store"})).json();
+    const d = await carregarAnalise(id, "no-store");
     const r = calcular(d, nome);
     await ({pdf: gerarPdf, word: gerarWord, excel: gerarExcel})[formato](r);
     return r;
@@ -650,5 +659,5 @@
   fetch("referencias.json", {cache: "no-store"}).then(x => x.json()).then(j => { REF = REF || j; }).catch(() => {});
   window._analiseMeta = p => REF && REF.metas && REF.metas[p] || null;
   window._analiseNomeCurto = p => (REF && REF.notas[p] && REF.notas[p].nome) || nomeCurto(p);
-  window._analiseCalcular = async (id) => { if (!REF) REF = await (await fetch("referencias.json")).json(); return calcular(await (await fetch(`analises/${id}.json`)).json()); };
+  window._analiseCalcular = async (id) => { if (!REF) REF = await (await fetch("referencias.json")).json(); return calcular(await carregarAnalise(id)); };
 })();
