@@ -532,7 +532,8 @@ def historico_devolvidas(dev_det, det, hoje, anterior=None):
     """Registro diário da resolução das devolvidas (devolvidas_reg.json, versionado em main; o workflow faz o commit).
     Compara as devolvidas de hoje com as da publicação anterior (detalhe/devolvidas.json no site): códigos que
     ENTRARAM no status devolvida e códigos que SAÍRAM dele, com o destino (reenviada, agendada, pendente, fila de
-    espera ou ausente do Mapa Social). O Mapa Social só mostra a situação atual; este registro é a linha de base
+    espera ou "ausente" = cancelada presumida: o código deixou de constar no Mapa Social, que só lista os quatro
+    status da fila). O Mapa Social só mostra a situação atual; este registro é a linha de base
     para medir quantas devoluções cada unidade corrige e em quanto tempo. Procedimentos e unidades ficam em listas
     (p, u) e as linhas usam os índices: entradas [pi, ui, código, data da devolução], saídas [..., destino]."""
     arq = PAINEL / "devolvidas_reg.json"
