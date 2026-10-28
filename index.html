@@ -24,7 +24,7 @@ html{font-size:14px}
 body{margin:0;background:var(--bg);color:var(--txt);font:13px/1.3 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 .wrap{max-width:1180px;margin:0 auto;padding:14px 14px 28px}
 header h1{font-size:1.45rem;margin:0}
-header p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
+header p{margin:4px 0 0;color:var(--muted);font-size:.72rem}
 .cred{font-size:.75rem;font-weight:400;margin-left:6px;vertical-align:middle;opacity:.85}
 .piloto{display:inline-block;background:var(--accent);color:#fff;border-radius:999px;padding:1px 9px;font-size:.75rem;font-weight:600;margin-left:6px;vertical-align:middle}
 .aviso{background:var(--aviso-bg);color:var(--aviso-txt);border-radius:10px;padding:10px 14px;margin-top:12px;font-size:.9rem}
@@ -145,6 +145,11 @@ a.irfila{color:var(--accent)}
 .nota{color:var(--muted);font-size:.8rem;margin:0 0 6px}
 .det p{margin:2px 0 0}.det .nota{margin:2px 0 0}   /* legendas e notas coladas ao item de que falam */
 footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid var(--line);padding-top:12px}
+footer summary{cursor:pointer;font-weight:600;color:var(--muted);font-size:.8rem;list-style:none;display:inline-block;padding:6px 12px;border:1px solid var(--line);border-radius:999px;user-select:none}
+footer summary::-webkit-details-marker{display:none}
+footer summary::before{content:"▸ ";}
+footer details[open] summary::before{content:"▾ ";}
+footer details>p:first-of-type{margin-top:12px}
 .mais[hidden]{display:none}
 .mais{display:block;margin:14px auto 0;padding:9px 18px;border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:8px;cursor:pointer}
 @media (max-width:760px){
@@ -302,6 +307,8 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 </section>
 
 <footer>
+<details>
+<summary>Fontes e mais</summary>
   <p><b>Fonte:</b> Mapa Social do Distrito Federal (MPDFT), painel público de regulação. Sem dados de identificação de usuários; o download detalhado traz o código SISREG da solicitação, que já é público no Mapa Social.</p>
   <p id="atraso"><b>Atraso dos dados:</b> o Mapa Social fica alguns dias atrás do SISREG: as solicitações mais recentes ainda não aparecem, por isso os totais podem diferir do SISREG.</p>
   <p><b>Como ler:</b> <i>Fila</i> = solicitações elegíveis para regulação: pendentes + reenviadas ao regulador da Região Norte (não inclui devolvidas nem as em fila de espera). Cores: Prioridade 1 = vermelho, 2 = amarelo, 3 = verde, 4 = azul; em cada cor, o número de dias é a espera da solicitação mais antiga e, abaixo, a média e a mediana do tempo que as solicitações dessa cor já esperam.
@@ -310,6 +317,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
   <p><b>Espera estimada e simulador:</b> a espera estimada (~N d no cartão) é a fila dividida pela <span data-jan="med12">saída mensal média dos últimos 12 meses</span>, isto é, quanto tempo a fila levaria para ser agendada no ritmo atual. No detalhe de cada fila, o botão <i>Simulador</i> abre uma área que mostra o efeito de uma oferta adicional de agendamentos por mês na espera estimada e na <span data-jan="proj24">projeção da fila em 24 meses</span>; a estimativa principal é para a fila toda; a tabela por cor distribui as vagas em cascata de prioridade (vermelhos primeiro, depois amarelos, e assim por diante). O <i>plano de intervenção</i> responde a pergunta inversa: para estabilizar a fila, zerá-la em um prazo (com ou sem mutirão inicial) ou levá-la a uma espera-alvo, quantos agendamentos a mais por mês são necessários e quantos bastam, depois, para a fila não voltar a crescer; mostra também um cenário pior que o normal.</p>
   <p><b>Gerar análise completa:</b> abra uma fila e escolha PDF, Word ou Excel (tabelas). O documento segue a metodologia padronizada (Figuras 1 a 4 e Tabela 1, com as UBS ordenadas de quem mais devolve por eSF); os parágrafos de interpretação saem em amarelo, como rascunho para revisão. <i>Dados detalhados</i> baixa as linhas da fila: solicitações pendentes, reenviadas e devolvidas, e agendamentos dos últimos 24 meses.</p>
   <p id="rodape-atualizacao">Versão piloto. O painel confere o Mapa Social a cada 2 horas e se atualiza sozinho assim que ele recarrega com solicitações novas (normalmente uma ou duas vezes por dia).</p>
+</details>
 </footer>
 </div>
 <script src="relatorio.js"></script>
