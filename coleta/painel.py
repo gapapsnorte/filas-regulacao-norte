@@ -325,6 +325,7 @@ def estatisticas_cores(b, hoje):
     lim_fim = date(hoje.year, hoje.month, 1)  # primeiro dia do mês atual (exclusivo)
     corte_at = hoje - timedelta(days=ATEND_DIAS)
     acc = defaultdict(lambda: defaultdict(lambda: {"fila": [], "atend": [], "ent": 0, "sai": 0}))
+    todos = defaultdict(list)                 # dias de espera de toda a fila (pendentes + reenviadas) por procedimento
     vistos, entradas = set(), set()   # entradas: solicitações já contadas na entrada, para nenhuma contar duas vezes
     for p, cod, dt, st, risco, *_ in b["det_sol"]["rows"]:
         if not _valido(p) or (p, cod) in vistos or not _valido(dt):
@@ -334,6 +335,7 @@ def estatisticas_cores(b, hoje):
         d = _br(dt)
         if st in (PEND, REENV):
             acc[p][cor]["fila"].append((hoje - d).days)
+            todos[p].append((hoje - d).days)
             if ini <= d < lim_fim:
                 entradas.add((p, cod))
                 acc[p][cor]["ent"] += 1
@@ -363,6 +365,9 @@ def estatisticas_cores(b, hoje):
                       "atend_media": round(statistics.mean(a)) if a else None,
                       "atend_mediana": round(statistics.median(a)) if a else None,
                       "atend_n": len(a), "ent": round(v["ent"] / 12, 1), "sai": round(v["sai"] / 12, 1)}
+        t = todos.get(p, [])
+        r["_fila"] = {"media": round(statistics.mean(t)) if t else None,
+                      "mediana": round(statistics.median(t)) if t else None, "n": len(t)}
         saida[ident(p)] = r
     return saida
 
@@ -577,7 +582,9 @@ def main():
     dados, detalhes, devolvidas, meta = montar(b, hoje, referencias())
     est = estatisticas_cores(b, hoje)
     for f in dados["filas"]:
-        f["cor_stats"] = est.get(f["id"], {})
+        cs = dict(est.get(f["id"], {}))
+        f["esp_fila"] = cs.pop("_fila", None)   # espera de quem está na fila hoje, fila inteira (média, mediana, n)
+        f["cor_stats"] = cs
     dados["atend_dias"] = ATEND_DIAS
     if len(dados["filas"]) < MIN_FILAS or not dados["solicitacoes_ate"] or dados["solicitacoes_ate"] == "-":
         print(f"ERRO: coleta incompleta ({len(dados['filas'])} filas, solicitações até {dados['solicitacoes_ate']!r}); nada foi gravado.")
