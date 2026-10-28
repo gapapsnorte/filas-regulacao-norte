@@ -302,12 +302,12 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 </section>
 
 <section id="aba-prio" hidden>
-<p class="nota">Todas as filas com solicitações aguardando, lado a lado, para decidir onde concentrar o esforço de gestão. O painel não classifica nem pondera: mostra o dano acumulado e o esforço para corrigir; o julgamento é da gestão. Uma vaga de um procedimento não vira vaga de outro. <button type="button" class="ajuda" aria-expanded="false" title="O que cada coluna mostra">?</button><span class="nota12" hidden><b>Dano</b>: <i>pessoas-mês de espera</i> (quanto tempo, somado, as pessoas que estão na fila hoje já esperaram), <i>meses de estoque</i>, <i>espera mediana</i> e os <i>vermelhos e amarelos</i> com o mais antigo deles. <b>Esforço</b>: quantas vagas por mês a mais seriam necessárias para <i>estabilizar</i> (a fila parar de crescer) ou <i>zerar em 12 meses</i>, na média dos últimos 12 meses e no cenário pior que o normal (entrada 18% maior, saída 25% menor). Passe o cursor sobre cada cabeçalho para ver a conta. Clique no cabeçalho para ordenar.</span></p>
+<p class="nota">Todas as filas com solicitações aguardando, lado a lado, para decidir onde concentrar o esforço de gestão. O painel não classifica nem pondera: mostra o dano acumulado e o esforço para corrigir; o julgamento é da gestão. Uma vaga de um procedimento não vira vaga de outro. <button type="button" class="ajuda" aria-expanded="false" title="O que cada coluna mostra">?</button><span class="nota12" hidden><b>Dano</b>: <i>pessoas-mês de espera</i> (quanto tempo, somado, as pessoas que estão na fila hoje já esperaram), <i>meses de estoque</i>, <i>espera mediana</i> e os <i>vermelhos e amarelos</i> com o mais antigo deles. <b>Situação</b>: três sinais que se combinam: <i>sem oferta</i> (sem saída há mais de 1 ano ou fila parada), <i>crescendo</i> (saldo positivo em 9 ou mais dos últimos 12 meses) e <i>fila de espera (n)</i> (solicitações aguardando pactuação, fora da fila do regulador). <b>Esforço</b>: quantas vagas por mês a mais seriam necessárias para <i>estabilizar</i> (a fila parar de crescer) ou <i>zerar em 12 meses</i>, na média dos últimos 12 meses e no cenário pior que o normal (entrada 18% maior, saída 25% menor). Passe o cursor sobre cada cabeçalho para ver a conta. Clique no cabeçalho para ordenar.</span></p>
 <div class="kpis" id="pz-kpis"></div>
 <div class="ctrl">
   <input type="search" id="pz-busca" placeholder="Buscar procedimento">
   <select id="pz-tipo"><option value="">Todos os tipos</option></select>
-  <label><input type="checkbox" id="pz-sem"> ocultar filas sem oferta</label>
+  <label title="Oculta as filas sem saída há mais de 1 ano ou paradas"><input type="checkbox" id="pz-sem"> ocultar filas sem oferta</label>
   <button id="pz-baixar" title="Tabela filtrada em Excel, com as contas explicadas">Baixar (Excel)</button>
   <span class="cont" id="pz-cont"></span>
 </div>
@@ -699,10 +699,13 @@ function chips(f){
 }
 // classe da fila no topo da ficha: sem oferta ou cresce (no máximo uma frase; não há classe "estável")
 function diagHtml(f){
-  const ss=sinais(f);
-  if(ss.length) return `<div class="diag"><b>Sem oferta:</b> ${ss.map(x=>x==="espera"?`${fmt(f.espera.n)} em fila de espera (aguardando pactuação)`:ROT_SINAL[x]).join("; ")}. <a href="#aba-oferta">ver aba Sem oferta</a></div>`;
-  const m=f.alertas.map(a=>a.match(/Fila crescendo: saldo positivo em (\d+) dos/)).find(Boolean);
-  return m?`<div class="diag" title="${esc(JAN.cresce75)}"><b>Cresce ≈ +${fmt(f.saldo12/12,1)}/mês</b> (saldo positivo em ${m[1]} de 12 meses). Nas filas da região com esse padrão, 3 em 4 continuaram crescendo nos 12 meses seguintes.</div>`:"";
+  const ss=sinais(f).filter(x=>x!=="espera"), m=f.alertas.map(a=>a.match(/Fila crescendo: saldo positivo em (\d+) dos/)).find(Boolean), en=f.espera&&f.espera.n>0;
+  const fr=[];
+  if(ss.length) fr.push(`<b>Sem oferta:</b> ${ss.map(x=>ROT_SINAL[x]).join("; ")}.`);
+  if(m) fr.push(`<span title="${esc(JAN.cresce75)}"><b>Cresce ≈ +${fmt(f.saldo12/12,1)}/mês</b> (saldo positivo em ${m[1]} de 12 meses). Nas filas da região com esse padrão, 3 em 4 continuaram crescendo nos 12 meses seguintes.</span>`);
+  if(en) fr.push(`${fr.length?"· ":""}${fmt(f.espera.n)} em fila de espera (aguardando pactuação) — <a href="#aba-oferta">ver aba Sem oferta</a>`);
+  else if(ss.length) fr[0]+=` <a href="#aba-oferta">ver aba Sem oferta</a>`;
+  return fr.length?`<div class="diag">${fr.join(" ")}</div>`:"";
 }
 function item(f){
   const meta = (window._analiseMeta && window._analiseMeta(f.p)) || {};
@@ -1097,9 +1100,9 @@ $("of-lista").addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.class
 let pzOrd={k:"pm",dir:-1};
 function linhaPrio(f){
   const b=baseSim(f), bp=piorB(b), cs=f.cor_stats||{}, pz=plano(b,12,0), pzp=plano(bp,12,0), m=f.alertas.map(a=>a.match(/Fila crescendo: saldo positivo em (\d+) dos/)).find(Boolean);
-  const ss=sinais(f), va=["vermelho","amarelo"].filter(c=>f.cores[c]);
+  const ss=sinais(f).filter(x=>x!=="espera"), va=["vermelho","amarelo"].filter(c=>f.cores[c]);
   const pm=Object.entries(f.cores).reduce((t,[c,k])=>t+(cs[c]&&cs[c].fila_media!=null?k.n*cs[c].fila_media/DIAS_MES:0),0);
-  return {f,b,sem:ss.length>0,sit:ss.length?"sem oferta":m?"crescendo":"",pos:m?+m[1]:null,
+  return {f,b,sem:ss.length>0,cres:!!m,esp:f.espera?f.espera.n:0,sit:[ss.length?"sem oferta":"",m?"crescendo":"",f.espera&&f.espera.n?`fila de espera (${f.espera.n})`:""].filter(Boolean).join(" · "),pos:m?+m[1]:null,
     estoque:b.sai>0?f.fila/b.sai:null,med:f.esp_fila?f.esp_fila.mediana:null,pm,
     va:va.reduce((t,c)=>t+f.cores[c].n,0),vaAnt:va.reduce((mx,c)=>Math.max(mx,f.cores[c].dias||0),0),
     est:Math.max(0,b.ent-b.sai),zera:pz.N,zeraP:pzp.N};
@@ -1109,7 +1112,7 @@ const PZ_COL=[ // chave, rótulo, valor para ordenar, explicação (title)
   ["tipo","Tipo",r=>r.f.tipo||"",""],
   ["fila","Na fila",r=>r.f.fila,"Solicitações aguardando (pendentes + reenviadas)"],
   ["saldo","Saldo 12 m",r=>r.f.saldo12,"Entrada − saída nos últimos 12 meses completos; abaixo, em quantos desses meses o saldo foi positivo. "+JAN.m12],
-  ["sit","Situação",r=>r.sit,"“sem oferta”: fila de espera, sem saída há mais de 1 ano ou fila parada (aba Sem oferta); “crescendo”: saldo positivo em 9 ou mais dos últimos 12 meses. "+JAN.cresc],
+  ["sit","Situação",r=>r.sit,"“sem oferta”: sem saída há mais de 1 ano ou fila parada; “crescendo”: saldo positivo em 9 ou mais dos últimos 12 meses; “fila de espera (n)”: solicitações aguardando pactuação, fora da fila do regulador (aba Sem oferta). Os sinais se combinam. "+JAN.cresc],
   ["estoque","Meses de estoque",r=>r.estoque==null?1e12:r.estoque,JAN.estoque],
   ["med","Espera mediana (dias)",r=>r.med==null?-1:r.med,"Mediana do tempo que quem está na fila hoje já esperou (a comparável às metas da SES-DF, que são medianas). "+JAN.esp],
   ["pm","Pessoas-mês de espera",r=>r.pm,JAN.pm],
@@ -1130,7 +1133,7 @@ function renderPrio(){
   if(!D) return;
   const L=filtrarPrio(), tot=L.reduce((s,r)=>s+r.pm,0), dsc=pzOrd.dir<0?"descending":"ascending";
   const th=c=>`<th data-ord="${c[0]}"${pzOrd.k===c[0]?` aria-sort="${dsc}"`:""}${c[3]?` title="${esc(c[3])}"`:""}>${c[1]}</th>`;
-  const sinal=r=>r.sit?`<span class="tag" title="${r.sit==="crescendo"?esc(JAN.cresc):"Ver a aba Sem oferta"}">${r.sit}</span>`:"";
+  const sinal=r=>[r.sem?'<span class="tag" title="Sem saída há mais de 1 ano ou fila parada (aba Sem oferta)">sem oferta</span>':"",r.cres?`<span class="tag" title="${esc(JAN.cresc)}">crescendo</span>`:"",r.esp?`<small title="Solicitações em fila de espera (aguardando pactuação), fora da fila do regulador">fila de espera (${fmt(r.esp)})</small>`:""].join(" ");
   const lin=r=>`<tr><td><a class="irfila" href="#f-${r.f.id}">${esc(r.f.p)}</a></td><td>${esc(r.f.tipo||"")}</td><td>${fmt(r.f.fila)}</td>
     <td title="${r.pos!=null?`saldo positivo em ${r.pos} de 12 meses`:"abaixo de 9 meses positivos de 12"}">${r.f.saldo12>0?"+":""}${fmt(r.f.saldo12)}${r.pos!=null?`<small>${r.pos}/12</small>`:""}</td>
     <td>${sinal(r)}</td><td>${r.estoque==null?"sem saída":fmt(r.estoque,1)}</td>
@@ -1141,7 +1144,7 @@ function renderPrio(){
   $("pz-lista").innerHTML=L.length?`<table class="tab rank"><thead><tr>${PZ_COL.map(th).join("")}</tr></thead><tbody>${L.map(lin).join("")}</tbody></table>`:'<p style="padding:12px">Nenhuma fila encontrada.</p>';
   $("pz-cont").textContent=`${fmt(L.length)} filas · ${fmt(Math.round(tot))} pessoas-mês`;
   const todas=D.filas.filter(f=>f.fila>0).map(linhaPrio);
-  $("pz-kpis").innerHTML=kpiHtml([[fmt(Math.round(todas.reduce((s,r)=>s+r.pm,0))),JT("pm","pessoas-mês de espera acumulados na região (soma das filas)")],[fmt(todas.length),"filas com solicitações aguardando"],[fmt(todas.filter(r=>r.sem).length),"filas com sinal de falta de oferta"],[fmt(todas.filter(r=>r.sit==="crescendo").length),"filas crescendo (sem outro sinal de falta de oferta)"]]);
+  $("pz-kpis").innerHTML=kpiHtml([[fmt(Math.round(todas.reduce((s,r)=>s+r.pm,0))),JT("pm","pessoas-mês de espera acumulados na região (soma das filas)")],[fmt(todas.length),"filas com solicitações aguardando"],[fmt(todas.filter(r=>r.sem).length),"filas sem saída há mais de 1 ano ou paradas"],[fmt(todas.filter(r=>r.cres).length),"filas crescendo"],[fmt(todas.filter(r=>r.esp).length),"filas com solicitações em fila de espera"]]);
 }
 async function baixarPrio(){
   await xlsx(); const L=filtrarPrio(), wb=XLSX.utils.book_new(), r1=v=>v!=null?Math.round(v*10)/10:"";
@@ -1149,7 +1152,7 @@ async function baixarPrio(){
     ...L.map((r,i)=>[i+1,r.f.p,r.f.tipo,r.f.fila,r.f.saldo12,r.pos??"",r.sit,r.estoque==null?"sem saída":r1(r.estoque),r.med??"",Math.round(r.pm),r.va,r.va?r.vaAnt:"",Math.ceil(r.est-1e-9),r.b.sai>=5?r1(r.est/r.b.sai*100):"",Math.ceil(r.zera-1e-9),Math.ceil(r.zeraP-1e-9)])]);
   ws["!cols"]=[8,55,10,9,11,16,13,14,16,16,16,16,16,16,16,20].map(w=>({wch:w}));
   XLSX.utils.book_append_sheet(wb,ws,"Priorização");
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Aba Priorização","todas as filas com solicitações aguardando, lado a lado; o painel não classifica nem pondera, o julgamento é da gestão; uma vaga de um procedimento não vira vaga de outro"],["Filtro",`${$("pz-tipo").value||"todos os tipos"} · ${$("pz-sem").checked?"sem as filas sem oferta":"com as filas sem oferta"} · busca: ${$("pz-busca").value||"(nenhuma)"}`],
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Aba Priorização","todas as filas com solicitações aguardando, lado a lado; o painel não classifica nem pondera, o julgamento é da gestão; uma vaga de um procedimento não vira vaga de outro"],["Filtro",`${$("pz-tipo").value||"todos os tipos"} · ${$("pz-sem").checked?"sem as filas sem oferta (sem saída há mais de 1 ano ou paradas)":"com as filas sem oferta"} · busca: ${$("pz-busca").value||"(nenhuma)"}`],
     ["Pessoas-mês de espera",JAN.pm],["Meses de estoque",JAN.estoque],["Espera mediana","mediana do tempo que quem está na fila hoje já esperou (vazio: dado disponível só a partir da próxima coleta)"],["Estabilizar","entrada − saída (médias dos últimos 12 meses), em vagas por mês a mais, permanentes"],["Zerar em 12 m","(entrada − saída) + fila ÷ 12, em vagas por mês a mais durante 12 meses"],["Cenário pior",JAN.pess]])),"Leia-me");
   XLSX.writeFile(wb,`Priorização das filas - Região Norte (${D.data.split("-").reverse().join("-")}).xlsx`);
   return L.length;
