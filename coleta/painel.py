@@ -541,7 +541,8 @@ def historico_devolvidas(dev_det, det, hoje, anterior=None):
         assert isinstance(reg.get("dias"), list)
     except (OSError, ValueError, AssertionError) as e:
         print("devolvidas_reg.json ausente ou ilegível (%s); começando o registro hoje." % e)
-        reg = {"inicio": hoje.isoformat(), "estoque_inicial": len(dev_det["r"]), "p": [], "u": [], "dias": []}
+        # estoque por código único (um código pode ter duas datas de devolução), igual ao "estoque" de cada dia
+        reg = {"inicio": hoje.isoformat(), "estoque_inicial": len({r[1] for r in dev_det["r"]}), "p": [], "u": [], "dias": []}
     if anterior is None:
         _reg_publicado(reg, hoje.isoformat())
         try:
