@@ -686,7 +686,7 @@ function diagHtml(f){
 function item(f){
   const meta = (window._analiseMeta && window._analiseMeta(f.p)) || {};
   const linhas = COR.filter(c=>f.cores[c]).map(c=>{const k=f.cores[c], m=meta[c];
-    const cs=(f.cor_stats||{})[c]||{}, at=cs.atend_n?`${fmt(cs.atend_media)} <small title="mediana ${fmt(cs.atend_mediana)} dias">(n=${fmt(cs.atend_n)})</small>`:"–";
+    const cs=(f.cor_stats||{})[c]||{}, at=cs.atend_n?`${fmt(cs.atend_media)} <small class="${cs.atend_n<MIN12?"fraco":""}" title="n = ${fmt(cs.atend_n)} agendamentos com atendimento nos últimos ${D.atend_dias||90} dias entraram nesta média${cs.atend_n<MIN12?" (menos de 20: média pouco confiável)":""}; mediana ${fmt(cs.atend_mediana)} dias">(n=${fmt(cs.atend_n)})</small>`:"–";
     return `<tr><td>${c}</td><td>${fmt(k.n)}</td><td>${dd(k.antiga)}</td><td class="${m&&k.dias>m?"acima":""}">${fmt(k.dias)}</td><td title="mediana ${fmt(cs.fila_mediana)} dias">${cs.fila_media!=null?fmt(cs.fila_media):"–"}</td><td>${at}</td><td>${m?fmt(m):"–"}</td></tr>`}).join("");
   const semMeta=!f.meta_normativa, bs=baseSim(f);
   return `<div class="fila" tabindex="0" id="f-${f.id}" data-id="${f.id}">
@@ -702,7 +702,7 @@ function item(f){
    <div class="det">
      ${legenda(f)}
      ${grafico(f)}
-     <div class="rolagem"><table class="cores"><tr><th>Prioridade</th><th>Solicitações</th><th>Mais antiga</th><th title="Dias entre a solicitação mais antiga dessa prioridade e a data da coleta">Espera da mais antiga (dias)</th><th title="Tempo médio que quem está na fila hoje já esperou. ${JAN.esp}">Média na fila hoje (dias)</th><th title="Tempo médio entre a solicitação e o atendimento, nos agendamentos com atendimento nos últimos ${D.atend_dias||90} dias. ${JAN.d90}">Média até o atendimento (dias)</th><th title="Tempo máximo de espera (mediana) definido em normativa da SES-DF para a prioridade">Meta (dias)</th></tr>${linhas}</table></div>
+     <div class="rolagem"><table class="cores"><tr><th>Prioridade</th><th>Solicitações</th><th>Mais antiga</th><th title="Dias entre a solicitação mais antiga dessa prioridade e a data da coleta">Espera da mais antiga (dias)</th><th title="Tempo médio que quem está na fila hoje já esperou. ${JAN.esp}">Média na fila hoje (dias)</th><th title="Tempo médio entre a solicitação e o atendimento, nos agendamentos com atendimento nos últimos ${D.atend_dias||90} dias. n = quantos agendamentos entraram na média: com n pequeno (abaixo de 20) a média diz pouco. ${JAN.d90}">Média até o atendimento (dias)</th><th title="Tempo máximo de espera (mediana) definido em normativa da SES-DF para a prioridade">Meta (dias)</th></tr>${linhas}</table></div>
      <p class="nota" style="margin:2px 0 0">“Média na fila hoje” = há quanto tempo, em média, esperam as solicitações que ainda estão na fila. “Média até o atendimento” = tempo entre a solicitação e o atendimento nos agendados com atendimento ${JT("d90",`nos últimos ${D.atend_dias||90} dias`)} (n = quantos; passe o cursor para ver a mediana).</p>
      <p style="font-size:.8rem;color:var(--muted);margin:2px 0 0">Devolvidas (todas as de hoje, sem recorte de período): ${fmt(f.devolvidas)} · ${resumoReg(f)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Sem meta de tempo de espera definida em normativa da SES-DF para este procedimento"}</p>
      ${f.fila>0?simHtml(f):""}
