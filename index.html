@@ -87,13 +87,11 @@ header p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
 .graf{position:relative;max-width:760px}
 .barras{position:relative;max-width:760px}
 .barras svg{display:block}
-.mini{max-width:560px;margin-top:10px}
-.mini h5{margin:0 0 2px;font-size:.82rem;color:var(--muted);font-weight:600}
+.reg-sub{margin-top:10px}.reg-sub h5{margin:0 0 4px;font-size:.82rem;color:var(--muted);font-weight:600}
 .serie-dv{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px}
-.serie-dv h3{margin:0 0 8px;font-size:1rem}
 .serie-dv .ctrl{margin-bottom:8px}
 .serie-dv .ctrl select{max-width:100%}
-.busca-proc{display:inline-flex;align-items:center;gap:4px;max-width:100%;flex:1 1 300px}#sv-proc-txt{flex:1 1 auto;width:auto;min-width:0;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--card);color:var(--txt)}
+.busca-proc{display:inline-flex;align-items:center;gap:4px;max-width:100%;flex:1 1 300px}#rg-proc-txt{flex:1 1 auto;width:auto;min-width:0;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--card);color:var(--txt)}
 .serie-dv .nota{margin:6px 0 0;font-size:.82rem;color:var(--muted)}
 .periodo-nota{font-size:.74rem;color:var(--muted);margin:2px 0 0}
 .dica{text-decoration:underline dotted;text-underline-offset:2px;cursor:help}
@@ -209,22 +207,6 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 </section>
 
 <section id="aba-dev" hidden>
-<div class="serie-dv" id="dv-serie">
-<button type="button" class="sim-abrir" id="sv-abrir" aria-expanded="false">▸ Devolvidas ao longo do tempo</button>
-<div id="sv-corpo" hidden>
-<div class="ctrl" style="margin-top:10px">
-  <select id="sv-nivel"><option value="">Todas as unidades</option></select>
-  <select id="sv-un"><option value="">Todas as unidades do nível</option></select>
-  <select id="sv-tipo"><option value="">Consultas e exames</option></select>
-  <span class="busca-proc"><input type="text" id="sv-proc-txt" list="sv-proc-lista" placeholder="Procedimento (digite ou abra a lista)" autocomplete="off" aria-label="Procedimento"><datalist id="sv-proc-lista"></datalist><input type="hidden" id="sv-proc" value=""><button type="button" class="ajuda" id="sv-proc-x" title="Limpar o procedimento" hidden>×</button></span>
-  <select id="sv-medida" title="Por eSF = devolvidas ÷ soma das equipes de Saúde da Família das UBS selecionadas"><option value="n">Número de devolvidas</option><option value="esf">Devolvidas por eSF (só APS)</option></select>
-  <select id="dv-periodo" class="periodo"><option value="m">Por mês</option><option value="q">Por quadrimestre</option></select>
-  <span class="cont" id="sv-cont"></span>
-</div>
-<div id="sv-graf"></div>
-<p class="nota">Solicitações devolvidas hoje, contadas pela data em que o regulador as devolveu, <span data-jan="dev24">nos últimos 24 meses completos</span> (o mês corrente fica de fora). Devoluções que depois foram reenviadas e agendadas não aparecem, porque o Mapa Social só mostra a situação atual de cada solicitação; por isso os meses mais antigos tendem a ficar um pouco abaixo do que de fato ocorreu. <i>Por eSF</i> = devolvidas ÷ soma das equipes de Saúde da Família das UBS selecionadas.</p>
-</div>
-</div>
 <div class="serie-dv" id="dv-reg">
 <button type="button" class="sim-abrir" id="rg-abrir" aria-expanded="false">▸ Resolução das devolvidas (registro diário do painel)</button>
 <div id="rg-corpo" hidden>
@@ -232,8 +214,11 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 <div class="ctrl">
   <select id="rg-nivel"><option value="APS">APS (UBS e PSR)</option><option value="">Todos os níveis</option></select>
   <select id="rg-tipo"><option value="">Consultas e exames</option></select>
+  <span class="busca-proc"><input type="text" id="rg-proc-txt" list="rg-proc-lista" placeholder="Procedimento (digite ou abra a lista)" autocomplete="off" aria-label="Procedimento"><datalist id="rg-proc-lista"></datalist><input type="hidden" id="rg-proc" value=""><button type="button" class="ajuda" id="rg-proc-x" title="Limpar o procedimento" hidden>×</button></span>
+  <button id="rg-baixar" title="Por unidade, por procedimento e unidade × procedimento, com os filtros atuais">Baixar (Excel)</button>
   <span class="cont" id="rg-cont"></span>
 </div>
+<div class="dv-acoes"><small class="status" id="rg-status"></small></div>
 <div class="kpis" id="rg-kpis"></div>
 <div class="rank-wrap" id="rg-lista"></div>
 </div>
@@ -344,7 +329,6 @@ const JAN={
   med12:"Por que a média dos últimos 12 meses completos: é o ritmo atual, sem o mês corrente (incompleto) e sem anos antigos.",
   d90:"Por que 90 dias: agendamentos recentes o bastante para refletir a prática atual e numerosos o bastante para uma média.",
   dev12:"Por que 12 meses: janela de um ano para refletir a prática atual da unidade (decisão de 28/10/2026); percentuais com menos de 20 solicitações no período aparecem em cinza e não entram na frente da ordenação.",
-  dev24:"Por que 24 meses: mesma janela dos gráficos de entrada e saída.",
   d30:"Por que 30 dias: prazo igual para todas as devolvidas da coorte, curto o bastante para medir a correção rápida.",
   cresc:"Por que 9 de 12 meses: a fila cresceu em três quartos do último ano, o que não se explica por sazonalidade.",
   parada:"Por que 3 meses: um trimestre inteiro sem nenhum agendamento, prazo em que qualquer oferta regular teria aparecido.",
@@ -360,7 +344,7 @@ const JAN={
 };
 const JT=(k,txt)=>`<span class="dica" title="${JAN[k]}">${txt}</span>`;
 document.addEventListener("DOMContentLoaded",()=>document.querySelectorAll("[data-jan]").forEach(e=>{ e.title=JAN[e.dataset.jan]; e.classList.add("dica"); }));
-let D, DV = null, vis = 60, visPr = 60, ultimaLista = [], PROC_ID = {};   // PROC_ID: nome do procedimento -> id (busca da série de devolvidas)
+let D, DV = null, vis = 60, visPr = 60, ultimaLista = [], PROC_ID = {};   // PROC_ID: nome do procedimento -> id (busca da resolução das devolvidas)
 const $ = id => document.getElementById(id);
 const porId = {};
 const atrasoTxt = () => { const u=(D.atraso_ultimos||[]).filter(x=>x!=null), mn=Math.min(...u), mx=Math.max(...u); return u.length>1&&mn!==mx ? `atraso de ${mn} a ${mx} ${mx===1?"dia":"dias"} (últimas ${u.length} medições)` : atrasoUnico(); };
@@ -389,7 +373,6 @@ const notaParcial=P=>P.some(p=>p.parcial)?`<p class="periodo-nota">* quadrimestr
 function mudarPeriodo(v){
   PER=v; document.querySelectorAll("select.periodo").forEach(s=>s.value=v);
   if(D) render();
-  if(DV){ renderSerie(); visao==="un"?renderUn():renderPr(); }
 }
 
 function xlsx(){ return window.XLSX ? Promise.resolve() : new Promise((ok,er)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";s.onload=ok;s.onerror=()=>er(new Error("falha ao carregar a biblioteca do Excel"));document.head.appendChild(s);}); }
@@ -443,13 +426,13 @@ function legenda(f){
 }
 // botão "?": mostra/esconde o elemento logo depois dele (ou logo depois do seu pai, quando ele é o último de uma linha)
 document.addEventListener("click",e=>{
-  const b=e.target.closest(".ajuda"); if(!b) return;
+  const b=e.target.closest(".ajuda"); if(!b||b.id==="rg-proc-x") return;   // × do seletor de procedimento tem tratador próprio
   const t=b.nextElementSibling||b.parentElement.nextElementSibling; if(!t) return;
   t.hidden=!t.hidden; b.setAttribute("aria-expanded",String(!t.hidden));
 });
 // simulador embutido: abre ao clicar dentro da ficha e só calcula na primeira abertura
 document.addEventListener("click",e=>{
-  const b=e.target.closest(".sim-abrir"); if(!b||b.id==="sv-abrir"||b.id==="rg-abrir") return;   // sv-abrir e rg-abrir têm tratador próprio
+  const b=e.target.closest(".sim-abrir"); if(!b||b.id==="rg-abrir") return;   // rg-abrir tem tratador próprio
   const sm=b.nextElementSibling; sm.hidden=!sm.hidden; b.setAttribute("aria-expanded",String(!sm.hidden)); b.textContent=(sm.hidden?"▸ ":"▾ ")+b.textContent.slice(2);
   if(!sm.hidden&&!sm.dataset.ok){ sm.dataset.ok=1; atualizarSim(sm,"delta"); }
 });
@@ -496,19 +479,6 @@ function hover(e){
 function sairHover(e){
   const g=e.target.closest&&e.target.closest(".graf"); if(!g || g.contains(e.relatedTarget)) return;
   g.querySelector(".tip").hidden=true; g.querySelector(".cur").setAttribute("visibility","hidden"); g.querySelector(".pts").setAttribute("visibility","hidden");
-}
-
-// Barras por período (devolvidas). vals já agregados por periodos(); dec = casas decimais
-function barras(P, vals, dec=0, h=240){
-  const n=vals.length, B={w:760,h,pl:52,pr:12,pt:16,pb:26}, mx0=Math.max(1,...vals), st=passo(mx0/4), mx=Math.ceil(mx0/st)*st;
-  const X=i=>B.pl+i/n*(B.w-B.pl-B.pr), lw=(B.w-B.pl-B.pr)/n, Y=v=>B.pt+(mx-v)/mx*(B.h-B.pb-B.pt), passoX=n>12?3:1;
-  let g="";
-  for(let v=0;v<=mx+1e-9;v+=st) g+=`<line x1="${B.pl}" x2="${B.w-B.pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${B.pl-6}" y="${Y(v)+3.5}" font-size="10.5" text-anchor="end" fill="var(--muted)">${fmt(v,dec)}</text>`;
-  vals.forEach((v,i)=>{ const p=P[i], y=Y(v);
-    g+=`<rect x="${(X(i)+lw*0.12).toFixed(1)}" y="${y.toFixed(1)}" width="${(lw*0.76).toFixed(1)}" height="${(B.h-B.pb-y).toFixed(1)}" rx="2" fill="var(--accent)" ${p.parcial?'fill-opacity=".45"':""}><title>${esc(p.titulo)}: ${fmt(v,dec)}</title></rect>`;
-    if(lw>=26||n<=8) g+=`<text x="${(X(i)+lw/2).toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="${n>12?9:10.5}" text-anchor="middle" fill="var(--txt)">${fmt(v,dec)}</text>`;
-    if(i%passoX===0) g+=`<text x="${(X(i)+lw/2).toFixed(1)}" y="${B.h-8}" font-size="10" text-anchor="middle" fill="var(--muted)">${p.rot}</text>`; });
-  return `<div class="barras"><svg viewBox="0 0 ${B.w} ${B.h}" width="100%" role="img" aria-label="Devolvidas por período">${g}</svg></div>${notaParcial(P)}`;
 }
 
 // ---------------------------------------------------------------- simulador de oferta
@@ -697,6 +667,12 @@ function chips(f){
     const tit=`${c}: ${fmt(k.n)} solicitações; a mais antiga é de ${dd(k.antiga)} (${fmt(k.dias)} dias de espera)`+(tem?`; média de espera de quem está na fila hoje: ${fmt(cs.fila_media)} dias; mediana: ${fmt(cs.fila_mediana)} dias`:"");
     return `<span class="chip ${c.replace(" ","")}" title="${tit}">${fmt(k.n)}${k.dias!=null?" · "+fmt(k.dias)+" d":""}${tem?`<small>média ${fmt(cs.fila_media)} · mediana ${fmt(cs.fila_mediana)}</small>`:""}</span>`}).join("") || `<span style="color:var(--muted);font-size:.8rem">sem fila</span>`;
 }
+// resolução das devolvidas na ficha: link sempre; os números só aparecem quando o registro já foi carregado (aba Devolvidas aberta antes)
+function resumoReg(f){
+  let n="";
+  if(REG&&REG.p){ const A=aggReg({pi:REG.p.indexOf(f.p),por:"u"}); n=A.N?` (registro desde ${dd(REG.inicio).slice(0,5)}): ${fmt(A.N)} novas, ${fmt(A.RS/A.N*100)}% saíram${A.med!=null?`, mediana ${fmt(A.med)} d`:""}`:` (registro desde ${dd(REG.inicio).slice(0,5)}): sem devolvidas novas`; }
+  return `Resolução das devolvidas${n} — <a href="#aba-reg-${f.id}">por unidade</a>`;
+}
 // classe da fila no topo da ficha: sem oferta ou cresce (no máximo uma frase; não há classe "estável")
 function diagHtml(f){
   const ss=sinais(f).filter(x=>x!=="espera"), m=f.alertas.map(a=>a.match(/Fila crescendo: saldo positivo em (\d+) dos/)).find(Boolean), en=f.espera&&f.espera.n>0;
@@ -728,7 +704,7 @@ function item(f){
      ${grafico(f)}
      <div class="rolagem"><table class="cores"><tr><th>Prioridade</th><th>Solicitações</th><th>Mais antiga</th><th title="Dias entre a solicitação mais antiga dessa prioridade e a data da coleta">Espera da mais antiga (dias)</th><th title="Tempo médio que quem está na fila hoje já esperou. ${JAN.esp}">Média na fila hoje (dias)</th><th title="Tempo médio entre a solicitação e o atendimento, nos agendamentos com atendimento nos últimos ${D.atend_dias||90} dias. ${JAN.d90}">Média até o atendimento (dias)</th><th title="Tempo máximo de espera (mediana) definido em normativa da SES-DF para a prioridade">Meta (dias)</th></tr>${linhas}</table></div>
      <p class="nota" style="margin:2px 0 0">“Média na fila hoje” = há quanto tempo, em média, esperam as solicitações que ainda estão na fila. “Média até o atendimento” = tempo entre a solicitação e o atendimento nos agendados com atendimento ${JT("d90",`nos últimos ${D.atend_dias||90} dias`)} (n = quantos; passe o cursor para ver a mediana).</p>
-     <p style="font-size:.8rem;color:var(--muted);margin:2px 0 0">Devolvidas (todas as de hoje, sem recorte de período): ${fmt(f.devolvidas)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Sem meta de tempo de espera definida em normativa da SES-DF para este procedimento"}</p>
+     <p style="font-size:.8rem;color:var(--muted);margin:2px 0 0">Devolvidas (todas as de hoje, sem recorte de período): ${fmt(f.devolvidas)} · ${resumoReg(f)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Sem meta de tempo de espera definida em normativa da SES-DF para este procedimento"}</p>
      ${f.fila>0?simHtml(f):""}
      <div class="gerar" data-id="${f.id}" data-p="${esc(f.p)}">
        <b>Gerar análise completa</b>
@@ -773,6 +749,7 @@ function lerHash(){
   else if(h==="#aba-un"||h==="#aba-proc"||h==="#aba-dev") mostrarAba("dev",h==="#aba-proc"?"pr":h==="#aba-un"?"un":undefined);
   else if(h==="#aba-oferta") mostrarAba("oferta");
   else if(h==="#aba-prio") mostrarAba("prio");
+  else if(h.startsWith("#aba-reg-")) abrirRegProc(h.slice(9));
 }
 async function baixarLista(){
   await xlsx();
@@ -798,89 +775,115 @@ async function carregarDV(){
   });
   const j=DV.janela12||[];
   document.querySelectorAll(".nota12").forEach(el=>el.innerHTML=`<b>% devolvidas (12 m)</b> = das solicitações feitas${j.length?` de ${esc(j[0])} a ${esc(j[1])}`:" nos últimos 12 meses completos"} (pela data da solicitação), quantas estão devolvidas hoje. O total inclui tudo o que foi solicitado no período: pendentes, reenviadas, devolvidas e agendadas. Cada solicitação conta uma vez; a que foi devolvida, corrigida e depois agendada conta como não devolvida, porque o Mapa Social só guarda a situação atual (por isso o percentual é um piso). Na ordenação por esse percentual, só entram na frente unidades ou procedimentos com ${MIN12} ou mais solicitações no período; com menos, o percentual aparece em cinza. ${JAN.dev12}`);
-  prepararSerie(); renderSerie();
   return DV;
 }
 const pct12=(d,t)=>t?(t<MIN12?`<span class="fraco" title="menos de ${MIN12} solicitações no período: percentual pouco confiável">${fmt(d/t*100,1)}%</span>`:fmt(d/t*100,1)+"%"):"–";
 const ord12=x=>x.t12>=MIN12?x.d12/x.t12:-1;
-// ---------------------------------------------------------------- devolvidas ao longo do tempo
-// DV.serie = [índice da fila em DV.serie_ids, índice da unidade, índice do mês, n]; soma por período com filtros opcionais
-function serieDV({ids=null,uis=null}={}){
-  const P=periodos(DV.meses), v=new Array(DV.meses.length).fill(0);
-  for(const [fi,ui,mi,q] of DV.serie){ if(ids&&!ids.has(DV.serie_ids[fi])) continue; if(uis&&!uis.has(ui)) continue; v[mi]+=q; }
-  return {P,vals:agreg(v,P)};
-}
-function unidadesDo(nivel){ return DV.unidades.map((u,i)=>[u,i]).filter(([u])=>!nivel||u[1]===nivel); }
-function prepararSerie(){
-  const sel=(id,ops)=>{ const s=$(id), v=s.value; s.options.length=1; ops.forEach(([val,txt])=>s.insertAdjacentHTML("beforeend",`<option value="${esc(val)}">${esc(txt)}</option>`)); if([...s.options].some(o=>o.value===v)) s.value=v; };
-  sel("sv-nivel",NIVEIS.filter(n=>DV.unidades.some(u=>u[1]===n)).map(n=>[n,n==="APS"?"APS (UBS e PSR)":n==="OUTROS"?"Outras unidades":n]));
-  sel("sv-tipo",[...new Set(D.filas.map(f=>f.tipo).filter(Boolean))].sort().map(t=>[t,t]));
-  const procs=DV.serie_ids.map(id=>porId[id]).filter(Boolean).sort((a,b)=>a.p.localeCompare(b.p,"pt"));
-  $("sv-proc-lista").innerHTML=procs.map(f=>`<option value="${esc(f.p)}"></option>`).join(""); PROC_ID=Object.fromEntries(procs.map(f=>[f.p,f.id]));
-  atualizarUnSerie();
-}
-function atualizarUnSerie(){
-  const s=$("sv-un"), v=s.value; s.options.length=1;
-  unidadesDo($("sv-nivel").value).sort((a,b)=>a[0][0].localeCompare(b[0][0],"pt",{numeric:true})).forEach(([u,i])=>s.insertAdjacentHTML("beforeend",`<option value="${i}">${esc(u[0])}</option>`));
-  if([...s.options].some(o=>o.value===v)) s.value=v;
-}
-function renderSerie(){
-  if(!DV||!DV.serie) { $("dv-serie").hidden=true; return; }
-  $("dv-serie").hidden=false;
-  const nivel=$("sv-nivel").value, un=$("sv-un").value, tipo=$("sv-tipo").value, proc=$("sv-proc").value, medida=$("sv-medida").value;
-  let uis=null, ids=null;
-  if(un!=="") uis=new Set([+un]); else if(nivel) uis=new Set(unidadesDo(nivel).map(([,i])=>i));
-  if(proc) ids=new Set([proc]); else if(tipo) ids=new Set(D.filas.filter(f=>f.tipo===tipo).map(f=>f.id));
-  let esf=null;
-  if(medida==="esf"){ // só UBS com eSF cadastrada (APS)
-    const base=uis?[...uis]:DV.unidades.map((_,i)=>i), com=base.filter(i=>DV.unidades[i][2]);
-    uis=new Set(com); esf=com.reduce((s,i)=>s+DV.unidades[i][2],0)||null;
-  }
-  const {P,vals}=serieDV({ids,uis}), total=vals.reduce((s,v)=>s+v,0);
-  const v2=esf?vals.map(v=>v/esf):vals;
-  $("sv-graf").innerHTML=esf||total?barras(P,v2,esf?1:0):'<p style="padding:12px">Nenhuma devolvida com os filtros escolhidos.</p>';
-  $("sv-cont").textContent=esf?`${fmt(total)} devolvidas em ${fmt(esf)} eSF (${fmt(total/esf,1)} por eSF em ${P.length} ${PER==="m"?"meses":"quadrimestres"})`:`${fmt(total)} devolvidas em ${P.length} ${PER==="m"?"meses":"quadrimestres"}`;
-}
-function miniSerie(titulo,opts){
-  const {P,vals}=serieDV(opts); if(!vals.some(v=>v)) return "";
-  return `<div class="mini"><h5>${esc(titulo)} · ${PER==="m"?"por mês":"por quadrimestre"} (${JT("dev24","24 meses")})</h5>${barras(P,vals,0,170)}</div>`;
-}
-
 // ---------------------------------------------------------------- resolução das devolvidas (devolvidas_reg.json)
 let REG=null;
 async function carregarReg(){
   if(REG!==null) return REG;
   try{ const r=await fetch("devolvidas_reg.json",{cache:"no-store"}); REG=r.ok?await r.json():false; }catch{ REG=false; }
+  const procs=[...D.filas].sort((a,b)=>a.p.localeCompare(b.p,"pt"));
+  $("rg-proc-lista").innerHTML=procs.map(f=>`<option value="${esc(f.p)}"></option>`).join(""); PROC_ID=Object.fromEntries(procs.map(f=>[f.p,f.id]));
   if(REG){ const tipos=[...new Set(D.filas.map(f=>f.tipo).filter(Boolean))].sort(); tipos.forEach(t=>$("rg-tipo").insertAdjacentHTML("beforeend",`<option>${esc(t)}</option>`));
     NIVEIS.filter(n=>n!=="APS"&&DV&&DV.unidades.some(u=>u[1]===n)).forEach(n=>$("rg-nivel").insertAdjacentHTML("beforeend",`<option value="${n}">${n==="OUTROS"?"Outras":n}</option>`)); }
   return REG;
 }
 const nivelUn=u=>{ const x=DV&&DV.unidades.find(v=>v[0]===u); return x?x[1]:"OUTROS"; };
 const tipoProc=p=>{ const f=D.filas.find(x=>x.p===p); return f?f.tipo:""; };
-function renderReg(){
-  const R=REG, nv=$("rg-nivel").value, tp=$("rg-tipo").value;
-  if(!R){ $("rg-kpis").innerHTML=""; $("rg-lista").innerHTML='<p style="padding:12px">O registro diário ainda não foi iniciado: começa na primeira coleta publicada depois desta versão do painel.</p>'; $("rg-cont").textContent=""; return; }
-  const dias=R.dias||[], dd0=d=>new Date(d+"T12:00:00"), nd=(a,b)=>Math.round((dd0(b)-dd0(a))/864e5);
-  const ok=(pi,ui)=>(!nv||nivelUn(R.u[ui])===nv)&&(!tp||tipoProc(R.p[pi])===tp);
-  // entradas e saídas em ordem cronológica
-  const E=[], X={}, destEst={}; let saiEstoque=0;
-  dias.forEach(d=>{ d.entradas.forEach(([pi,ui,cod])=>{ if(ok(pi,ui)) E.push({pi,ui,cod,dia:d.data}); });
-    d.saidas.forEach(([pi,ui,cod,,dest])=>{ if(ok(pi,ui)) X[cod]={dia:d.data,dest}; }); });
-  const U={}; const un=ui=>U[ui]||(U[ui]={u:R.u[ui],novas:0,res:0,c30:0,r30:0,dias:[],dest:{}});
-  E.forEach(e=>{ const k=un(e.ui), x=X[e.cod]; k.novas++; const idade=nd(e.dia,D.data);
-    if(x&&nd(e.dia,x.dia)>=0){ k.res++; k.dias.push(nd(e.dia,x.dia)); k.dest[x.dest]=(k.dest[x.dest]||0)+1; }
-    if(idade>=30){ k.c30++; if(x&&nd(e.dia,x.dia)<=30) k.r30++; } });
-  const novasCod=new Set(E.map(e=>e.cod));
-  Object.entries(X).forEach(([cod,x])=>{ if(!novasCod.has(cod)){ saiEstoque++; destEst[x.dest]=(destEst[x.dest]||0)+1; } });
-  const L=Object.values(U).filter(k=>k.novas).sort((a,b)=>b.novas-a.novas), med=a=>{ if(!a.length) return null; const s=[...a].sort((x,y)=>x-y); return s[Math.floor(s.length/2)]; };
-  const tot=k=>L.reduce((s,x)=>s+x[k],0), N=tot("novas"), RS=tot("res"), C30=tot("c30"), R30=tot("r30");
-  const destTxt=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${fmt(v)}`).join(", ")||"–";
-  $("rg-kpis").innerHTML=kpiHtml([[fmt(dias.length),`dias de registro desde ${dd(R.inicio)}`],[fmt(N),"devolvidas novas no período"],[N?fmt(RS/N*100,1)+"%":"–",`das novas já saíram do status devolvida (${fmt(RS)})`],[C30?fmt(R30/C30*100,1)+"%":"–",`resolvidas ${JT("d30","em até 30 dias")} (coorte de ${fmt(C30)} com 30+ dias)`],[fmt(saiEstoque),`saíram do estoque inicial (${destTxt(destEst)})`]]);
-  $("rg-lista").innerHTML=L.length?`<table class="tab rank"><thead><tr><th>#</th><th style="text-align:left">Unidade solicitante</th><th title="Devolvidas que apareceram depois do início do registro">Novas</th><th title="Novas que depois saíram do status devolvida">Saíram</th><th title="Saíram ÷ novas">% resolvidas</th><th title="Entre as novas com 30 dias ou mais de registro, quantas saíram em até 30 dias. ${JAN.d30}">% em 30 d</th><th title="Mediana de dias entre a entrada e a saída do status">Dias até sair</th><th>Destino das que saíram</th></tr></thead><tbody>${L.map((k,i)=>`<tr><td>${i+1}</td><td style="text-align:left">${esc(k.u)}<small>${nivelUn(k.u)==="OUTROS"?"Outras":nivelUn(k.u)}</small></td><td>${fmt(k.novas)}</td><td>${fmt(k.res)}</td><td>${k.novas?fmt(k.res/k.novas*100,1)+"%":"–"}</td><td>${k.c30?fmt(k.r30/k.c30*100,1)+"%":"–"}</td><td>${med(k.dias)!=null?fmt(med(k.dias)):"–"}</td><td style="text-align:left;font-size:.8rem">${destTxt(k.dest)}</td></tr>`).join("")}</tbody></table>`:'<p style="padding:12px">Ainda não há devolvidas novas registradas com esses filtros.</p>';
-  $("rg-cont").textContent=`estoque atual: ${fmt(dias.length?dias[dias.length-1].estoque:R.estoque_inicial)} devolvidas · no início do registro: ${fmt(R.estoque_inicial)}`;
+// Agregação única do registro diário. Filtros: pi (procedimento, índice em REG.p), ui (unidade, índice em REG.u), nv (nível), tp (tipo);
+// por = "u" (unidade), "p" (procedimento) ou "up" (os dois). Novas = entradas no status devolvida depois do início do registro;
+// saíram = novas que depois deixaram o status; coorte de 30 dias = novas com 30+ dias de registro.
+let _regEv=null;
+function regEventos(){
+  if(_regEv&&_regEv.R===REG) return _regEv;
+  const E=[], X={};
+  (REG.dias||[]).forEach(d=>{ d.entradas.forEach(([pi,ui,cod])=>E.push({pi,ui,cod,dia:d.data})); d.saidas.forEach(([pi,ui,cod,,dest])=>{ X[cod]={dia:d.data,dest,pi,ui}; }); });   // em ordem cronológica
+  return _regEv={R:REG,E,X,novas:new Set(E.map(e=>e.cod))};
 }
-$("rg-abrir").onclick=async()=>{ const c=$("rg-corpo"); c.hidden=!c.hidden; $("rg-abrir").setAttribute("aria-expanded",String(!c.hidden)); $("rg-abrir").textContent=(c.hidden?"▸ ":"▾ ")+"Resolução das devolvidas (registro diário do painel)"; if(!c.hidden){ await carregarReg(); renderReg(); } };
+const medianaReg=a=>{ if(!a.length) return null; const s=[...a].sort((x,y)=>x-y); return s[Math.floor(s.length/2)]; };
+function aggReg({pi=null,ui=null,nv="",tp="",por="u"}={}){
+  const R=REG, {E,X,novas}=regEventos(), nd=(a,b)=>Math.round((new Date(b+"T12:00:00")-new Date(a+"T12:00:00"))/864e5), mn={}, mt={};
+  const nivU=u=>mn[u]??(mn[u]=nivelUn(R.u[u])), tipP=p=>mt[p]??(mt[p]=tipoProc(R.p[p]));
+  const ok=(p,u)=>(pi==null||p===pi)&&(ui==null||u===ui)&&(!nv||nivU(u)===nv)&&(!tp||tipP(p)===tp);
+  const U={}, todos=[];
+  E.forEach(e=>{ if(!ok(e.pi,e.ui)) return;
+    const k=por==="u"?e.ui:por==="p"?e.pi:e.pi+"|"+e.ui, g=U[k]||(U[k]={pi:e.pi,ui:e.ui,novas:0,res:0,c30:0,r30:0,dias:[],dest:{}}), x=X[e.cod];
+    g.novas++;
+    if(x&&nd(e.dia,x.dia)>=0){ g.res++; const n=nd(e.dia,x.dia); g.dias.push(n); todos.push(n); g.dest[x.dest]=(g.dest[x.dest]||0)+1; }
+    if(nd(e.dia,D.data)>=30){ g.c30++; if(x&&nd(e.dia,x.dia)<=30) g.r30++; } });
+  let saiEstoque=0; const destEst={};
+  Object.entries(X).forEach(([cod,x])=>{ if(!novas.has(cod)&&ok(x.pi,x.ui)){ saiEstoque++; destEst[x.dest]=(destEst[x.dest]||0)+1; } });
+  const L=Object.values(U).sort((a,b)=>b.novas-a.novas);
+  L.forEach(g=>{ g.med=medianaReg(g.dias); g.u=R.u[g.ui]; g.p=R.p[g.pi]; });
+  const tot=k=>L.reduce((s,x)=>s+x[k],0);
+  return {L,N:tot("novas"),RS:tot("res"),C30:tot("c30"),R30:tot("r30"),saiEstoque,destEst,med:medianaReg(todos)};
+}
+const destTxt=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${fmt(v)}`).join(", ")||"–";
+const SEM_REG='<p style="padding:12px">O registro diário ainda não foi iniciado: começa na primeira coleta publicada depois desta versão do painel.</p>';
+const vazioReg=()=>`<p style="padding:12px">Ainda não há devolvidas novas registradas com esses filtros (${fmt((REG.dias||[]).length)} ${(REG.dias||[]).length===1?"dia":"dias"} de registro, desde ${dd(REG.inicio)}).</p>`;
+// tabela de resolução; 1ª coluna = unidade (por "u") ou procedimento (por "p"); % com menos de MIN12 novas saem em cinza e ficam por último ao ordenar
+function tabelaReg(L,por){
+  if(!L.length) return vazioReg();
+  const fr=k=>k.novas<MIN12?` class="fraco" title="menos de ${MIN12} devolvidas novas: percentual instável"`:"", pc=(k,a,b)=>b?fmt(a/b*100,1)+"%":"–";
+  const th=(t,r,tit="")=>`<th data-rord="${r}"${tit?` title="${tit}"`:""}>${t}</th>`;
+  return `<table class="tab rank regtab"><thead><tr><th>#</th><th style="text-align:left" data-rord="txt">${por==="u"?"Unidade solicitante":"Procedimento"}</th>${th("Novas","num","Devolvidas que apareceram depois do início do registro")}${th("Saíram","num","Novas que depois saíram do status devolvida")}${th("% resolvidas","pct","Saíram ÷ novas")}${th("% em 30 d","pct","Entre as novas com 30 dias ou mais de registro, quantas saíram em até 30 dias. "+JAN.d30)}${th("Dias até sair","num","Mediana de dias entre a entrada e a saída do status")}<th>Destino das que saíram</th></tr></thead><tbody>${
+    L.map((k,i)=>`<tr data-w="${k.novas<MIN12?1:0}"><td>${i+1}</td><td style="text-align:left">${esc(por==="u"?k.u:k.p)}<small>${por==="u"?(nivelUn(k.u)==="OUTROS"?"Outras":nivelUn(k.u)):esc(tipoProc(k.p))}</small></td><td data-v="${k.novas}">${fmt(k.novas)}</td><td data-v="${k.res}">${fmt(k.res)}</td><td data-v="${k.novas?k.res/k.novas:-1}"${fr(k)}>${pc(k,k.res,k.novas)}</td><td data-v="${k.c30?k.r30/k.c30:-1}"${fr(k)}>${pc(k,k.r30,k.c30)}</td><td data-v="${k.med??-1}">${k.med!=null?fmt(k.med):"–"}</td><td style="text-align:left;font-size:.8rem">${destTxt(k.dest)}</td></tr>`).join("")}</tbody></table>`;
+}
+document.addEventListener("click",e=>{
+  const th=e.target.closest("table.regtab th[data-rord]"); if(!th) return;
+  const tb=th.closest("table"), c=[...th.parentElement.children].indexOf(th), k=th.dataset.rord, txt=k==="txt";
+  const dir=th.getAttribute("aria-sort")==="descending"?1:th.getAttribute("aria-sort")==="ascending"?-1:(txt?1:-1);
+  const linhas=[...tb.tBodies[0].rows].sort((a,b)=>(k==="pct"&&a.dataset.w!==b.dataset.w)?a.dataset.w-b.dataset.w:dir*(txt?a.cells[c].textContent.localeCompare(b.cells[c].textContent,"pt"):a.cells[c].dataset.v-b.cells[c].dataset.v));
+  tb.querySelectorAll("th").forEach(t=>t.removeAttribute("aria-sort")); th.setAttribute("aria-sort",dir<0?"descending":"ascending");
+  linhas.forEach((r,i)=>{ r.cells[0].textContent=i+1; tb.tBodies[0].appendChild(r); });
+});
+function renderReg(){
+  const R=REG, nv=$("rg-nivel").value, tp=$("rg-tipo").value, id=$("rg-proc").value, f=id?porId[id]:null;
+  if(!R){ $("rg-kpis").innerHTML=""; $("rg-lista").innerHTML=SEM_REG; $("rg-cont").textContent=""; return; }
+  const dias=R.dias||[], A=aggReg({pi:f?R.p.indexOf(f.p):null,nv,tp,por:"u"});
+  $("rg-kpis").innerHTML=kpiHtml([[fmt(dias.length),`dias de registro desde ${dd(R.inicio)}`],[fmt(A.N),"devolvidas novas no período"],[A.N?fmt(A.RS/A.N*100,1)+"%":"–",`das novas já saíram do status devolvida (${fmt(A.RS)})`],[A.C30?fmt(A.R30/A.C30*100,1)+"%":"–",`resolvidas ${JT("d30","em até 30 dias")} (coorte de ${fmt(A.C30)} com 30+ dias)`],[fmt(A.saiEstoque),`saíram do estoque inicial (${destTxt(A.destEst)})`]]);
+  $("rg-lista").innerHTML=tabelaReg(A.L,"u");
+  $("rg-cont").textContent=`${f?"procedimento: "+f.p+" · ":""}estoque atual: ${fmt(dias.length?dias[dias.length-1].estoque:R.estoque_inicial)} devolvidas · no início do registro: ${fmt(R.estoque_inicial)}`;
+}
+// preenche (sob demanda) uma sub-tabela de resolução dentro da unidade ou do procedimento expandido
+async function preencherReg(el){
+  const corpo=el.querySelector(".reg-corpo"); corpo.innerHTML='<p class="nota">carregando…</p>';
+  const R=await carregarReg(); if(!R){ corpo.innerHTML=SEM_REG; return; }
+  const h=el.querySelector("h5"), ini=` (registro diário desde ${dd(R.inicio)})`;
+  if(el.dataset.un){ h.textContent="Resolução das devolvidas desta unidade, por procedimento"+ini; corpo.innerHTML=tabelaReg(aggReg({ui:R.u.indexOf(el.dataset.un),por:"p"}).L,"p"); }
+  else { h.textContent="Resolução das devolvidas deste procedimento, por unidade solicitante"+ini; corpo.innerHTML=tabelaReg(aggReg({pi:R.p.indexOf(el.dataset.pr),nv:$("pr-nivel").value,por:"u"}).L,"u"); }
+}
+async function baixarReg(){
+  await xlsx(); await carregarReg(); if(!REG) throw new Error("o registro diário ainda não foi iniciado");
+  const R=REG, nv=$("rg-nivel").value, tp=$("rg-tipo").value, id=$("rg-proc").value, f=id?porId[id]:null, pi=f?R.p.indexOf(f.p):null, wb=XLSX.utils.book_new(), r1=v=>Math.round(v*10)/10;
+  const cab=["Novas","Saíram","% resolvidas","Coorte de 30 dias (novas com 30+ dias)","Resolvidas em até 30 dias","% em 30 d","Dias até sair (mediana)","Destino das que saíram"];
+  const vals=g=>[g.novas,g.res,g.novas?r1(g.res/g.novas*100):"",g.c30,g.r30,g.c30?r1(g.r30/g.c30*100):"",g.med??"",destTxt(g.dest)];
+  const aba=(nome,por,cabId,linha,wch)=>{ const A=aggReg({pi,nv,tp,por}), ws=XLSX.utils.aoa_to_sheet([[...cabId,...cab],...A.L.map(g=>[...linha(g),...vals(g)])]); ws["!cols"]=wch.map(w=>({wch:w})); XLSX.utils.book_append_sheet(wb,ws,nome); return A; };
+  const A=aba("Por unidade","u",["Unidade solicitante","Nível"],g=>[g.u,nivelUn(g.u)],[40,10,9,9,13,20,20,10,16,50]);
+  aba("Por procedimento","p",["Procedimento","Tipo"],g=>[g.p,tipoProc(g.p)],[55,10,9,9,13,20,20,10,16,50]);
+  aba("Unidade × procedimento","up",["Unidade solicitante","Procedimento"],g=>[g.u,g.p],[40,55,9,9,13,20,20,10,16,50]);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Resolução das devolvidas","registro diário do painel: a cada coleta, os códigos que entram no status devolvida e os que saem dele"],["Início do registro",`${dd(R.inicio)} (${(R.dias||[]).length} dias de registro; estoque inicial de ${fmt(R.estoque_inicial)} devolvidas)`],["Filtro",`${$("rg-nivel").options[$("rg-nivel").selectedIndex].text} · ${tp||"consultas e exames"} · procedimento: ${f?f.p:"(todos)"}`],
+    ["Novas","devolvidas que apareceram depois do início do registro (o estoque que já existia fica à parte)"],["Saíram","novas que depois saíram do status devolvida"],["% resolvidas","saíram ÷ novas"],["% em 30 d","entre as novas com 30 dias ou mais de registro, quantas saíram em até 30 dias"],["Dias até sair","mediana de dias entre a entrada e a saída do status"],["Destino","para onde foram as que saíram: reenviada, agendada, pendente, fila de espera ou ausente do Mapa Social"],["Percentuais instáveis",`com menos de ${MIN12} devolvidas novas`]])),"Leia-me");
+  XLSX.writeFile(wb,`Resolução das devolvidas - Região Norte (${D.data.split("-").reverse().join("-")}).xlsx`);
+  return A.L.length;
+}
+async function abrirReg(){ const c=$("rg-corpo"); c.hidden=false; $("rg-abrir").setAttribute("aria-expanded","true"); $("rg-abrir").textContent="▾ Resolução das devolvidas (registro diário do painel)"; await carregarReg(); renderReg(); }
+$("rg-abrir").onclick=async()=>{ const c=$("rg-corpo"); if(c.hidden) await abrirReg(); else { c.hidden=true; $("rg-abrir").setAttribute("aria-expanded","false"); $("rg-abrir").textContent="▸ Resolução das devolvidas (registro diário do painel)"; } };
 ["rg-nivel","rg-tipo"].forEach(id=>$(id).addEventListener("input",()=>REG!==null&&renderReg()));
+// busca de procedimento: o texto digitado (ou escolhido na lista) vira o id guardado no campo oculto
+function aplicarProc(){ const t=$("rg-proc-txt").value.trim(), id=PROC_ID[t]||""; $("rg-proc").value=id; $("rg-proc-x").hidden=!t; if(REG!==null) renderReg(); }
+$("rg-proc-txt").addEventListener("input",aplicarProc);
+$("rg-proc-txt").addEventListener("focus",e=>e.target.select());   // ao clicar, o texto fica selecionado: digitar substitui e a lista volta completa
+$("rg-proc-x").onclick=()=>{ $("rg-proc-txt").value=""; aplicarProc(); $("rg-proc-txt").focus(); };
+$("rg-baixar").onclick=()=>comStatus($("rg-status"),baixarReg);
+// #aba-reg-<id>: aba Devolvidas, bloco de resolução aberto e o procedimento selecionado
+async function abrirRegProc(id){
+  const f=porId[id]; if(!f) return;
+  await mostrarAba("dev"); $("rg-proc-txt").value=f.p; $("rg-proc").value=id; $("rg-proc-x").hidden=false;
+  await abrirReg(); $("dv-reg").scrollIntoView({block:"start",behavior:"smooth"});
+}
 
 // Agrega por unidade: total, consultas e exames, e a lista de procedimentos de cada uma
 function porUnidade(tipo){
@@ -914,8 +917,8 @@ function linhaUn(x,pos){
 }
 function detalheUn(x){
   const procs=x.procs.map(([id,n])=>{const f=porId[id], q=x.p12[id]||[0,0]; return `<tr><td>${f?`<a class="irfila" href="#f-${id}">${esc(f.p)}</a>`:id}</td><td>${esc(f?f.tipo:"")}</td><td>${fmt(n)}</td><td>${fmt(n/x.n*100,1)}%</td><td>${x.esf?fmt(n/x.esf,1):"–"}</td><td title="${fmt(q[0])} devolvidas entre ${fmt(q[1])} solicitações nos últimos 12 meses">${pct12(q[0],q[1])}</td></tr>`;}).join("");
-  const ui=DV.unidades.findIndex(u=>u[0]===x.u);
-  return `<tr class="sub"><td colspan="7">${DV.serie?miniSerie("Devolvidas da unidade",{uis:new Set([ui])}):""}<div class="rolagem"><table class="tab ord"><tr><th>Procedimento</th><th>Tipo</th><th>Devolvidas</th><th title="Devolvidas do procedimento ÷ total de devolvidas da unidade">% da unidade</th><th title="${TIT_ESF}">Por eSF</th><th title="${TIT_12}">% devolvidas (12 m)</th></tr>${procs}</table></div>
+  return `<tr class="sub"><td colspan="7"><div class="rolagem"><table class="tab ord"><tr><th>Procedimento</th><th>Tipo</th><th>Devolvidas</th><th title="Devolvidas do procedimento ÷ total de devolvidas da unidade">% da unidade</th><th title="${TIT_ESF}">Por eSF</th><th title="${TIT_12}">% devolvidas (12 m)</th></tr>${procs}</table></div>
+    <div class="reg-sub" data-un="${esc(x.u)}"><h5>Resolução das devolvidas desta unidade, por procedimento</h5><div class="reg-corpo"></div></div>
     <div class="dv-acoes"><button data-dev-un="${esc(x.u)}">Baixar devolvidas desta unidade (Excel)</button><small class="status"></small></div></td></tr>`;
 }
 const TIT_ESF="Devolvidas ÷ número de equipes de Saúde da Família da UBS (só APS)", TIT_12="Devolvidas ÷ solicitações feitas nos últimos 12 meses completos (pela data da solicitação); cada solicitação conta uma vez. "+JAN.dev12;
@@ -951,7 +954,6 @@ function filtrarPr(){
   return L;
 }
 function itemPr(x,pos){
-  const nivelPr=$("pr-nivel").value;
   const us=x.us.map(([ui,n])=>{const [u,nv,esf]=DV.unidades[ui], q=x.u12[ui]||[0,0]; return `<tr><td>${esc(u)}</td><td>${nv==="OUTROS"?"Outras":nv}</td><td>${fmt(n)}</td><td>${esf?fmt(n/esf,1):"–"}</td><td>${fmt(n/x.n*100,1)}%</td><td title="${fmt(q[0])} devolvidas entre ${fmt(q[1])} solicitações nos últimos 12 meses">${pct12(q[0],q[1])}</td></tr>`;}).join("");
   return `<div class="fila" tabindex="0" data-pid="${x.f.id}">
     <div class="lin dv">
@@ -962,7 +964,8 @@ function itemPr(x,pos){
       <div class="num"><b>${fmt(x.f.fila)}</b><small>na fila</small></div>
       <div class="num" title="${fmt(x.d12)} devolvidas entre ${fmt(x.t12)} solicitações nos últimos 12 meses. ${JAN.dev12}"><b>${pct12(x.d12,x.t12)}</b><small>devolvidas (12 m)</small></div>
     </div>
-    <div class="det">${DV.serie?miniSerie("Devolvidas do procedimento"+(nivelPr?" ("+nivelPr+")":""),{ids:new Set([x.f.id]),uis:nivelPr?new Set(unidadesDo(nivelPr).map(([,i])=>i)):null}):""}<div class="rolagem"><table class="tab ord"><tr><th>Unidade solicitante</th><th>Nível</th><th>Devolvidas</th><th title="${TIT_ESF}">Por eSF</th><th title="Devolvidas da unidade ÷ total de devolvidas do procedimento">% do procedimento</th><th title="${TIT_12}">% devolvidas (12 m)</th></tr>${us}</table></div>
+    <div class="det"><div class="rolagem"><table class="tab ord"><tr><th>Unidade solicitante</th><th>Nível</th><th>Devolvidas</th><th title="${TIT_ESF}">Por eSF</th><th title="Devolvidas da unidade ÷ total de devolvidas do procedimento">% do procedimento</th><th title="${TIT_12}">% devolvidas (12 m)</th></tr>${us}</table></div>
+      <div class="reg-sub" data-pr="${esc(x.f.p)}"><h5>Resolução das devolvidas deste procedimento, por unidade solicitante</h5><div class="reg-corpo"></div></div>
       <div class="dv-acoes"><a class="irfila" href="#f-${x.f.id}">Abrir a fila no painel</a> <button data-dev-p="${x.f.id}">Baixar devolvidas deste procedimento (Excel)</button><small class="status"></small></div></div>
   </div>`;
 }
@@ -971,7 +974,7 @@ function renderPr(){
   $("pr-cab").innerHTML=`<div class="lin dv"><button type="button" data-pord="nome"${ab("nome")}>Procedimento</button><button type="button" data-pord="n"${ab("n")}>Devolvidas</button><button type="button" data-pord="aps"${ab("aps")}>Da APS (n)</button><button type="button" data-pord="pctaps"${ab("pctaps")} title="Devolvidas de UBS e PSR ÷ total de devolvidas do procedimento">Da APS (%)</button><button type="button" data-pord="fila"${ab("fila")}>Na fila</button><button type="button" data-pord="taxa12"${ab("taxa12")} title="${TIT_12}">Devolvidas (12 m)</button></div>`;
   const abertos=[...document.querySelectorAll("#pr-lista .fila.aberta")].map(c=>c.dataset.pid);
   $("pr-lista").innerHTML=L.slice(0,visPr).map((x,i)=>itemPr(x,rank?i+1:0)).join("")||"<p>Nenhum procedimento encontrado.</p>";
-  abertos.forEach(id=>{ const c=document.querySelector(`#pr-lista .fila[data-pid="${id}"]`); if(c) c.classList.add("aberta"); });
+  abertos.forEach(id=>{ const c=document.querySelector(`#pr-lista .fila[data-pid="${id}"]`); if(c){ c.classList.add("aberta"); preencherReg(c.querySelector(".reg-sub")); } });
   $("pr-mais").hidden=L.length<=visPr; $("pr-mais").textContent=`Mostrar mais (${fmt(L.length-visPr)} restantes)`;
   $("pr-cont").textContent=`${fmt(L.length)} procedimentos · ${fmt(L.reduce((s,x)=>s+x.n,0))} devolvidas`;
 }
@@ -1192,16 +1195,6 @@ const PRONTO=fetch("dados.json",{cache:"no-store"}).then(r=>{if(!r.ok) throw new
 ["busca","tipo","alerta","ordem"].forEach(id=>$(id).addEventListener("input",()=>{vis=60;render();}));
 ["un-busca","un-nivel","un-tipo","un-ordem"].forEach(id=>$(id).addEventListener("input",()=>{ if(id==="un-ordem") unOrd={k:null,dir:-1}; DV&&renderUn(); }));
 ["pr-busca","pr-tipo","pr-nivel","pr-ordem"].forEach(id=>$(id).addEventListener("input",()=>{ if(id==="pr-ordem") prOrd={k:null,dir:-1}; visPr=60;DV&&renderPr();}));
-$("sv-nivel").addEventListener("input",()=>{atualizarUnSerie();renderSerie();});
-["sv-un","sv-medida"].forEach(id=>$(id).addEventListener("input",renderSerie));
-$("sv-tipo").addEventListener("input",()=>{ if($("sv-tipo").value){ $("sv-proc").value=""; $("sv-proc-txt").value=""; $("sv-proc-x").hidden=true; } renderSerie(); });
-// busca de procedimento: o texto digitado (ou escolhido na lista) vira o id guardado no campo oculto
-function aplicarProc(){ const t=$("sv-proc-txt").value.trim(), id=PROC_ID[t]||""; $("sv-proc").value=id; $("sv-proc-x").hidden=!t;
-  if(id) $("sv-tipo").value=""; renderSerie(); }
-$("sv-proc-txt").addEventListener("input",aplicarProc);
-$("sv-proc-txt").addEventListener("focus",e=>e.target.select());   // ao clicar, o texto fica selecionado: digitar substitui e a lista volta completa
-$("sv-proc-x").onclick=()=>{ $("sv-proc-txt").value=""; aplicarProc(); $("sv-proc-txt").focus(); };
-$("sv-abrir").onclick=()=>{ const c=$("sv-corpo"); c.hidden=!c.hidden; $("sv-abrir").setAttribute("aria-expanded",String(!c.hidden)); $("sv-abrir").textContent=(c.hidden?"▸ ":"▾ ")+"Devolvidas ao longo do tempo"; };
 document.querySelectorAll("select.periodo").forEach(s=>s.addEventListener("input",()=>mudarPeriodo(s.value)));
 $("mais").onclick=()=>{vis+=60;render();};
 $("pr-mais").onclick=()=>{visPr+=60;renderPr();};
@@ -1217,7 +1210,7 @@ $("lista").addEventListener("pointerout",sairHover);
 function alternarUn(tr){
   const nx=tr.nextElementSibling;
   if(nx&&nx.classList.contains("sub")){ nx.remove(); tr.classList.remove("aberta"); }
-  else { tr.insertAdjacentHTML("afterend",detalheUn(UN_ATUAL[tr.dataset.u])); tr.classList.add("aberta"); }
+  else { tr.insertAdjacentHTML("afterend",detalheUn(UN_ATUAL[tr.dataset.u])); tr.classList.add("aberta"); preencherReg(tr.nextElementSibling.querySelector(".reg-sub")); }
 }
 $("un-lista").addEventListener("click",e=>{
   if(e.target.closest("a")) return;
@@ -1237,7 +1230,7 @@ function alternar(e){
     return;
   }
   if(e.target.closest(".det")) return;
-  const c=e.target.closest(".fila"); if(c) c.classList.toggle("aberta");
+  const c=e.target.closest(".fila"); if(c){ c.classList.toggle("aberta"); if(c.classList.contains("aberta")){ const r=c.querySelector(".reg-sub"); if(r) preencherReg(r); } }
 }
 $("pr-cab").addEventListener("click",e=>{ const b=e.target.closest("button[data-pord]"); if(!b) return; const k=b.dataset.pord; cliqueOrd(prOrd,k,k==="nome"?1:-1); if([...$("pr-ordem").options].some(o=>o.value===k)) $("pr-ordem").value=k; visPr=60; renderPr(); });
 // tabelas internas das devolvidas: clicar no cabeçalho ordena as linhas (1º clique: maior→menor ou A→Z; 2º: inverte)

@@ -491,6 +491,43 @@ def _indice(lista, v):
     return lista.index(v)
 
 
+def mesclar_dia(dia, entradas, saidas, estoque):
+    """Junta ao registro do dia (E1, X1) o que mudou desde a publicação anterior (E2, X2), por código SISREG:
+    E = (E1 − X2) ∪ (E2 − X1) e X = (X1 − E2) ∪ (X2 − E1). Quem entra e sai (ou sai e volta) no mesmo dia não aparece
+    em nenhum dos dois; a saída nova leva o destino novo e a antiga mantém o seu."""
+    e1, x1 = {x[2] for x in dia["entradas"]}, {x[2] for x in dia["saidas"]}
+    e2, x2 = {x[2] for x in entradas}, {x[2] for x in saidas}
+    dia["entradas"] = [x for x in dia["entradas"] if x[2] not in x2] + [x for x in entradas if x[2] not in x1]
+    dia["saidas"] = [x for x in dia["saidas"] if x[2] not in e2] + [x for x in saidas if x[2] not in e1]
+    dia["estoque"] = estoque
+
+
+def _reg_publicado(reg, hoje_s):
+    """O commit de devolvidas_reg.json em main pode falhar (rebase) e o arquivo local daquela rodada se perde, enquanto o
+    site publica a versão com os eventos. Para não perder o que já foi registrado, adota do site os dias que faltam
+    aqui e, no dia de hoje, o registro mais completo."""
+    try:
+        with urllib.request.urlopen(PUBLICADO + "devolvidas_reg.json", timeout=60) as r:
+            pub = json.loads(r.read().decode("utf-8"))
+        assert isinstance(pub.get("dias"), list)
+    except Exception as e:
+        print("Registro de devolvidas: não li o registro publicado (%s)." % e)
+        return
+    def traduz(dia):   # índices do registro publicado -> índices do registro local
+        pi = lambda i: _indice(reg["p"], pub["p"][i]); ui = lambda i: _indice(reg["u"], pub["u"][i])
+        return dict(dia, entradas=[[pi(x[0]), ui(x[1]), *x[2:]] for x in dia["entradas"]],
+                    saidas=[[pi(x[0]), ui(x[1]), *x[2:]] for x in dia["saidas"]])
+    locais = {d["data"]: d for d in reg["dias"]}
+    for d in pub["dias"]:
+        l = locais.get(d["data"])
+        if l is None:
+            reg["dias"].append(traduz(d))
+        elif d["data"] == hoje_s and len(d["entradas"]) + len(d["saidas"]) > len(l["entradas"]) + len(l["saidas"]):
+            reg["dias"][reg["dias"].index(l)] = traduz(d)
+    if pub.get("inicio") and pub["inicio"] < reg["inicio"]:
+        reg["inicio"], reg["estoque_inicial"] = pub["inicio"], pub.get("estoque_inicial", reg["estoque_inicial"])
+
+
 def historico_devolvidas(dev_det, det, hoje, anterior=None):
     """Registro diário da resolução das devolvidas (devolvidas_reg.json, versionado em main; o workflow faz o commit).
     Compara as devolvidas de hoje com as da publicação anterior (detalhe/devolvidas.json no site): códigos que
@@ -506,6 +543,7 @@ def historico_devolvidas(dev_det, det, hoje, anterior=None):
         print("devolvidas_reg.json ausente ou ilegível (%s); começando o registro hoje." % e)
         reg = {"inicio": hoje.isoformat(), "estoque_inicial": len(dev_det["r"]), "p": [], "u": [], "dias": []}
     if anterior is None:
+        _reg_publicado(reg, hoje.isoformat())
         try:
             with urllib.request.urlopen(PUBLICADO + "detalhe/devolvidas.json", timeout=180) as r:
                 anterior = json.loads(r.read().decode("utf-8"))
@@ -530,11 +568,7 @@ def historico_devolvidas(dev_det, det, hoje, anterior=None):
     if dia is None:
         dia = {"data": hoje_s, "anterior": anterior.get("data"), "estoque": len(atual), "entradas": [], "saidas": []}
         reg["dias"].append(dia)
-    else:   # segunda coleta do mesmo dia: acrescenta o que mudou desde a anterior, sem repetir códigos
-        dia["estoque"] = len(atual)
-    for chave, novos in (("entradas", entradas), ("saidas", saidas)):
-        vistos = {x[2] for x in dia[chave]}
-        dia[chave].extend(x for x in novos if x[2] not in vistos)
+    mesclar_dia(dia, entradas, saidas, len(atual))   # nova coleta no mesmo dia: o que mudou se junta ao já registrado
     reg["dias"].sort(key=lambda d: d["data"])
     dest = defaultdict(int)
     for x in dia["saidas"]:
