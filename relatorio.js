@@ -15,7 +15,7 @@
     ["azul", "Azul", "00B0F0"]];
   const FONTE = "Fonte: Mapa Social do Distrito Federal.";
   const MIN12 = 20;   // mínimo de solicitações em 12 meses para o % de devolvidas entrar no ranking/texto (abaixo disso sai em cinza)
-  const CAB_ESQ = "SES-DF  ·  SRSNO  ·  DIRAPS Norte  ·  GAPAPS Norte", CAB_DIR = "Análise de Filas de Regulação – Região Norte";
+  const CAB_ESQ = "SES-DF  ·  SRSNO  ·  DIRAPS Norte  ·  parceria GERNO e GAPAPS Norte", CAB_DIR = "Análise de Filas de Regulação – Região Norte";
   const carregadas = {};
   let REF = null;
 

@@ -25,6 +25,7 @@ body{margin:0;background:var(--bg);color:var(--txt);font:13px/1.3 system-ui,-app
 .wrap{max-width:1180px;margin:0 auto;padding:14px 14px 28px}
 header h1{font-size:1.45rem;margin:0}
 header p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
+.cred{font-size:.75rem;font-weight:400;margin-left:6px;vertical-align:middle;opacity:.85}
 .piloto{display:inline-block;background:var(--accent);color:#fff;border-radius:999px;padding:1px 9px;font-size:.75rem;font-weight:600;margin-left:6px;vertical-align:middle}
 .aviso{background:var(--aviso-bg);color:var(--aviso-txt);border-radius:10px;padding:10px 14px;margin-top:12px;font-size:.9rem}
 .kpis{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:8px;margin:12px 0}   /* todos os cartões em 1 linha, mesma largura e altura */
@@ -161,7 +162,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 <body>
 <div class="wrap">
 <header>
-  <h1>Filas de regulação – Região Norte <span class="piloto">versão piloto</span></h1>
+  <h1>Filas de regulação – Região Norte <span class="piloto">versão piloto</span> <span class="cred">desenvolvido por Rebeca de Sousa Carvalho (GAPAPS/DIRAPS) · metodologia de análise: GERNO/DIRAPS Norte</span></h1>
   <p>GAPAPS Norte · <span id="info">carregando…</span></p>
   <div class="aviso" id="aviso" hidden></div>
 </header>
@@ -210,7 +211,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 <div class="serie-dv" id="dv-reg">
 <button type="button" class="sim-abrir" id="rg-abrir" aria-expanded="false">▸ Resolução das devolvidas (registro diário do painel)</button>
 <div id="rg-corpo" hidden>
-<p class="nota" style="margin-top:8px">O Mapa Social só mostra a situação atual de cada solicitação: uma devolvida que foi corrigida, reenviada e agendada deixa de aparecer como devolvida. Por isso o painel passou a registrar, a cada coleta, os códigos que <b>entram</b> no status devolvida e os que <b>saem</b> dele, e para onde vão (reenviada, agendada, pendente, fila de espera ou ausente). É a linha de base para medir quantas devoluções cada unidade corrige e em quanto tempo. <button type="button" class="ajuda" aria-expanded="false" title="Como as medidas são calculadas">?</button><span class="nota12" hidden><b>Novas</b> = devolvidas que apareceram depois do início do registro (o estoque que já existia no início fica à parte). <b>Resolvidas</b> = novas que depois saíram do status devolvida; a <b data-jan="d30">coorte de 30 dias</b> considera só as novas com 30 dias ou mais de registro, para que todas tenham tido o mesmo prazo. <b>Dias até sair</b> = da entrada no registro até a saída (mediana). As saídas do estoque inicial também são contadas, mas sem prazo, porque não se sabe quando cada uma foi devolvida em relação ao registro.</span></p>
+<p class="nota" style="margin-top:8px">O Mapa Social só mostra a situação atual de cada solicitação: uma devolvida que foi corrigida, reenviada e agendada deixa de aparecer como devolvida. Por isso o painel passou a registrar, a cada coleta, os códigos que <b>entram</b> no status devolvida e os que <b>saem</b> dele, e para onde vão (reenviada, agendada, pendente, fila de espera ou canceladas presumidas). É a linha de base para medir quantas devoluções cada unidade corrige e em quanto tempo. <button type="button" class="ajuda" aria-expanded="false" title="Como as medidas são calculadas">?</button><span class="nota12" hidden><b>Novas</b> = devolvidas que apareceram depois do início do registro (o estoque que já existia no início fica à parte). <b>Resolvidas</b> = novas que depois saíram do status devolvida; a <b data-jan="d30">coorte de 30 dias</b> considera só as novas com 30 dias ou mais de registro, para que todas tenham tido o mesmo prazo. <b>Dias até sair</b> = da entrada no registro até a saída (mediana). As saídas do estoque inicial também são contadas, mas sem prazo, porque não se sabe quando cada uma foi devolvida em relação ao registro.</span></p>
 <div class="ctrl">
   <select id="rg-nivel"><option value="APS">APS (UBS e PSR)</option><option value="">Todos os níveis</option></select>
   <select id="rg-tipo"><option value="">Consultas e exames</option></select>
@@ -287,7 +288,7 @@ footer{margin-top:28px;color:var(--muted);font-size:.8rem;border-top:1px solid v
 </section>
 
 <section id="aba-prio" hidden>
-<p class="nota">Todas as filas com solicitações aguardando, lado a lado, para decidir onde concentrar o esforço de gestão. O painel não classifica nem pondera: mostra o dano acumulado e o esforço para corrigir; o julgamento é da gestão. Uma vaga de um procedimento não vira vaga de outro. <button type="button" class="ajuda" aria-expanded="false" title="O que cada coluna mostra">?</button><span class="nota12" hidden><b>Dano</b>: <i>pessoas-ano de espera</i>: cada pessoa na fila carrega o tempo que já esperou; somando o de todas, temos quanto tempo de vida a fila já custou (100 pessoas esperando 1 ano = 100 pessoas-ano; 10 pessoas esperando 10 anos também). É a medida que junta tamanho e tempo da fila num número só, sem pesar prioridades. É uma medida construída por este painel (soma das esperas individuais de quem está na fila); a unidade é a mesma que a epidemiologia usa para somar tempo de acompanhamento de pessoas (pessoas-ano), e não consta de normativa da SES-DF. Ao lado, <i>meses de estoque</i>, <i>espera mediana</i> e os <i>vermelhos e amarelos</i> com o mais antigo deles. <b>Situação</b>: três sinais que se combinam: <i>sem oferta</i> (sem saída há mais de 1 ano ou fila parada), <i>crescendo</i> (saldo positivo em 9 ou mais dos últimos 12 meses) e <i>fila de espera (n)</i> (solicitações aguardando pactuação, fora da fila do regulador). <b>Esforço</b>: quantas vagas por mês a mais seriam necessárias para <i>estabilizar</i> (a fila parar de crescer) ou <i>zerar em 12 meses</i>, na média dos últimos 12 meses e no cenário pior que o normal (entrada 18% maior, saída 25% menor). Passe o cursor sobre cada cabeçalho para ver a conta. Clique no cabeçalho para ordenar.</span></p>
+<p class="nota">Todas as filas com solicitações aguardando, lado a lado, para decidir onde concentrar o esforço de gestão. O painel não classifica nem pondera: mostra o dano acumulado e o esforço para corrigir; o julgamento é da gestão. Uma vaga de um procedimento não vira vaga de outro. <button type="button" class="ajuda" aria-expanded="false" title="O que cada coluna mostra">?</button><span class="nota12" hidden><b>Dano</b>: <i>pessoas-ano de espera</i>: cada pessoa na fila carrega o tempo que já esperou; somando o de todas, temos quanto tempo de vida a fila já custou (100 pessoas esperando 1 ano = 100 pessoas-ano; 10 pessoas esperando 10 anos também). É a medida que junta tamanho e tempo da fila num número só, sem pesar prioridades. É uma medida construída por este painel (soma das esperas individuais de quem está na fila); a unidade é a mesma que a epidemiologia usa para somar tempo de acompanhamento de pessoas (pessoas-ano), e não consta de normativa da SES-DF. Ao lado, a <i>espera mediana</i> de quem está na fila. <b>Situação</b>: três sinais que se combinam: <i>sem oferta</i> (sem saída há mais de 1 ano ou fila parada), <i>crescendo</i> (saldo positivo em 9 ou mais dos últimos 12 meses) e <i>fila de espera (n)</i> (solicitações aguardando pactuação, fora da fila do regulador). <b>Esforço</b>: quantas vagas por mês a mais seriam necessárias para <i>estabilizar</i> (a fila parar de crescer), na média dos últimos 12 meses. O esforço para zerar a fila em 12 meses, o cenário pior, os meses de estoque e os vermelhos e amarelos continuam na ficha de cada fila e na planilha Excel desta aba. Passe o cursor sobre cada cabeçalho para ver a conta. Clique no cabeçalho para ordenar.</span></p>
 <div class="kpis" id="pz-kpis"></div>
 <div class="ctrl">
   <input type="search" id="pz-busca" placeholder="Buscar procedimento">
@@ -608,7 +609,7 @@ function simHtml(f){
     <p><b>2. Fila que cresce.</b> ${JT("cresc","Saldo positivo em 9 ou mais dos últimos 12 meses")}: nas filas da região com esse padrão, 3 em 4 continuaram crescendo nos 12 meses seguintes. É um sinal forte, não uma certeza.</p>
     <p><b>3. Como estimamos o tempo de espera.</b> Pense numa fila de banco com 30 pessoas e um caixa que atende 10 por hora: quem chega agora espera cerca de 3 horas (30 ÷ 10). A regra vale para qualquer fila em que o ritmo se mantém (é a chamada lei de Little): <b>espera ≈ tamanho da fila ÷ quantos saem por mês</b>. Exemplo: 300 pessoas na fila e 30 agendamentos por mês → quem entra hoje espera cerca de 10 meses. Essa conta tem um limite: se entram mais pessoas do que saem, a fila cresce enquanto a pessoa espera, e ela demora mais do que a conta diz. Nas filas que crescem, use a tabela por cor: ela simula mês a mês as vagas atendendo primeiro os vermelhos, depois amarelos, verdes e azuis, e diz em que mês alguém que entra hoje seria atendido. Quando comparamos a espera com uma meta, usamos a espera mediana (a do paciente que está no meio da fila), porque as metas da SES-DF são escritas em mediana.</p>
     <p><b>4. Como calculamos o plano.</b> Toda fila tem dois problemas separados: o que <b>entra</b> todo mês e o que <b>já está acumulado</b>. <i>Estabilizar</i>: para a fila parar de crescer, é preciso agendar por mês pelo menos o que entra por mês; se entram 50 e saem 40, faltam 10 vagas por mês, para sempre. <i>Zerar</i>: além de estabilizar, é preciso escoar o acumulado; dividimos a fila pelo prazo: 600 pessoas em 12 meses são mais 50 vagas por mês durante um ano; depois de zerar, basta manter a oferta igual à entrada. <i>Mutirão</i>: tira pessoas do acumulado de uma vez, mas não muda o que entra; numa fila que cresce 10 por mês, um mutirão de 120 vagas compra 12 meses até a fila voltar ao tamanho de hoje; se a fila cresce, mutirão sem oferta regular é alívio temporário. <i>Espera-alvo</i>: em vez de zerar, pode-se mirar um tamanho de fila em que a espera fique dentro de uma meta; essa fila-alvo = entrada mensal × meta em meses (a mesma regra do banco, invertida); quando o procedimento tem meta normativa, ela vem preenchida; nas demais filas, o campo fica livre para testar uma meta gerencial, e o texto diz que ela não é normativa. <i>Faixa pessimista</i>: como toda projeção erra, mostramos também o plano para um cenário pior que o normal, com a entrada 18% maior e a saída 25% menor que a média. São os erros típicos do teste do item 1: em cerca de 1 caso em 4, a entrada real ficou acima desse valor, e o mesmo vale para a saída. Não é um limite, é um "pior razoável".</p>
-    <p><b>5. O que o painel não decide.</b> Não classifica a espera como alta nem pesa as prioridades: mostra meses de estoque, espera mediana, pessoas-ano de espera e o número de vermelhos e amarelos com a mais antiga deles. O julgamento é da gestão. Saída = agendamentos do Mapa Social, com faltas e cancelados; não considera custo, vagas físicas nem mudança da demanda.</p>
+    <p><b>5. O que o painel não decide.</b> Não classifica a espera como alta nem pesa as prioridades: mostra espera mediana e pessoas-ano de espera (meses de estoque e vermelhos e amarelos ficam na ficha e no Excel). O julgamento é da gestão. Saída = agendamentos do Mapa Social, com faltas e cancelados; não considera custo, vagas físicas nem mudança da demanda.</p>
    </div>
    <small class="nota">Premissas: saída = agendamentos do Mapa Social (inclui cancelados e faltas, o que pode superestimar a capacidade real); a espera estimada da fila toda não separa prioridades e não é o “tempo médio” do Mapa Social (que usa os agendamentos dos últimos 15 dias). Não considera custo, vagas físicas nem mudança na demanda.</small></div></div>`;
 }
@@ -820,7 +821,8 @@ function aggReg({pi=null,ui=null,nv="",tp="",por="u"}={}){
   const tot=k=>L.reduce((s,x)=>s+x[k],0);
   return {L,N:tot("novas"),RS:tot("res"),C30:tot("c30"),R30:tot("r30"),saiEstoque,destEst,med:medianaReg(todos)};
 }
-const destTxt=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${fmt(v)}`).join(", ")||"–";
+const destNome=k=>k==="ausente"?"canceladas (presumidas)":k;
+const destTxt=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${destNome(k)} ${fmt(v)}`).join(", ")||"–";
 const SEM_REG='<p style="padding:12px">O registro diário ainda não foi iniciado: começa na primeira coleta publicada depois desta versão do painel.</p>';
 const vazioReg=()=>`<p style="padding:12px">Ainda não há devolvidas novas registradas com esses filtros (${fmt((REG.dias||[]).length)} ${(REG.dias||[]).length===1?"dia":"dias"} de registro, desde ${dd(REG.inicio)}).</p>`;
 // tabela de resolução; 1ª coluna = unidade (por "u") ou procedimento (por "p"); % com menos de MIN12 novas saem em cinza e ficam por último ao ordenar
@@ -865,7 +867,7 @@ async function baixarReg(){
   aba("Por procedimento","p",["Procedimento","Tipo"],g=>[g.p,tipoProc(g.p)],[55,10,9,9,13,20,20,10,16,50]);
   aba("Unidade × procedimento","up",["Unidade solicitante","Procedimento"],g=>[g.u,g.p],[40,55,9,9,13,20,20,10,16,50]);
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Resolução das devolvidas","registro diário do painel: a cada coleta, os códigos que entram no status devolvida e os que saem dele"],["Início do registro",`${dd(R.inicio)} (${(R.dias||[]).length} dias de registro; estoque inicial de ${fmt(R.estoque_inicial)} devolvidas)`],["Filtro",`${$("rg-nivel").options[$("rg-nivel").selectedIndex].text} · ${tp||"consultas e exames"} · procedimento: ${f?f.p:"(todos)"}`],
-    ["Novas","devolvidas que apareceram depois do início do registro (o estoque que já existia fica à parte)"],["Saíram","novas que depois saíram do status devolvida"],["% resolvidas","saíram ÷ novas"],["% em 30 d","entre as novas com 30 dias ou mais de registro, quantas saíram em até 30 dias"],["Dias até sair","mediana de dias entre a entrada e a saída do status"],["Destino","para onde foram as que saíram: reenviada, agendada, pendente, fila de espera ou ausente do Mapa Social"],["Percentuais instáveis",`com menos de ${MIN12} devolvidas novas`]])),"Leia-me");
+    ["Novas","devolvidas que apareceram depois do início do registro (o estoque que já existia fica à parte)"],["Saíram","novas que depois saíram do status devolvida"],["% resolvidas","saíram ÷ novas"],["% em 30 d","entre as novas com 30 dias ou mais de registro, quantas saíram em até 30 dias"],["Dias até sair","mediana de dias entre a entrada e a saída do status"],["Destino","para onde foram as que saíram: reenviada, agendada, pendente, fila de espera ou canceladas (presumidas: o código deixou de constar no Mapa Social)"],["Percentuais instáveis",`com menos de ${MIN12} devolvidas novas`]])),"Leia-me");
   XLSX.writeFile(wb,`Resolução das devolvidas - Região Norte (${D.data.split("-").reverse().join("-")}).xlsx`);
   return A.L.length;
 }
@@ -1112,21 +1114,15 @@ function linhaPrio(f){
 }
 const PZ_COL=[ // chave, rótulo, valor para ordenar, explicação (title)
   ["nome","Procedimento",r=>r.f.p,"Clique para abrir a ficha da fila"],
-  ["tipo","Tipo",r=>r.f.tipo||"",""],
   ["fila","Na fila",r=>r.f.fila,"Solicitações aguardando (pendentes + reenviadas)"],
   ["saldo","Saldo 12 m",r=>r.f.saldo12,"Entrada − saída nos últimos 12 meses completos; abaixo, em quantos desses meses o saldo foi positivo. "+JAN.m12],
   ["sit","Situação",r=>r.sit,"“sem oferta”: sem saída há mais de 1 ano ou fila parada; “crescendo”: saldo positivo em 9 ou mais dos últimos 12 meses; “fila de espera (n)”: solicitações aguardando pactuação, fora da fila do regulador (aba Sem oferta). Os sinais se combinam. "+JAN.cresc],
-  ["estoque","Meses de estoque",r=>r.estoque==null?1e12:r.estoque,JAN.estoque],
   ["med","Espera mediana (dias)",r=>r.med==null?-1:r.med,"Mediana do tempo que quem está na fila hoje já esperou (a comparável às metas da SES-DF, que são medianas). "+JAN.esp],
   ["pm","Pessoas-ano de espera",r=>r.pm,JAN.pm],
-  ["va","Verm. + amar. (n)",r=>r.va,"Solicitações vermelhas e amarelas aguardando"],
-  ["vaAnt","Mais antiga deles (dias)",r=>r.vaAnt,"Espera da solicitação mais antiga entre as vermelhas e amarelas"],
-  ["est","Estabilizar (vagas/mês)",r=>r.est,"Vagas a mais por mês, permanentes, para a fila parar de crescer: entrada − saída (médias dos últimos 12 meses); entre parênteses, % da saída atual. "+JAN.med12],
-  ["zera","Zerar em 12 m (vagas/mês)",r=>r.zera,"Vagas a mais por mês durante 12 meses para zerar a fila: (entrada − saída) + fila ÷ 12. "+JAN.f12],
-  ["zeraP","Zerar em 12 m, cenário pior",r=>r.zeraP,"Mesma conta com entrada ×1,18 e saída ×0,75. "+JAN.pess]
+  ["est","Estabilizar (vagas/mês)",r=>r.est,"Vagas a mais por mês, permanentes, para a fila parar de crescer: entrada − saída (médias dos últimos 12 meses); entre parênteses, % da saída atual. "+JAN.med12]
 ];
 function filtrarPrio(){
-  const q=norm($("pz-busca").value.trim()), t=$("pz-tipo").value, sem=$("pz-sem").checked, col=PZ_COL.find(c=>c[0]===pzOrd.k)||PZ_COL[7];
+  const q=norm($("pz-busca").value.trim()), t=$("pz-tipo").value, sem=$("pz-sem").checked, col=PZ_COL.find(c=>c[0]===pzOrd.k)||PZ_COL[5];
   const L=D.filas.filter(f=>f.fila>0&&(!q||norm(f.p).includes(q))&&(!t||f.tipo===t)).map(linhaPrio).filter(r=>!(sem&&r.sem));
   const v=r=>col[2](r);
   L.sort((a,b)=>{ const x=v(a), y=v(b); return pzOrd.dir*(typeof x==="string"?x.localeCompare(y,"pt"):x-y)||b.pm-a.pm; });
@@ -1137,13 +1133,11 @@ function renderPrio(){
   const L=filtrarPrio(), tot=L.reduce((s,r)=>s+r.pm,0), dsc=pzOrd.dir<0?"descending":"ascending";
   const th=c=>`<th data-ord="${c[0]}"${pzOrd.k===c[0]?` aria-sort="${dsc}"`:""}${c[3]?` title="${esc(c[3])}"`:""}>${c[1]}</th>`;
   const sinal=r=>[r.sem?'<span class="tag" title="Sem saída há mais de 1 ano ou fila parada (aba Sem oferta)">sem oferta</span>':"",r.cres?`<span class="tag" title="${esc(JAN.cresc)}">crescendo</span>`:"",r.esp?`<small title="Solicitações em fila de espera (aguardando pactuação), fora da fila do regulador">fila de espera (${fmt(r.esp)})</small>`:""].join(" ");
-  const lin=r=>`<tr><td><a class="irfila" href="#f-${r.f.id}">${esc(r.f.p)}</a></td><td>${esc(r.f.tipo||"")}</td><td>${fmt(r.f.fila)}</td>
+  const lin=r=>`<tr><td><a class="irfila" href="#f-${r.f.id}">${esc(r.f.p)}</a></td><td>${fmt(r.f.fila)}</td>
     <td title="${r.pos!=null?`saldo positivo em ${r.pos} de 12 meses`:"abaixo de 9 meses positivos de 12"}">${r.f.saldo12>0?"+":""}${fmt(r.f.saldo12)}${r.pos!=null?`<small>${r.pos}/12</small>`:""}</td>
-    <td>${sinal(r)}</td><td>${r.estoque==null?"sem saída":fmt(r.estoque,1)}</td>
+    <td>${sinal(r)}</td>
     <td${r.med==null?' title="disponível na próxima coleta"':""}>${r.med==null?"–":fmt(r.med)}</td><td><b>${fmt(Math.round(r.pm))}</b></td>
-    <td>${fmt(r.va)}</td><td>${r.va?fmt(r.vaAnt):"–"}</td>
-    <td>${r.est>0.05?`+${fmt(Math.ceil(r.est))}${r.b.sai>=5?`<small>+${fmt(r.est/r.b.sai*100)}% da saída</small>`:""}`:"0"}</td>
-    <td>${r.zera>0.05?`+${fmt(Math.ceil(r.zera))}`:"0"}</td><td>${r.zeraP>0.05?`+${fmt(Math.ceil(r.zeraP))}`:"0"}</td></tr>`;
+    <td>${r.est>0.05?`+${fmt(Math.ceil(r.est))}${r.b.sai>=5?`<small>+${fmt(r.est/r.b.sai*100)}% da saída</small>`:""}`:"0"}</td></tr>`;
   $("pz-lista").innerHTML=L.length?`<table class="tab rank"><thead><tr>${PZ_COL.map(th).join("")}</tr></thead><tbody>${L.map(lin).join("")}</tbody></table>`:'<p style="padding:12px">Nenhuma fila encontrada.</p>';
   $("pz-cont").textContent=`${fmt(L.length)} filas · ${fmt(Math.round(tot))} pessoas-ano`;
   const todas=D.filas.filter(f=>f.fila>0).map(linhaPrio);
