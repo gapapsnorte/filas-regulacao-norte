@@ -86,8 +86,6 @@ header p{margin:4px 0 0;color:var(--muted);font-size:.72rem}
 .ajuda{border:1px solid var(--line);background:var(--card);color:var(--accent);border-radius:50%;width:22px;height:22px;font-size:.8rem;font-weight:700;cursor:pointer;line-height:1;padding:0}
 .ajuda-txt{font-size:.82rem;line-height:1.45;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:2px 0 8px;max-width:760px}.ajuda-txt p{margin:4px 0}
 .graf{position:relative;max-width:760px}
-.barras{position:relative;max-width:760px}
-.barras svg{display:block}
 .reg-sub{margin-top:10px}.reg-sub h5{margin:0 0 4px;font-size:.82rem;color:var(--muted);font-weight:600}
 .serie-dv{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px}
 .serie-dv .ctrl{margin-bottom:8px}
@@ -155,7 +153,7 @@ footer details>p:first-of-type{margin-top:12px}
 @media (max-width:760px){
   .lin{grid-template-columns:1fr 1fr;grid-template-areas:"n n" "f s" "c c"}
   .lin .nome{grid-area:n}.lin .f{grid-area:f;text-align:left}.lin .s{grid-area:s}.lin .c{grid-area:c}.lin .sp{display:none}
-  .lin.dv{grid-template-columns:1fr 1fr;grid-template-areas:none}.lin.dv .nome{grid-column:1/-1}
+  .lin.dv{grid-template-columns:1fr 1fr;grid-template-areas:none}.lin.dv .nome{grid-area:auto;grid-row:1;grid-column:1/-1}
   .ctrl .cont{margin-left:0;flex-basis:100%}
   .kpis{display:flex;overflow-x:auto;scroll-snap-type:x proximity;gap:8px;margin:10px -14px;padding:0 14px 4px}
   .kpi{flex:0 0 150px;scroll-snap-align:start;padding:6px 10px}
@@ -216,7 +214,7 @@ footer details>p:first-of-type{margin-top:12px}
 <div class="serie-dv" id="dv-reg">
 <button type="button" class="sim-abrir" id="rg-abrir" aria-expanded="false">▸ Resolução das devolvidas (registro diário do painel)</button>
 <div id="rg-corpo" hidden>
-<p class="nota" style="margin-top:8px">O Mapa Social só mostra a situação atual de cada solicitação: uma devolvida que foi corrigida, reenviada e agendada deixa de aparecer como devolvida. Por isso o painel passou a registrar, a cada coleta, os códigos que <b>entram</b> no status devolvida e os que <b>saem</b> dele, e para onde vão (reenviada, agendada, pendente, fila de espera ou cancelada presumida). É a linha de base para medir quantas devoluções cada unidade corrige e em quanto tempo. <button type="button" class="ajuda" aria-expanded="false" title="Como as medidas são calculadas">?</button><span class="nota12" hidden><b>Novas</b> = devolvidas que apareceram depois do início do registro (o estoque que já existia no início fica à parte). <b>Resolvidas</b> = novas que depois saíram do status devolvida; a <b data-jan="d30">coorte de 30 dias</b> considera só as novas com 30 dias ou mais de registro, para que todas tenham tido o mesmo prazo. <b>Dias até sair</b> = da entrada no registro até a saída (mediana). As saídas do estoque inicial também são contadas, mas sem prazo, porque não se sabe quando cada uma foi devolvida em relação ao registro. <b>Cancelada (presumida)</b> = o código deixou de constar no Mapa Social sem reaparecer como reenviada, agendada, pendente ou em fila de espera. O Mapa Social lista a solicitação só nesses quatro status, e uma devolvida só sai deles quando é reenviada ou cancelada no SISREG (pela unidade, pelo regulador ou por negativa); por isso o cancelamento é a explicação mais provável, mas o painel não o confirma: mudança de região da unidade ou falha de uma recarga também fazem o código sumir.</span></p>
+<p class="nota" style="margin-top:8px">O Mapa Social só mostra a situação atual de cada solicitação: uma devolvida que foi corrigida, reenviada e agendada deixa de aparecer como devolvida. Por isso o painel passou a registrar, a cada coleta, os códigos que <b>entram</b> no status devolvida e os que <b>saem</b> dele, e para onde vão (reenviada, agendada, pendente, fila de espera ou <span class="dica" data-jan="canc">cancelada presumida</span>). É a linha de base para medir quantas devoluções cada unidade corrige e em quanto tempo. <button type="button" class="ajuda" aria-expanded="false" title="Como as medidas são calculadas">?</button><span class="nota12" hidden><b>Novas</b> = devolvidas que apareceram depois do início do registro (o estoque que já existia no início fica à parte). <b>Resolvidas</b> = novas que depois saíram do status devolvida; a <b data-jan="d30">coorte de 30 dias</b> considera só as novas com 30 dias ou mais de registro, para que todas tenham tido o mesmo prazo. <b>Dias até sair</b> = da entrada no registro até a saída (mediana). As saídas do estoque inicial também são contadas, mas sem prazo, porque não se sabe quando cada uma foi devolvida em relação ao registro. <b>Cancelada (presumida)</b> = o código deixou de constar no Mapa Social sem reaparecer como reenviada, agendada, pendente ou em fila de espera. O Mapa Social só lista a solicitação em quatro status (pendente, reenviada, devolvida e fila de espera); os agendamentos vêm de outra base. Uma devolvida só sai desses status quando é reenviada ou cancelada no SISREG (pela unidade, pelo regulador ou por negativa); por isso o cancelamento é a explicação mais provável, mas o painel não o confirma: mudança de região da unidade ou falha de uma recarga também fazem o código sumir.</span></p>
 <div class="ctrl">
   <select id="rg-nivel"><option value="APS">APS (UBS e PSR)</option><option value="">Todos os níveis</option></select>
   <select id="rg-tipo"><option value="">Consultas e exames</option></select>
@@ -315,7 +313,7 @@ footer details>p:first-of-type{margin-top:12px}
   <i>Entrada</i> = solicitações pela data da solicitação (pendentes, reenviadas e agendadas); <i>saída</i> = agendamentos pela data do atendimento; <i>saldo</i> = entrada − saída, em meses completos. Passe o cursor sobre o gráfico para ver os valores de cada mês. O seletor <i>Gráficos por quadrimestre</i> soma os meses de cada quadrimestre (jan–abr, mai–ago, set–dez); quadrimestres incompletos na <span data-jan="m24">janela de 24 meses</span> ficam marcados com asterisco e ponto vazado.</p>
   <p><b>Alertas:</b> <i>fila crescendo</i> = <span data-jan="cresc">saldo positivo em 9 ou mais dos últimos 12 meses</span>; <i>espera acima da meta</i> = solicitação mais antiga de uma cor com espera maior que a meta do protocolo do procedimento (só existe quando uma normativa da SES-DF define meta de espera por prioridade para o procedimento; hoje, apenas Consulta em Cirurgia Geral e em Pequena Cirurgia, conforme a Portaria SES-DF 79/2026 – demais filas ficam marcadas como <i>sem meta normativa</i> e não geram esse alerta); <i>fila parada</i> = 20+ solicitações aguardando, ninguém agendado <span data-jan="parada">nos últimos 3 meses</span> nem marcado à frente; <i>sem saída há mais de 1 ano</i> = há solicitações aguardando e o último agendamento registrado tem <span data-jan="semsaida">mais de 365 dias</span> (ou não há nenhum). A aba <i>Sem oferta</i> reúne esses dois últimos alertas com a <i>fila de espera</i> (solicitações aguardando pactuação, fora da fila do regulador).</p>
   <p><b>Espera estimada e simulador:</b> a espera estimada (~N d no cartão) é a fila dividida pela <span data-jan="med12">saída mensal média dos últimos 12 meses</span>, isto é, quanto tempo a fila levaria para ser agendada no ritmo atual. No detalhe de cada fila, o botão <i>Simulador</i> abre uma área que mostra o efeito de uma oferta adicional de agendamentos por mês na espera estimada e na <span data-jan="proj24">projeção da fila em 24 meses</span>; a estimativa principal é para a fila toda; a tabela por cor distribui as vagas em cascata de prioridade (vermelhos primeiro, depois amarelos, e assim por diante). O <i>plano de intervenção</i> responde a pergunta inversa: para estabilizar a fila, zerá-la em um prazo (com ou sem mutirão inicial) ou levá-la a uma espera-alvo, quantos agendamentos a mais por mês são necessários e quantos bastam, depois, para a fila não voltar a crescer; mostra também um cenário pior que o normal.</p>
-  <p><b>Gerar análise completa:</b> abra uma fila e escolha PDF, Word ou Excel (tabelas). O documento segue a metodologia padronizada (Figuras 1 a 4 e Tabela 1, com as UBS ordenadas de quem mais devolve por eSF); os parágrafos de interpretação saem em amarelo, como rascunho para revisão. <i>Dados detalhados</i> baixa as linhas da fila: solicitações pendentes, reenviadas e devolvidas, e agendamentos dos últimos 24 meses.</p>
+  <p><b>Gerar análise completa:</b> abra uma fila e escolha PDF, Word ou Excel (tabelas). O documento segue a metodologia padronizada (Figuras 1 a 4 e Tabela 1, com as UBS ordenadas de quem mais devolve por eSF); os parágrafos de interpretação saem em amarelo, como rascunho para revisão. <i>Dados detalhados</i> baixa as linhas da fila: solicitações pendentes, reenviadas, devolvidas e em fila de espera, e agendamentos dos últimos 24 meses.</p>
   <p id="rodape-atualizacao">Versão piloto. O painel confere o Mapa Social a cada 2 horas e se atualiza sozinho assim que ele recarrega com solicitações novas (normalmente uma ou duas vezes por dia).</p>
 </details>
 </footer>
@@ -333,6 +331,7 @@ const NIVEIS = ["APS","DIRASE","HRS","HRPL","UPA","OUTROS"];
 const MIN12=20;   // mínimo de solicitações em 12 meses para a razão de devolvidas valer na ordenação (abaixo disso sai em cinza)
 // Justificativa de cada janela temporal usada no painel (aparece ao passar o cursor; elementos estáticos usam data-jan)
 const JAN={
+  canc:"Cancelada (presumida) = o código deixou de constar no Mapa Social sem reaparecer como reenviada, agendada, pendente ou em fila de espera. O Mapa Social só lista a solicitação em quatro status (pendente, reenviada, devolvida e fila de espera); os agendamentos vêm de outra base. Uma devolvida só sai desses status quando é reenviada ou cancelada no SISREG (pela unidade, pelo regulador ou por negativa); o cancelamento é a explicação mais provável, mas o painel não o confirma: mudança de região da unidade ou falha de uma recarga também fazem o código sumir.",
   m12:"Por que 12 meses: um ano completo cobre todas as estações e mostra o comportamento recente da fila, sem o peso de anos antigos.",
   m24:"Por que 24 meses: dois anos deixam a sazonalidade se repetir e mostram a tendência; é a janela de todos os gráficos mensais do painel e da identificação de meses aberrantes.",
   med12:"Por que a média dos últimos 12 meses completos: é o ritmo atual, sem o mês corrente (incompleto) e sem anos antigos.",
@@ -504,9 +503,8 @@ const dias10=v=>v==null?"sem saída":v>3650?"mais de 10 anos":fmt(v);
 // agendados quando não há vermelho aguardando, e assim por diante. cap = vagas por mês; M = vagas de mutirão (1º mês); H = horizonte em meses.
 // Por cor: fila ao fim de 12 meses, mês em que a fila da cor zera e espera de quem entra hoje (mês em que o atendimento acumulado da cor
 // alcança a fila que ela tem hoje). Entrada por cor = média observada dos últimos 12 meses.
-const ORDEM_COR=["vermelho","amarelo","verde","azul","sem risco"];
 function cascata(f,cap,M,H=60){
-  const cores=ORDEM_COR.filter(c=>f.cores[c]), st={},st0={},ent={},cum={},esp={},zera={},f12={};
+  const cores=COR.filter(c=>f.cores[c]), st={},st0={},ent={},cum={},esp={},zera={},f12={};
   cores.forEach(c=>{ st[c]=f.cores[c].n; st0[c]=st[c]; ent[c]=((f.cor_stats||{})[c]||{}).ent||0; cum[c]=0; esp[c]=null; zera[c]=null; f12[c]=null; });
   for(let t=1;t<=H;t++){
     let livre=cap+(t===1?M:0);
@@ -554,7 +552,7 @@ function planoHtml(f){
    </div>
    <div class="plano-txt"></div><div class="plano-graf"></div></div>`;
 }
-const up=v=>fmt(Math.ceil(v-1e-9));
+const up=v=>fmt(Math.ceil(v-1e-9)+0);   // +0 evita "-0"
 const pior=y=>` (${JT("pess","cenário pior que o normal")}: +${up(y)})`;
 // texto das três linhas do plano e gráfico da espera-alvo
 function atualizarPlano(box,f,b,P,M){
@@ -783,7 +781,7 @@ async function carregarDV(){
     $("pr-nivel").insertAdjacentHTML("beforeend",`<option value="${n}">Só devolvidas da ${n==="OUTROS"?"outras unidades":n}</option>`);
   });
   const j=DV.janela12||[];
-  document.querySelectorAll(".nota12").forEach(el=>el.innerHTML=`<b>% devolvidas (12 m)</b> = das solicitações feitas${j.length?` de ${esc(j[0])} a ${esc(j[1])}`:" nos últimos 12 meses completos"} (pela data da solicitação), quantas estão devolvidas hoje. O total inclui tudo o que foi solicitado no período: pendentes, reenviadas, devolvidas e agendadas. Cada solicitação conta uma vez; a que foi devolvida, corrigida e depois agendada conta como não devolvida, porque o Mapa Social só guarda a situação atual (por isso o percentual é um piso). Na ordenação por esse percentual, só entram na frente unidades ou procedimentos com ${MIN12} ou mais solicitações no período; com menos, o percentual aparece em cinza. ${JAN.dev12}`);
+  document.querySelectorAll("#dv-un .nota12, #dv-pr .nota12").forEach(el=>el.innerHTML=`<b>% devolvidas (12 m)</b> = das solicitações feitas${j.length?` de ${esc(j[0])} a ${esc(j[1])}`:" nos últimos 12 meses completos"} (pela data da solicitação), quantas estão devolvidas hoje. O total inclui tudo o que foi solicitado no período: pendentes, reenviadas, devolvidas e agendadas. Cada solicitação conta uma vez; a que foi devolvida, corrigida e depois agendada conta como não devolvida, porque o Mapa Social só guarda a situação atual (por isso o percentual é um piso). Na ordenação por esse percentual, só entram na frente unidades ou procedimentos com ${MIN12} ou mais solicitações no período; com menos, o percentual aparece em cinza. ${JAN.dev12}`);
   return DV;
 }
 const pct12=(d,t)=>t?(t<MIN12?`<span class="fraco" title="menos de ${MIN12} solicitações no período: percentual pouco confiável">${fmt(d/t*100,1)}%</span>`:fmt(d/t*100,1)+"%"):"–";
@@ -829,8 +827,9 @@ function aggReg({pi=null,ui=null,nv="",tp="",por="u"}={}){
   const tot=k=>L.reduce((s,x)=>s+x[k],0);
   return {L,N:tot("novas"),RS:tot("res"),C30:tot("c30"),R30:tot("r30"),saiEstoque,destEst,med:medianaReg(todos)};
 }
-const destNome=k=>k==="ausente"?"cancelada (presumida)":k;
-const destTxt=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${destNome(k)} ${fmt(v)}`).join(", ")||"–";
+const destNome=k=>k==="ausente"?"cancelada (presumida)":k==="outro"?"outro status":k;
+const destTxt=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${destNome(k)} ${fmt(v)}`).join(", ")||"–";   // texto puro (Excel)
+const destHtml=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k==="ausente"?JT("canc",destNome(k)):esc(k)} ${fmt(v)}`).join(", ")||"–";
 const SEM_REG='<p style="padding:12px">O registro diário ainda não foi iniciado: começa na primeira coleta publicada depois desta versão do painel.</p>';
 const vazioReg=()=>`<p style="padding:12px">Ainda não há devolvidas novas registradas com esses filtros (${fmt((REG.dias||[]).length)} ${(REG.dias||[]).length===1?"dia":"dias"} de registro, desde ${dd(REG.inicio)}).</p>`;
 // tabela de resolução; 1ª coluna = unidade (por "u") ou procedimento (por "p"); % com menos de MIN12 novas saem em cinza e ficam por último ao ordenar
@@ -839,7 +838,7 @@ function tabelaReg(L,por){
   const fr=k=>k.novas<MIN12?` class="fraco" title="menos de ${MIN12} devolvidas novas: percentual instável"`:"", pc=(k,a,b)=>b?fmt(a/b*100,1)+"%":"–";
   const th=(t,r,tit="")=>`<th data-rord="${r}"${tit?` title="${tit}"`:""}>${t}</th>`;
   return `<table class="tab rank regtab"><thead><tr><th>#</th><th style="text-align:left" data-rord="txt">${por==="u"?"Unidade solicitante":"Procedimento"}</th>${th("Novas","num","Devolvidas que apareceram depois do início do registro")}${th("Saíram","num","Novas que depois saíram do status devolvida")}${th("% resolvidas","pct","Saíram ÷ novas")}${th("% em 30 d","pct","Entre as novas com 30 dias ou mais de registro, quantas saíram em até 30 dias. "+JAN.d30)}${th("Dias até sair","num","Mediana de dias entre a entrada e a saída do status")}<th>Destino das que saíram</th></tr></thead><tbody>${
-    L.map((k,i)=>`<tr data-w="${k.novas<MIN12?1:0}"><td>${i+1}</td><td style="text-align:left">${esc(por==="u"?k.u:k.p)}<small>${por==="u"?(nivelUn(k.u)==="OUTROS"?"Outras":nivelUn(k.u)):esc(tipoProc(k.p))}</small></td><td data-v="${k.novas}">${fmt(k.novas)}</td><td data-v="${k.res}">${fmt(k.res)}</td><td data-v="${k.novas?k.res/k.novas:-1}"${fr(k)}>${pc(k,k.res,k.novas)}</td><td data-v="${k.c30?k.r30/k.c30:-1}"${fr(k)}>${pc(k,k.r30,k.c30)}</td><td data-v="${k.med??-1}">${k.med!=null?fmt(k.med):"–"}</td><td style="text-align:left;font-size:.8rem">${destTxt(k.dest)}</td></tr>`).join("")}</tbody></table>`;
+    L.map((k,i)=>`<tr data-w="${k.novas<MIN12?1:0}"><td>${i+1}</td><td style="text-align:left">${esc(por==="u"?k.u:k.p)}<small>${por==="u"?(nivelUn(k.u)==="OUTROS"?"Outras":nivelUn(k.u)):esc(tipoProc(k.p))}</small></td><td data-v="${k.novas}">${fmt(k.novas)}</td><td data-v="${k.res}">${fmt(k.res)}</td><td data-v="${k.novas?k.res/k.novas:-1}"${fr(k)}>${pc(k,k.res,k.novas)}</td><td data-v="${k.c30?k.r30/k.c30:-1}"${fr(k)}>${pc(k,k.r30,k.c30)}</td><td data-v="${k.med??-1}">${k.med!=null?fmt(k.med):"–"}</td><td style="text-align:left;font-size:.8rem">${destHtml(k.dest)}</td></tr>`).join("")}</tbody></table>`;
 }
 document.addEventListener("click",e=>{
   const th=e.target.closest("table.regtab th[data-rord]"); if(!th) return;
@@ -853,7 +852,7 @@ function renderReg(){
   const R=REG, nv=$("rg-nivel").value, tp=$("rg-tipo").value, id=$("rg-proc").value, f=id?porId[id]:null;
   if(!R){ $("rg-kpis").innerHTML=""; $("rg-lista").innerHTML=SEM_REG; $("rg-cont").textContent=""; return; }
   const dias=R.dias||[], A=aggReg({pi:f?R.p.indexOf(f.p):null,nv,tp,por:"u"});
-  $("rg-kpis").innerHTML=kpiHtml([[fmt(dias.length),`dias de registro desde ${dd(R.inicio)}`],[fmt(A.N),"devolvidas novas no período"],[A.N?fmt(A.RS/A.N*100,1)+"%":"–",`das novas já saíram do status devolvida (${fmt(A.RS)})`],[A.C30?fmt(A.R30/A.C30*100,1)+"%":"–",`resolvidas ${JT("d30","em até 30 dias")} (coorte de ${fmt(A.C30)} com 30+ dias)`],[fmt(A.saiEstoque),`saíram do estoque inicial (${destTxt(A.destEst)})`]]);
+  $("rg-kpis").innerHTML=kpiHtml([[fmt(dias.length),`dias de registro desde ${dd(R.inicio)}`],[fmt(A.N),"devolvidas novas no período"],[A.N?fmt(A.RS/A.N*100,1)+"%":"–",`das novas já saíram do status devolvida (${fmt(A.RS)})`],[A.C30?fmt(A.R30/A.C30*100,1)+"%":"–",`resolvidas ${JT("d30","em até 30 dias")} (coorte de ${fmt(A.C30)} com 30+ dias)`],[fmt(A.saiEstoque),`saíram do estoque inicial (${destHtml(A.destEst)})`]]);
   $("rg-lista").innerHTML=tabelaReg(A.L,"u");
   $("rg-cont").textContent=`${f?"procedimento: "+f.p+" · ":""}estoque atual: ${fmt(dias.length?dias[dias.length-1].estoque:R.estoque_inicial)} devolvidas · no início do registro: ${fmt(R.estoque_inicial)}`;
 }
@@ -875,7 +874,7 @@ async function baixarReg(){
   aba("Por procedimento","p",["Procedimento","Tipo"],g=>[g.p,tipoProc(g.p)],[55,10,9,9,13,20,20,10,16,50]);
   aba("Unidade × procedimento","up",["Unidade solicitante","Procedimento"],g=>[g.u,g.p],[40,55,9,9,13,20,20,10,16,50]);
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Resolução das devolvidas","registro diário do painel: a cada coleta, os códigos que entram no status devolvida e os que saem dele"],["Início do registro",`${dd(R.inicio)} (${(R.dias||[]).length} dias de registro; estoque inicial de ${fmt(R.estoque_inicial)} devolvidas)`],["Filtro",`${$("rg-nivel").options[$("rg-nivel").selectedIndex].text} · ${tp||"consultas e exames"} · procedimento: ${f?f.p:"(todos)"}`],
-    ["Novas","devolvidas que apareceram depois do início do registro (o estoque que já existia fica à parte)"],["Saíram","novas que depois saíram do status devolvida"],["% resolvidas","saíram ÷ novas"],["% em 30 d","entre as novas com 30 dias ou mais de registro, quantas saíram em até 30 dias"],["Dias até sair","mediana de dias entre a entrada e a saída do status"],["Destino","para onde foram as que saíram: reenviada, agendada, pendente, fila de espera ou cancelada presumida (o código deixou de constar no Mapa Social sem reaparecer nos outros status; o Mapa Social só lista os quatro status da fila, e uma devolvida só sai deles quando é reenviada ou cancelada, mas o painel não confirma o cancelamento)"],["Percentuais instáveis",`com menos de ${MIN12} devolvidas novas`]])),"Leia-me");
+    ["Novas","devolvidas que apareceram depois do início do registro (o estoque que já existia fica à parte)"],["Saíram","novas que depois saíram do status devolvida"],["% resolvidas","saíram ÷ novas"],["% em 30 d","entre as novas com 30 dias ou mais de registro, quantas saíram em até 30 dias"],["Dias até sair","mediana de dias entre a entrada e a saída do status"],["Destino","para onde foram as que saíram: reenviada, agendada, pendente, fila de espera ou cancelada presumida (o código deixou de constar no Mapa Social sem reaparecer nos outros status; o Mapa Social só lista a solicitação em pendente, reenviada, devolvida e fila de espera, e uma devolvida só sai deles quando é reenviada ou cancelada, mas o painel não confirma o cancelamento)"],["Percentuais instáveis",`com menos de ${MIN12} devolvidas novas`]])),"Leia-me");
   XLSX.writeFile(wb,`Resolução das devolvidas - Região Norte (${D.data.split("-").reverse().join("-")}).xlsx`);
   return A.L.length;
 }
@@ -1031,9 +1030,9 @@ async function mostrarAba(a,v){
   document.querySelectorAll(".abas button").forEach(b=>b.setAttribute("aria-selected",b.dataset.aba===a));
   ["filas","dev","oferta","prio"].forEach(x=>$("aba-"+x).hidden=x!==a);
   if(a==="filas"){ if(/^#aba-/.test(location.hash)) history.replaceState(null,"",location.pathname+location.search); return; }
-  if(a==="oferta"){ history.replaceState(null,"","#aba-oferta"); await abrirOferta(); return; }
-  if(a==="prio"){ history.replaceState(null,"","#aba-prio"); renderPrio(); return; }
-  if(!DV){ $("un-lista").innerHTML='<p style="padding:12px">Carregando devolvidas…</p>';
+  if(a==="oferta"){ history.replaceState(null,"","#aba-oferta"); await PRONTO.catch(()=>{}); if(D) await abrirOferta(); return; }
+  if(a==="prio"){ history.replaceState(null,"","#aba-prio"); await PRONTO.catch(()=>{}); renderPrio(); return; }
+  if(!DV){ ["un-lista","pr-lista"].forEach(id=>$(id).innerHTML='<p style="padding:12px">Carregando devolvidas…</p>');
     try{ await carregarDV(); }catch(err){ $("un-lista").innerHTML=`<p style="padding:12px">Não foi possível carregar as devolvidas (${esc(err.message)}).</p>`; return; } }
   mostrarVisao(v||visao);
 }
@@ -1109,7 +1108,7 @@ $("of-lista").addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.class
 
 // ---------------------------------------------------------------- aba Priorização (todas as filas lado a lado)
 // Dano: pessoas-ano de espera (soma, por cor, de n × espera média de quem está na fila hoje ÷ 365; a média é aditiva, então a soma é exata).
-// Esforço: vagas a mais por mês para estabilizar e para zerar em 12 meses, na média e na faixa pessimista (entrada ×1,18, saída ×0,75).
+// Esforço: vagas a mais por mês para estabilizar (na tela); zerar em 12 meses e a faixa pessimista (entrada ×1,18, saída ×0,75) só no Excel.
 let pzOrd={k:"pm",dir:-1};
 function linhaPrio(f){
   const b=baseSim(f), bp=piorB(b), cs=f.cor_stats||{}, pz=plano(b,12,0), pzp=plano(bp,12,0), m=f.alertas.map(a=>a.match(/Fila crescendo: saldo positivo em (\d+) dos/)).find(Boolean);
@@ -1123,7 +1122,7 @@ function linhaPrio(f){
 const PZ_COL=[ // chave, rótulo, valor para ordenar, explicação (title)
   ["nome","Procedimento",r=>r.f.p,"Clique para abrir a ficha da fila"],
   ["fila","Na fila",r=>r.f.fila,"Solicitações aguardando (pendentes + reenviadas)"],
-  ["saldo","Saldo 12 m",r=>r.f.saldo12,"Entrada − saída nos últimos 12 meses completos; abaixo, em quantos desses meses o saldo foi positivo. "+JAN.m12],
+  ["saldo","Saldo 12 m",r=>r.f.saldo12,"Entrada − saída nos últimos 12 meses completos; quando foi positivo em 9 ou mais desses meses, abaixo aparece em quantos. "+JAN.m12],
   ["sit","Situação",r=>r.sit,"“sem oferta”: sem saída há mais de 1 ano ou fila parada; “crescendo”: saldo positivo em 9 ou mais dos últimos 12 meses; “fila de espera (n)”: solicitações aguardando pactuação, fora da fila do regulador (aba Sem oferta). Os sinais se combinam. "+JAN.cresc],
   ["med","Espera mediana (dias)",r=>r.med==null?-1:r.med,"Mediana do tempo que quem está na fila hoje já esperou (a comparável às metas da SES-DF, que são medianas). "+JAN.esp],
   ["pm","Pessoas-ano de espera",r=>r.pm,JAN.pm],
@@ -1166,7 +1165,7 @@ async function baixarPrio(){
 $("pz-baixar").onclick=()=>comStatus($("pz-status"),baixarPrio);
 $("pz-lista").addEventListener("click",e=>{
   const h=e.target.closest("th[data-ord]"); if(!h) return;
-  const k=h.dataset.ord; cliqueOrd(pzOrd,k,k==="nome"||k==="tipo"||k==="sit"?1:-1); renderPrio();
+  const k=h.dataset.ord; cliqueOrd(pzOrd,k,k==="nome"||k==="sit"?1:-1); renderPrio();
 });
 
 // ---------------------------------------------------------------- carga
@@ -1202,9 +1201,9 @@ $("mais").onclick=()=>{vis+=60;render();};
 $("pr-mais").onclick=()=>{visPr+=60;renderPr();};
 $("baixar").onclick=()=>baixarLista().catch(e=>{ $("cont").textContent="Não foi possível gerar a planilha: "+e.message; });
 $("un-baixar").onclick=()=>comStatus($("un-status"),async()=>{await baixarResumoUn();});
-$("un-baixar-det").onclick=()=>comStatus($("un-status"),()=>window.baixarDevolvidas({unidades:filtrarUn().map(x=>x.u),titulo:"Devolvidas detalhadas - unidades filtradas"},porId));
+$("un-baixar-det").onclick=()=>comStatus($("un-status"),()=>window.baixarDevolvidas({unidades:filtrarUn().map(x=>x.u),tipo:$("un-tipo").value,titulo:"Devolvidas detalhadas - unidades filtradas"},porId));
 $("pr-baixar").onclick=()=>comStatus($("pr-status"),async()=>{await baixarResumoPr();});
-document.querySelectorAll(".abas button").forEach(b=>b.onclick=()=>{ if(b.dataset.aba==="filas") history.replaceState(null,"",location.pathname); mostrarAba(b.dataset.aba); });
+document.querySelectorAll(".abas button").forEach(b=>b.onclick=()=>mostrarAba(b.dataset.aba));
 document.querySelectorAll(".visao button").forEach(b=>b.onclick=()=>mostrarVisao(b.dataset.visao));
 window.addEventListener("hashchange",lerHash);
 $("lista").addEventListener("pointermove",hover);

@@ -662,7 +662,7 @@
       "Classificação de risco", "Unidade solicitante"], ...A.map(([c, ds, da, st, cor, u]) => [c, dataXl(ds), dataXl(da), st, COR_TXT[cor] || "", u])],
       [16, 12, 12, 36, 12, 34]), "Agendamentos");
     X.utils.book_append_sheet(wb, folha(X, leiaMe(d, [["Procedimento", p],
-      ["Aba Solicitações", "Pendentes e reenviadas ao regulador (fila) e devolvidas, uma linha por solicitação. Não inclui fila de espera."],
+      ["Aba Solicitações", "Pendentes e reenviadas ao regulador (fila), devolvidas e em fila de espera (status PENDENTE / FILA DE ESPERA), uma linha por solicitação."],
       ["Aba Agendamentos", `Agendamentos com data a partir de ${dd(d.agendamentos_desde)}, inclusive os marcados à frente, com cancelados e faltas (mesma regra do OUTPUT).`]]), [30, 110]), "Leia-me");
     X.writeFile(wb, `Dados detalhados - ${nome} (${dd(d.data).replace(/\//g, "-")}).xlsx`);
     return {s: S.length, a: A.length};
@@ -695,5 +695,4 @@
   fetch("referencias.json", {cache: "no-store"}).then(x => x.json()).then(j => { REF = REF || j; }).catch(() => {});
   window._analiseMeta = p => REF && REF.metas && REF.metas[p] || null;
   window._analiseNomeCurto = p => (REF && REF.notas[p] && REF.notas[p].nome) || nomeCurto(p);
-  window._analiseCalcular = async (id) => { if (!REF) REF = await (await fetch("referencias.json")).json(); return calcular(await carregarAnalise(id)); };
 })();

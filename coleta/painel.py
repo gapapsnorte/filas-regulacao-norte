@@ -6,7 +6,7 @@ Uso local: python coleta/painel.py             (coleta e grava, sem publicar)
 
 Gera:
   dados.json                resumo de todas as filas (painel)
-  devolvidas.json           devolvidas por fila × unidade solicitante, série mensal pela data da devolução e, em d12,
+  devolvidas.json           devolvidas por fila × unidade solicitante e, em d12,
                             [unidade, devolvidas, solicitações] dos últimos 12 meses por fila (razão de devolvidas)
   espera.json               registro diário da fila de espera (total e por fila), versionado em main como atraso.json
   detalhe/espera.json       solicitações em fila de espera, linha a linha (aba Sem oferta)
@@ -273,7 +273,6 @@ def montar(b, hoje, ref=None):
                 alvo[(p, u)] += int(q)
     nomes = sorted({u for d in procs.values() for u in d["dev_un"]} | {u for (p, u) in tot12 if p in procs})
     pos_u = {u: k for k, u in enumerate(nomes)}
-    ids_serie, celulas = serie_devolvidas(b, meses[-N_PAINEL:], pos_u, nomes)
     d12 = defaultdict(list)
     for (p, u), t in sorted(tot12.items()):
         if p in procs and t:
@@ -282,34 +281,8 @@ def montar(b, hoje, ref=None):
     devolvidas = dict(meta, unidades=[[u, nivel(u, niveis), esf.get(u)] for u in nomes],
                       filas={ident(p): sorted(([pos_u[u], q] for u, q in d["dev_un"].items()), key=lambda x: -x[1])
                              for p, d in procs.items() if d["dev_un"]},
-                      meses=rot[-N_PAINEL:], serie_ids=ids_serie, serie=celulas,
                       janela12=[r12[0], r12[-1]], d12=dict(d12))
     return dict(meta, meses=rot[-N_PAINEL:], filas=resumo), detalhes, devolvidas, meta
-
-
-def serie_devolvidas(b, janela, pos_u, nomes):
-    """Devolvidas de hoje contadas pela data da devolução, nos meses da janela do painel, por fila × unidade.
-    Saída esparsa: [índice da fila em ids, índice da unidade, índice do mês, quantidade]. Uma solicitação conta
-    uma vez, na sua devolução mais recente (o Mapa Social guarda, para algumas, mais de uma data)."""
-    idx = {k: i for i, k in enumerate(janela)}
-    ult = {}
-    for p, cod, _dt, st, _risco, _cid, u, ddev, _ in b["det_sol"]["rows"]:
-        if not _valido(p) or st != DEVOL or not _valido(ddev) or not _valido(u):
-            continue
-        d = _br(ddev)
-        if (p, cod) not in ult or d > ult[(p, cod)][0]:
-            ult[(p, cod)] = (d, u)
-    cel, ids = defaultdict(int), {}
-    for (p, _cod), (d, u) in ult.items():
-        k = (d.year, d.month)
-        if k not in idx:
-            continue
-        if u not in pos_u:
-            pos_u[u] = len(nomes)
-            nomes.append(u)
-        fi = ids.setdefault(ident(p), len(ids))
-        cel[(fi, pos_u[u], idx[k])] += 1
-    return list(ids), sorted([list(k) + [n] for k, n in cel.items()])
 
 
 ATEND_DIAS = 90   # janela dos atendimentos usados no "tempo até o atendimento"
@@ -373,7 +346,7 @@ def estatisticas_cores(b, hoje):
 
 
 def montar_detalhe(b, hoje):
-    """Linhas de cada fila: solicitações (pendentes, reenviadas, devolvidas) e agendamentos dos últimos 24 meses."""
+    """Linhas de cada fila: solicitações (pendentes, reenviadas, devolvidas e em fila de espera) e agendamentos dos últimos 24 meses."""
     corte = _mes_inicial_painel(hoje)
     det = defaultdict(lambda: {"s": [], "a": []})
     vistos = set()
@@ -497,8 +470,8 @@ def mesclar_dia(dia, entradas, saidas, estoque):
     em nenhum dos dois; a saída nova leva o destino novo e a antiga mantém o seu."""
     e1, x1 = {x[2] for x in dia["entradas"]}, {x[2] for x in dia["saidas"]}
     e2, x2 = {x[2] for x in entradas}, {x[2] for x in saidas}
-    dia["entradas"] = [x for x in dia["entradas"] if x[2] not in x2] + [x for x in entradas if x[2] not in x1]
-    dia["saidas"] = [x for x in dia["saidas"] if x[2] not in e2] + [x for x in saidas if x[2] not in e1]
+    dia["entradas"] = [x for x in dia["entradas"] if x[2] not in x2] + [x for x in entradas if x[2] not in x1 and x[2] not in e1]
+    dia["saidas"] = [x for x in dia["saidas"] if x[2] not in e2] + [x for x in saidas if x[2] not in e1 and x[2] not in x1]
     dia["estoque"] = estoque
 
 
@@ -532,8 +505,8 @@ def historico_devolvidas(dev_det, det, hoje, anterior=None):
     """Registro diário da resolução das devolvidas (devolvidas_reg.json, versionado em main; o workflow faz o commit).
     Compara as devolvidas de hoje com as da publicação anterior (detalhe/devolvidas.json no site): códigos que
     ENTRARAM no status devolvida e códigos que SAÍRAM dele, com o destino (reenviada, agendada, pendente, fila de
-    espera ou "ausente" = cancelada presumida: o código deixou de constar no Mapa Social, que só lista os quatro
-    status da fila). O Mapa Social só mostra a situação atual; este registro é a linha de base
+    espera ou "ausente" = cancelada presumida: o código deixou de constar no Mapa Social, que só lista a solicitação
+    em pendente, reenviada, devolvida e fila de espera). O Mapa Social só mostra a situação atual; este registro é a linha de base
     para medir quantas devoluções cada unidade corrige e em quanto tempo. Procedimentos e unidades ficam em listas
     (p, u) e as linhas usam os índices: entradas [pi, ui, código, data da devolução], saídas [..., destino]."""
     arq = PAINEL / "devolvidas_reg.json"

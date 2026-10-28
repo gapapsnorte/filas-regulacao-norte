@@ -1,7 +1,7 @@
 name: Atualizar painel
 on:
   schedule:
-    # A cada 2 horas confere se o Mapa Social recarregou (ele recarrega 1 vez por dia, à noite).
+    # A cada 2 horas confere se o Mapa Social recarregou (ele recarrega uma ou duas vezes por dia).
     # Só coleta e publica quando há recarga nova ou quando o dia virou (para atualizar os dias de espera).
     - cron: "17 */2 * * *"
   workflow_dispatch:
