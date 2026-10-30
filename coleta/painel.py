@@ -51,6 +51,11 @@ MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "
 CORES = {"Prioridade 1": "vermelho", "Prioridade 2": "amarelo", "Prioridade 3": "verde", "Prioridade 4": "azul"}
 N_PAINEL = 24          # meses mostrados no painel (e janela dos agendamentos no detalhe)
 MIN_FILAS = 500        # abaixo disso a coleta é considerada falha (não publica)
+# Além do nº de filas, a coleta precisa trazer a fila, as devolvidas e o detalhe (um cubo vazio deixaria tudo zerado e,
+# no registro diário, marcaria ~47 mil devolvidas como "canceladas"). Valores bem abaixo do observado em out/2026
+# (579 filas com fila, 94 mil na fila, 769 filas com devolvidas, 47 mil devolvidas).
+MIN_COM_FILA, MIN_NA_FILA, MIN_COM_DEV, MIN_DEVOLVIDAS = 300, 20000, 300, 10000
+MIN_ESTOQUE_REL = 0.5  # estoque de devolvidas abaixo desta fração do anterior = coleta suspeita, o registro não é alterado
 ANOS_SERIE = 5         # série da análise: de janeiro de (ano - 5) até o mês anterior
 SEM_SAIDA_DIAS = 365   # alerta "sem saída há mais de 1 ano"
 
@@ -530,6 +535,9 @@ def historico_devolvidas(dev_det, det, hoje, anterior=None):
         return reg
     atual = {r[1]: (dev_det["p"][r[0]], r[5], r[6]) for r in dev_det["r"]}
     antes = {r[1]: (anterior["p"][r[0]], r[5], r[6]) for r in anterior["r"]}
+    if len(atual) < MIN_ESTOQUE_REL * len(antes):   # queda brusca do estoque = falha de coleta, não 'canceladas'
+        print("Registro de devolvidas: estoque caiu de %d para %d; coleta suspeita, dia sem comparação." % (len(antes), len(atual)))
+        return reg
     status = {}
     for d in det.values():
         for sl in d["s"]:
@@ -598,7 +606,15 @@ def main():
     if len(dados["filas"]) < MIN_FILAS or not dados["solicitacoes_ate"] or dados["solicitacoes_ate"] == "-":
         print(f"ERRO: coleta incompleta ({len(dados['filas'])} filas, solicitações até {dados['solicitacoes_ate']!r}); nada foi gravado.")
         sys.exit(1)
+    sinais_ok = (sum(1 for f in dados["filas"] if f["fila"] > 0) >= MIN_COM_FILA and sum(f["fila"] for f in dados["filas"]) >= MIN_NA_FILA
+                 and sum(1 for f in dados["filas"] if f["devolvidas"] > 0) >= MIN_COM_DEV and sum(f["devolvidas"] for f in dados["filas"]) >= MIN_DEVOLVIDAS)
+    if not sinais_ok:
+        print("ERRO: coleta com fila ou devolvidas muito abaixo do esperado (cubo vazio?); nada foi gravado.")
+        sys.exit(1)
     det, dev_det = montar_detalhe(b, hoje)
+    if not det or not dev_det.get("r"):
+        print("ERRO: detalhe sem solicitações ou sem devolvidas; nada foi gravado.")
+        sys.exit(1)
     print("[tempo] montagem: %.0f s" % (time.monotonic() - t), flush=True)
     t = time.monotonic()
     hist = historico_atraso(meta, hoje)

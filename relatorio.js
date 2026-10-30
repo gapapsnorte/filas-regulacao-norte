@@ -212,7 +212,9 @@
       return {u, n, pct: n / Math.max(totA, 1) * 100, esf: e ?? null, taxa: e ? n / e : null, d12: q ? q[0] : null, t12: q ? q[1] : null, pct12: q && q[1] ? q[0] / q[1] * 100 : null};
     }).sort((a, b) => (b.taxa ?? -1) - (a.taxa ?? -1) || b.n - a.n);  // ranking: quem mais devolve por eSF primeiro
     r.janela12 = d.dev12 ? d.dev12.janela : null;
-    r.d12Aps = r.ubs.reduce((t, x) => t + (x.d12 || 0), 0); r.t12Aps = r.ubs.reduce((t, x) => t + (x.t12 || 0), 0);
+    // total da APS: todas as UBS da referência (também as sem devolvidas), como no programa local
+    const apsQ = d.dev12 ? Object.entries(d.dev12.u).filter(([u]) => REF.esf[u] != null) : [];
+    r.d12Aps = apsQ.reduce((t, [, q]) => t + q[0], 0); r.t12Aps = apsQ.reduce((t, [, q]) => t + q[1], 0);
     // UBS sem devolvidas mas com solicitações no período também têm % (0%): entram só na nota
     r.notas.semDev12 = d.dev12 ? Object.entries(d.dev12.u).filter(([u, q]) => REF.esf[u] != null && q[1] >= MIN12 && !aps.some(([x]) => x === u)).map(([u, q]) => `${u} (0 de ${fmt(q[1])})`) : [];
     const semEsf = r.ubs.filter(x => x.esf == null).map(x => x.u);
@@ -235,12 +237,19 @@
   function textos(r) {
     const s = r.serie, n = s.in.length, t = {};
     const media = a => a.reduce((x, y) => x + y, 0) / Math.max(a.length, 1);
-    const p12 = s.in.slice(0, 12), u12 = s.in.slice(-12), us = s.saldo.slice(-12);
-    const v = media(p12) ? (media(u12) / media(p12) - 1) * 100 : 0;
-    const ab = r.aberr, ai = ab.in.a, ao = ab.out.a, nj = n - ab.ini;
-    t.fig1 = `Entre ${s.meses[0]} e ${s.meses[n - 1]}, a média mensal de entrada (INPUT) passou de ${fmt(media(p12), 1)} solicitações/mês nos primeiros 12 meses para ${fmt(media(u12), 1)} solicitações/mês nos últimos 12 meses (${v >= 0 ? "+" : ""}${fmt(v, 1)}%). ` +
+    // Médias: últimos 12 meses contra os 12 anteriores, e média dos últimos 24 meses (a projeção do painel usa a média de 12 meses)
+    const u12 = a => a.slice(-12), a12 = a => a.slice(-24, -12), us = s.saldo.slice(-12);
+    const ab = r.aberr, nj = n - ab.ini;
+    const varPct = (x, y) => y ? (x / y - 1) * 100 : null;
+    const comp = (nome, a) => {
+      const m1 = media(u12(a)), m0 = media(a12(a)), pc = n >= 24 ? varPct(m1, m0) : null;
+      return `${nome}: ${fmt(m1, 1)}/mês nos últimos 12 meses` + (n >= 24 ? ` contra ${fmt(m0, 1)}/mês nos 12 anteriores` + (pc != null ? ` (${pc >= 0 ? "+" : ""}${fmt(pc, 1)}%)` : "") : "");
+    };
+    const retaTxt = (nome, t) => `${nome} ${sinal(t.a)}/mês` + (t.r2 != null ? ` (R² ${fmt(t.r2, 2)})` : " (R² não calculável)");
+    t.fig1 = `A média mensal dos últimos 24 meses (${s.meses[n - 24 < 0 ? 0 : n - 24]} a ${s.meses[n - 1]}) foi de ${fmt(media(s.in.slice(-24)), 1)} solicitações na entrada (INPUT), ${fmt(media(s.out.slice(-24)), 1)} na saída (OUTPUT) e ${sinal(media(s.saldo.slice(-24)))} no saldo regulatório. ` +
+      `Comparando as médias anuais, ${comp("entrada", s.in)}; ${comp("saída", s.out)}. ` +
       `Nos últimos 12 meses, o saldo regulatório foi positivo em ${us.filter(x => x > 0).length} meses, somando ${fmt(us.reduce((a, b) => a + b, 0))} solicitações a mais do que as agendadas no período. ` +
-      `Nos últimos ${nj} meses, a tendência (reta de mínimos quadrados calculada sem os meses aberrantes, identificados pelo método de Theil-Sen) indica variação média de ${fmt(ai * 12, 1)} solicitações/mês por ano no INPUT e de ${fmt(ao * 12, 1)} solicitações/mês por ano no OUTPUT.`;
+      `As projeções do painel usam a média dos últimos 12 meses; a linha de tendência dos últimos ${nj} meses (mínimos quadrados, sem os meses aberrantes) mostra apenas a direção e não é usada para projetar: ${retaTxt("INPUT", ab.in)}, ${retaTxt("OUTPUT", ab.out)}, ${retaTxt("SALDO", ab.saldo)}. Quanto menor o R², menos a reta explica a oscilação mensal.`;
     const ext = [];
     for (const [k, a, chave] of [["INPUT", s.in, "in"], ["OUTPUT", s.out, "out"], ["SALDO REGULATÓRIO", s.saldo, "saldo"]]) {
       ab[chave].flag.forEach((x, i) => { if (x) ext.push(`${k} de ${s.meses[ab.ini + i]} (${fmt(a[ab.ini + i])})`); });
@@ -283,7 +292,7 @@
       titulo: `Análise da fila de ${/^CONSULTA/i.test(r.p) ? "Consulta em " : ""}${r.nome} - Região Norte`,
       f1: `Figura 1 – Comportamento da fila de ${r.nome}`,
       n1: [FONTE, `Nota: Dados extraídos em ${e}, referentes ao período de ${MESES_EXT[MESES.indexOf(m0)]} de 20${a0} a ${MESES_EXT[MESES.indexOf(m1)]} de 20${a1} (a série começa em janeiro de cinco anos antes do ano corrente, como no modelo de análise). ` +
-        `As linhas de tendência (mínimos quadrados) cobrem os últimos ${n - r.aberr.ini} meses e são calculadas sem os meses aberrantes (identificados pelo método de Theil-Sen: mais de 4 vezes a oscilação típica em relação à tendência; no saldo, acima ou abaixo, e sempre que a saída do mês for aberrante); o R² ao lado de cada linha considera só os meses não aberrantes, ` +
+        `As médias mostradas no alto da figura são dos últimos 24 meses; as projeções do painel usam a média dos últimos 12 meses. As linhas de tendência (mínimos quadrados) cobrem os últimos ${n - r.aberr.ini} meses, mostram só a direção da curva e são calculadas sem os meses aberrantes (identificados pelo método de Theil-Sen: mais de 4 vezes a oscilação típica em relação à tendência; no saldo, acima ou abaixo, e sempre que a saída do mês for aberrante); o R² ao lado de cada linha considera só os meses não aberrantes, ` +
         "que permanecem no gráfico em tracejado e com círculo vazio. Quando o valor ultrapassa a escala, o ponto é desenhado no limite do eixo, com o valor real escrito ao lado (nesses meses a altura não é fiel). Meses anteriores à janela não foram avaliados."],
       f2: `Figura 2 – Tempo de espera por prioridade em ${r.nome}`, n2,
       f3: `Figura 3.1 – Distribuição de solicitações pendentes em ${r.nome} por Código Internacional de Doenças (CID)`,
@@ -355,10 +364,11 @@
     });
     // legenda das médias mensais no alto do gráfico
     const media = a => a.reduce((x, y) => x + y, 0) / Math.max(a.length, 1);
-    const mm = [["INPUT médio", media(s.in), "#000000"], ["OUTPUT médio", media(s.out), "#00B050"],
-      ["SALDO REGULATÓRIO médio", media(s.saldo), "#FF0000"]];
+    const j24 = Math.max(0, n - 24), m24 = a => media(a.slice(j24));
+    const mm = [["INPUT médio", m24(s.in), "#000000"], ["OUTPUT médio", m24(s.out), "#00B050"],
+      ["SALDO REGULATÓRIO médio", m24(s.saldo), "#FF0000"]];
     g.font = "bold 22px Calibri, Arial, sans-serif";
-    const tit = `Média mensal (${s.meses[0]} a ${s.meses[n - 1]}):`;
+    const tit = `Média mensal dos últimos 24 meses (${s.meses[j24]} a ${s.meses[n - 1]}):`;
     const partes = mm.map(([t, v]) => `${t}: ${t.startsWith("SALDO") ? sinal(v) : fmt(v, 1)}`);
     const lt = g.measureText(tit).width + 24 + partes.reduce((a, p) => a + g.measureText(p).width + 90, 0);
     let lx = (W - lt) / 2; const ly = 36;
@@ -587,7 +597,7 @@
     aba("Saldo Regulatório", [["Mês/Ano", "INPUT", "OUTPUT", "SALDO REGULATÓRIO", "Mês aberrante em"], ...r.serie.meses.map((m, i) => [m, r.serie.in[i], r.serie.out[i], r.serie.saldo[i],
       [["INPUT", "in"], ["OUTPUT", "out"], ["SALDO", "saldo"]].filter(([, k]) => i >= r.aberr.ini && r.aberr[k].flag[i - r.aberr.ini]).map(([t]) => t).join("; ")])], [10, 10, 10, 20, 24]);
     aba("Tempo de espera por risco", [["Classificação", "Mais antiga", "Solicitações", "Espera média (dias)", "Espera mediana (dias)", "Espera da mais antiga (dias)", "Meta do protocolo (dias, mediana)", "Mediana acima da meta?"],
-      ...r.risco.map(x => [x.cor, x.antiga, x.n, x.n ? x.media ?? "" : "", x.n ? x.mediana ?? "" : "", x.dias ?? "", x.meta ?? "", x.meta && x.n && x.mediana != null ? (x.acima ? "Sim" : "Não") : ""]),
+      ...r.risco.map(x => [x.cor, dataXl(x.antiga), x.n, x.n ? x.media ?? "" : "", x.n ? x.mediana ?? "" : "", x.dias ?? "", x.meta ?? "", x.meta && x.n && x.mediana != null ? (x.acima ? "Sim" : "Não") : ""]),
       ["TOTAL", "", r.risco.reduce((a, x) => a + x.n, 0), "", "", "", "", ""]], [14, 12, 12, 22, 20, 22, 22, 14]);
     aba("Figura 3.1 CIDs grupos", [["Grupo", "Solicitações", "%"], ...r.cids.map(x => [x.grupo, x.n, x.pct])], [45, 12, 8]);
     aba("Figura 3.2 CIDs detalhe", [["Nível", "CID", "Solicitações", "%", "% acumulado", "Grupo na Figura 3.1"],
