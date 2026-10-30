@@ -292,7 +292,7 @@
       titulo: `Análise da fila de ${/^CONSULTA/i.test(r.p) ? "Consulta em " : ""}${r.nome} - Região Norte`,
       f1: `Figura 1 – Comportamento da fila de ${r.nome}`,
       n1: [FONTE, `Nota: Dados extraídos em ${e}, referentes ao período de ${MESES_EXT[MESES.indexOf(m0)]} de 20${a0} a ${MESES_EXT[MESES.indexOf(m1)]} de 20${a1} (a série começa em janeiro de cinco anos antes do ano corrente, como no modelo de análise). ` +
-        `As médias mostradas no alto da figura são dos últimos 24 meses; as projeções do painel usam a média dos últimos 12 meses. As linhas de tendência (mínimos quadrados) cobrem os últimos ${n - r.aberr.ini} meses, mostram só a direção da curva e são calculadas sem os meses aberrantes (identificados pelo método de Theil-Sen: mais de 4 vezes a oscilação típica em relação à tendência; no saldo, acima ou abaixo, e sempre que a saída do mês for aberrante); o R² ao lado de cada linha considera só os meses não aberrantes, ` +
+        `As médias mostradas no alto da figura são dos últimos 24 meses; as projeções do painel usam a média dos últimos 12 meses. A linha horizontal pontilhada de cada curva é a média dos últimos 12 meses, que não tem R² por ser uma linha sem inclinação. As linhas de tendência (mínimos quadrados) cobrem os últimos ${n - r.aberr.ini} meses, mostram só a direção da curva e são calculadas sem os meses aberrantes (identificados pelo método de Theil-Sen: mais de 4 vezes a oscilação típica em relação à tendência; no saldo, acima ou abaixo, e sempre que a saída do mês for aberrante); o R² ao lado de cada linha considera só os meses não aberrantes, ` +
         "que permanecem no gráfico em tracejado e com círculo vazio. Quando o valor ultrapassa a escala, o ponto é desenhado no limite do eixo, com o valor real escrito ao lado (nesses meses a altura não é fiel). Meses anteriores à janela não foram avaliados."],
       f2: `Figura 2 – Tempo de espera por prioridade em ${r.nome}`, n2,
       f3: `Figura 3.1 – Distribuição de solicitações pendentes em ${r.nome} por Código Internacional de Doenças (CID)`,
@@ -362,6 +362,12 @@
       let y = Y(reta(t, n - 1)) - 14; while (ty.some(z => Math.abs(z - y) < 24)) y += 24; ty.push(y);
       g.fillStyle = cor; g.fillText(sinal(t.a) + "/mês" + (t.r2 != null ? " · R² " + fmt(t.r2, 2) : ""), X(n - 1) + 10, y);
     });
+    // média dos últimos 12 meses (a que a projeção usa): linha horizontal pontilhada sobre os 12 meses que ela resume
+    ser.forEach(([nome, a, cor]) => {
+      const m12 = a.slice(-12).reduce((x, y) => x + y, 0) / Math.max(1, Math.min(12, a.length)), y = Yc(m12);
+      g.strokeStyle = cor; g.lineWidth = 2.2; g.setLineDash([3, 7]); g.beginPath(); g.moveTo(X(Math.max(0, n - 12)), y); g.lineTo(X(n - 1), y); g.stroke(); g.setLineDash([]);
+    });
+    g.font = "20px Calibri, Arial, sans-serif";
     // legenda das médias mensais no alto do gráfico
     const media = a => a.reduce((x, y) => x + y, 0) / Math.max(a.length, 1);
     const j24 = Math.max(0, n - 24), m24 = a => media(a.slice(j24));
@@ -369,7 +375,8 @@
       ["SALDO REGULATÓRIO médio", m24(s.saldo), "#FF0000"]];
     g.font = "bold 22px Calibri, Arial, sans-serif";
     const tit = `Média mensal dos últimos 24 meses (${s.meses[j24]} a ${s.meses[n - 1]}):`;
-    const partes = mm.map(([t, v]) => `${t}: ${t.startsWith("SALDO") ? sinal(v) : fmt(v, 1)}`);
+    const m12v = [media(s.in.slice(-12)), media(s.out.slice(-12)), media(s.saldo.slice(-12))];
+    const partes = mm.map(([t, v], i) => `${t}: ${t.startsWith("SALDO") ? sinal(v) : fmt(v, 1)} (12 m: ${t.startsWith("SALDO") ? sinal(m12v[i]) : fmt(m12v[i], 1)})`);
     const lt = g.measureText(tit).width + 24 + partes.reduce((a, p) => a + g.measureText(p).width + 90, 0);
     let lx = (W - lt) / 2; const ly = 36;
     g.fillStyle = "#404040"; g.fillText(tit, lx, ly); lx += g.measureText(tit).width + 24;
@@ -380,14 +387,15 @@
     g.font = "20px Calibri, Arial, sans-serif";
     const leg = [["INPUT", "#000", true], ["OUTPUT", "#00B050", true], ["SALDO REGULATÓRIO", "#FF0000", true],
       ["Linear (INPUT)", "#000", false], ["Linear (OUTPUT)", "#00B050", false], ["Linear (SALDO REGULATÓRIO)", "#FF0000", false],
+      ["Média dos últimos 12 meses", "#595959", "m12"],
       ["Mês aberrante", "#7F7F7F", "ab"]];
     g.font = "20px Calibri, Arial, sans-serif";
     const larg = leg.map(([t]) => g.measureText(t).width + 70), totL = larg.reduce((a, b) => a + b, 0);
     let x = (W - totL) / 2; const y = H - 28;
     leg.forEach(([t, cor, grossa], i) => {
-      g.strokeStyle = cor; g.lineWidth = grossa ? 4 : 1.6; g.setLineDash(grossa === "ab" ? [8, 6] : []); g.beginPath(); g.moveTo(x, y); g.lineTo(x + 44, y); g.stroke(); g.setLineDash([]);
+      g.strokeStyle = cor; g.lineWidth = grossa === "m12" ? 2.2 : grossa ? 4 : 1.6; g.setLineDash(grossa === "ab" ? [8, 6] : grossa === "m12" ? [3, 7] : []); g.beginPath(); g.moveTo(x, y); g.lineTo(x + 44, y); g.stroke(); g.setLineDash([]);
       if (grossa === "ab") { g.fillStyle = "#fff"; g.lineWidth = 3; g.beginPath(); g.arc(x + 22, y, 8, 0, 7); g.fill(); g.stroke(); }
-      else if (grossa) { g.fillStyle = cor; g.beginPath(); g.arc(x + 22, y, 5.5, 0, 7); g.fill(); }
+      else if (grossa && grossa !== "m12") { g.fillStyle = cor; g.beginPath(); g.arc(x + 22, y, 5.5, 0, 7); g.fill(); }
       g.fillStyle = "#404040"; g.fillText(t, x + 52, y); x += larg[i];
     });
     return c.toDataURL("image/png");
