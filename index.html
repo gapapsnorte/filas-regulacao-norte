@@ -161,6 +161,35 @@ footer details>p:first-of-type{margin-top:12px}
   .kpi b{font-size:1.15rem}.kpi span{font-size:.74rem}
   .pr-cab{display:none}
 }
+/* ajustes de leitura: legendas, botões, filtros fixos, celular */
+/* 2. selo de crescimento compacto */
+.alerta.cresc b{font-weight:700}
+/* 3. listas: legendas repetidas só no celular; cabeçalho fixo */
+@media (min-width:761px){.lin.dv .num small{display:none}.lin.dv .num b{font-size:1rem}}
+.pr-cab{position:sticky;top:0;z-index:3;background:var(--bg);padding-top:4px}
+@media (min-width:761px){.lin.dv.c5{grid-template-columns:minmax(0,3fr) 120px 90px 90px 110px}.lin.dv.c4{grid-template-columns:minmax(0,3fr) 110px 110px 110px 120px}}
+.num .pct{font-weight:400;color:var(--muted);font-size:.8rem}
+.of-nota{margin:0 0 6px;font-size:.78rem;color:var(--muted)}
+/* 4. hierarquia dos botões */
+.botoes button{background:transparent;color:var(--accent);font-weight:600}
+.botoes button.pri{background:var(--accent);color:#fff}
+.botoes button.lnk{border-color:transparent;text-decoration:underline;text-underline-offset:3px;font-weight:500;padding-left:6px;padding-right:6px}
+/* 5. barra de filtros fixa ao rolar (Filas e Priorização) */
+.ctrl.fixa{position:sticky;top:0;z-index:4;background:var(--bg);padding:6px 0 4px;margin:0 0 8px;box-shadow:0 6px 8px -8px rgba(0,0,0,.25)}
+/* 7. ponto de cor na tabela de prioridades */
+.pt{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:-1px;border:1px solid rgba(0,0,0,.12)}
+.pt.vermelho{background:var(--vermelho)}.pt.amarelo{background:var(--amarelo)}.pt.verde{background:var(--verde)}.pt.azul{background:var(--azul)}.pt.semrisco{background:var(--semrisco)}
+/* 9. destino alinhado à esquerda no registro */
+table.rank.regtab td:last-child{text-align:left;padding-left:26px}table.rank.regtab thead tr:first-child th:last-child{text-align:left;padding-left:26px}
+@media (max-width:760px){
+  /* 6. créditos em linha própria */
+  .cred{display:block;margin:4px 0 0}
+  /* 8. filtros em grade uniforme */
+  .ctrl{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .ctrl input[type=search],.ctrl button,.ctrl .cont,.ctrl label{grid-column:1/-1}
+  .ctrl select{width:100%;min-width:0}
+  .ctrl.fixa{position:static;box-shadow:none}
+}
 </style>
 </head>
 <body>
@@ -180,7 +209,7 @@ footer details>p:first-of-type{margin-top:12px}
 </nav>
 
 <section id="aba-filas">
-<div class="ctrl">
+<div class="ctrl fixa">
   <input type="search" id="busca" placeholder="Buscar procedimento (ex.: cirurgia, holter, oftalmo)">
   <select id="tipo"><option value="">Todos os tipos</option></select>
   <select id="alerta">
@@ -289,6 +318,8 @@ footer details>p:first-of-type{margin-top:12px}
   <span class="cont" id="of-cont"></span>
 </div>
 <div class="dv-acoes"><small class="status" id="of-status"></small></div>
+<p class="of-nota" id="of-nota"></p>
+<div class="pr-cab"><div class="lin dv c4"><button type="button" disabled style="cursor:default">Procedimento</button><button type="button" disabled style="cursor:default">Em fila de espera</button><button type="button" disabled style="cursor:default">Espera mais antiga</button><button type="button" disabled style="cursor:default">Na fila do regulador</button><button type="button" disabled style="cursor:default">Último agendamento</button></div></div>
 <div class="lista" id="of-lista"></div>
 <button class="mais" id="of-mais" hidden>Mostrar mais</button>
 </section>
@@ -296,7 +327,7 @@ footer details>p:first-of-type{margin-top:12px}
 <section id="aba-prio" hidden>
 <p class="nota">Todas as filas com solicitações aguardando, lado a lado, para decidir onde concentrar o esforço de gestão. O painel não classifica nem pondera: mostra o dano acumulado e o esforço para corrigir; o julgamento é da gestão. Uma vaga de um procedimento não vira vaga de outro. <button type="button" class="ajuda" aria-expanded="false" title="O que cada coluna mostra">?</button><span class="nota12" hidden><b>Dano</b>: <i>pessoas-ano de espera</i>: cada pessoa na fila carrega o tempo que já esperou; somando o de todas, temos quanto tempo de vida a fila já custou (100 pessoas esperando 1 ano = 100 pessoas-ano; 10 pessoas esperando 10 anos também). É a medida que junta tamanho e tempo da fila num número só, sem pesar prioridades. É uma medida construída por este painel (soma das esperas individuais de quem está na fila); a unidade é a mesma que a epidemiologia usa para somar tempo de acompanhamento de pessoas (pessoas-ano), e não consta de normativa da SES-DF. Ao lado, a <i>espera mediana</i> de quem está na fila. <b>Situação</b>: três sinais que se combinam: <i>sem oferta</i> (sem saída há mais de 1 ano ou fila parada), <i>crescendo</i> (saldo positivo em 9 ou mais dos últimos 12 meses) e <i>fila de espera (n)</i> (solicitações aguardando pactuação, fora da fila do regulador). <b>Esforço</b>: quantas vagas por mês a mais seriam necessárias para <i>estabilizar</i> (a fila parar de crescer), na média dos últimos 12 meses. O esforço para zerar a fila em 12 meses, o cenário pior, os meses de estoque e os vermelhos e amarelos continuam na ficha de cada fila e na planilha Excel desta aba. Passe o cursor sobre cada cabeçalho para ver a conta. Clique no cabeçalho para ordenar.</span></p>
 <div class="kpis" id="pz-kpis"></div>
-<div class="ctrl">
+<div class="ctrl fixa">
   <input type="search" id="pz-busca" placeholder="Buscar procedimento">
   <select id="pz-tipo"><option value="">Todos os tipos</option></select>
   <label title="Oculta as filas sem saída há mais de 1 ano ou paradas"><input type="checkbox" id="pz-sem"> ocultar filas sem oferta</label>
@@ -712,11 +743,11 @@ function resumoReg(f){
   return `Resolução das devolvidas${n} — <a href="#aba-reg-${f.id}">por unidade</a>`;
 }
 // classe da fila no topo da ficha: sem oferta ou cresce (no máximo uma frase; não há classe "estável")
-function diagHtml(f){
+function diagHtml(f,ficha){
   const ss=sinais(f).filter(x=>x!=="espera"), m=f.alertas.map(a=>a.match(/Fila crescendo: saldo positivo em (\d+) dos/)).find(Boolean), en=f.espera&&f.espera.n>0;
   const fr=[];
+  if(ficha){ return m?`<div class="diag"><span title="${esc(JAN.cresce75)}">Nas filas da região com saldo positivo em 9 ou mais dos últimos 12 meses, 3 em 4 continuaram crescendo nos 12 meses seguintes.</span></div>`:""; }
   if(ss.length) fr.push(`<b>Sem oferta:</b> ${ss.map(x=>ROT_SINAL[x]).join("; ")}.`);
-  if(m) fr.push(`<span title="${esc(JAN.cresce75)}"><b>Cresce ≈ +${fmt(f.saldo12/12,1)}/mês</b> (saldo positivo em ${m[1]} de 12 meses). Nas filas da região com esse padrão, 3 em 4 continuaram crescendo nos 12 meses seguintes.</span>`);
   if(en) fr.push(`${fr.length?"· ":""}${fmt(f.espera.n)} em fila de espera (aguardando pactuação) — <a href="#aba-oferta">ver aba Sem oferta</a>`);
   else if(ss.length) fr[0]+=` <a href="#aba-oferta">ver aba Sem oferta</a>`;
   return fr.length?`<div class="diag">${fr.join(" ")}</div>`:"";
@@ -741,7 +772,7 @@ function item(f){
   const meta = (window._analiseMeta && window._analiseMeta(f.p)) || {};
   const linhas = COR.filter(c=>f.cores[c]).map(c=>{const k=f.cores[c], m=meta[c];
     const cs=(f.cor_stats||{})[c]||{}, at=cs.atend_n?`${fmt(cs.atend_media)} <small class="${cs.atend_n<MIN12?"fraco":""}" title="n = ${fmt(cs.atend_n)} agendamentos com atendimento nos últimos ${D.atend_dias||90} dias entraram nesta média${cs.atend_n<MIN12?" (menos de 20: média pouco confiável)":""}; mediana ${fmt(cs.atend_mediana)} dias">(n=${fmt(cs.atend_n)})</small>`:"–";
-    return `<tr><td>${c}</td><td>${fmt(k.n)}</td><td>${dd(k.antiga)}</td><td class="${m&&k.dias>m?"acima":""}">${fmt(k.dias)}</td><td title="mediana ${fmt(cs.fila_mediana)} dias">${cs.fila_media!=null?fmt(cs.fila_media):"–"}</td><td>${at}</td><td>${m?fmt(m):"–"}</td></tr>`}).join("");
+    return `<tr><td><i class="pt ${c.replace(" ","")}"></i>${c}</td><td>${fmt(k.n)}</td><td>${dd(k.antiga)}</td><td class="${m&&k.dias>m?"acima":""}">${fmt(k.dias)}</td><td title="mediana ${fmt(cs.fila_mediana)} dias">${cs.fila_media!=null?fmt(cs.fila_media):"–"}</td><td>${at}</td><td>${m?fmt(m):"–"}</td></tr>`}).join("");
   const semMeta=!f.meta_normativa, bs=baseSim(f);
   return `<div class="fila" tabindex="0" id="f-${f.id}" data-id="${f.id}">
    <div class="lin">
@@ -751,20 +782,21 @@ function item(f){
      <div class="num s"><b style="color:${f.saldo12>0?"var(--saldo)":"var(--out)"}">${f.saldo12>0?"+":""}${fmt(f.saldo12)}</b><small class="dica" title="Saldo = entrada − saída nos últimos 12 meses completos; positivo = a fila cresceu nesse período. ${JAN.m12}">saldo 12 meses</small></div>
      <div class="sp">${spark(f)}</div>
    </div>
-   ${f.alertas.length?`<div class="alertas">${f.alertas.map(a=>`<span class="alerta" title="${tituloAlerta(a)}">⚠ ${esc(a)}</span>`).join("")}</div>`:""}
-   ${diagHtml(f)}
+   ${f.alertas.length?`<div class="alertas">${f.alertas.map(a=>{const m=a.match(/^Fila crescendo: saldo positivo em (\d+) dos/); return m?`<span class="alerta cresc" title="${tituloAlerta(a)} · ${esc(JAN.cresce75)}">⚠ Crescendo <b>+${fmt(f.saldo12/12,1)}/mês</b> · saldo positivo em ${m[1]} de 12 meses</span>`:`<span class="alerta" title="${tituloAlerta(a)}">⚠ ${esc(a)}</span>`;}).join("")}</div>`:""}
+   ${diagHtml(f,false)}
    <div class="det">
+     ${diagHtml(f,true)}
      ${legenda(f)}
      ${grafico(f)}
      <div class="rolagem"><table class="cores"><tr><th>Prioridade</th><th>Solicitações</th><th>Mais antiga</th><th title="Dias entre a solicitação mais antiga dessa prioridade e a data da coleta">Espera da mais antiga (dias)</th><th title="Tempo médio que quem está na fila hoje já esperou. ${JAN.esp}">Média na fila hoje (dias)</th><th title="Tempo médio entre a solicitação e o atendimento, nos agendamentos com atendimento nos últimos ${D.atend_dias||90} dias. n = quantos agendamentos entraram na média: com n pequeno (abaixo de 20) a média diz pouco. ${JAN.d90}">Média até o atendimento (dias)</th><th title="Tempo máximo de espera (mediana) definido em normativa da SES-DF para a prioridade">Meta (dias)</th></tr>${linhas}</table></div>
      <p class="nota" style="margin:2px 0 0">“Média na fila hoje” = há quanto tempo, em média, esperam as solicitações que ainda estão na fila. “Média até o atendimento” = tempo entre a solicitação e o atendimento nos agendados com atendimento ${JT("d90",`nos últimos ${D.atend_dias||90} dias`)} (n = quantos; passe o cursor para ver a mediana).</p>
-     <p style="font-size:.8rem;color:var(--muted);margin:2px 0 0">Devolvidas (todas as de hoje, sem recorte de período): ${fmt(f.devolvidas)} · ${resumoReg(f)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Sem meta de tempo de espera definida em normativa da SES-DF para este procedimento"}</p>
+     <p style="font-size:.8rem;color:var(--muted);margin:2px 0 0">Devolvidas aguardando correção (fora da fila; todas as de hoje, sem recorte de período): ${fmt(f.devolvidas)} · ${resumoReg(f)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Sem meta de tempo de espera definida em normativa da SES-DF para este procedimento"}</p>
      ${saidaHtml(f)}${espUnHtml(f)}
      ${f.fila>0?simHtml(f):""}
      <div class="gerar" data-id="${f.id}" data-p="${esc(f.p)}">
        <b>Gerar análise completa</b>
        <label>Nome nos títulos <input class="nome-curto" placeholder="ex.: Cirurgia Geral"></label>
-       <div class="botoes"><button data-f="pdf">PDF</button><button data-f="word">Word</button><button data-f="excel" title="Tabelas consolidadas da análise">Excel (tabelas)</button><button data-f="detalhe" title="Uma linha por solicitação e por agendamento, com o código SISREG">Dados detalhados (Excel)</button><button class="sec" data-link="1" title="Copia o endereço desta fila">Copiar link</button></div>
+       <div class="botoes"><button class="pri" data-f="pdf">PDF</button><button data-f="word">Word</button><button data-f="excel" title="Tabelas consolidadas da análise">Excel (tabelas)</button><button data-f="detalhe" title="Uma linha por solicitação e por agendamento, com o código SISREG">Dados detalhados (Excel)</button><button class="lnk" data-link="1" title="Copia o endereço desta fila">Copiar link</button></div>
        <small class="status"></small>
      </div>
    </div></div>`;
@@ -1014,11 +1046,10 @@ function filtrarPr(){
 function itemPr(x,pos){
   const us=x.us.map(([ui,n])=>{const [u,nv,esf]=DV.unidades[ui], q=x.u12[ui]||[0,0]; return `<tr><td>${esc(u)}</td><td>${nv==="OUTROS"?"Outras":nv}</td><td>${fmt(n)}</td><td>${esf?fmt(n/esf,1):"–"}</td><td>${fmt(n/x.n*100,1)}%</td><td title="${fmt(q[0])} devolvidas entre ${fmt(q[1])} solicitações nos últimos 12 meses">${pct12(q[0],q[1])}</td></tr>`;}).join("");
   return `<div class="fila" tabindex="0" data-pid="${x.f.id}">
-    <div class="lin dv">
+    <div class="lin dv c5">
       <div class="nome">${pos?pos+"º · ":""}${esc(x.f.p)}<small>${esc(x.f.tipo||"")}</small></div>
       <div class="num"><b>${fmt(x.n)}</b><small>devolvidas</small></div>
-      <div class="num"><b>${fmt(x.aps)}</b><small>da APS</small></div>
-      <div class="num" title="Devolvidas de UBS e PSR ÷ total de devolvidas do procedimento"><b>${fmt(x.aps/x.total*100,0)}%</b><small>da APS</small></div>
+      <div class="num" title="Devolvidas de UBS e PSR; entre parênteses, ÷ total de devolvidas do procedimento"><b>${fmt(x.aps)} <span class="pct">(${fmt(x.aps/x.total*100,0)}%)</span></b><small>da APS (n e %)</small></div>
       <div class="num"><b>${fmt(x.f.fila)}</b><small>na fila</small></div>
       <div class="num" title="${fmt(x.d12)} devolvidas entre ${fmt(x.t12)} solicitações nos últimos 12 meses. ${JAN.dev12}"><b>${pct12(x.d12,x.t12)}</b><small>devolvidas (12 m)</small></div>
     </div>
@@ -1029,7 +1060,7 @@ function itemPr(x,pos){
 }
 function renderPr(){
   const L=filtrarPr(), o=ordPr(), rank=o!=="nome", dsc=(prOrd.k?prOrd.dir:-1)<0?"descending":"ascending", ab=k=>o===k?` aria-sort="${dsc}"`:"";
-  $("pr-cab").innerHTML=`<div class="lin dv"><button type="button" data-pord="nome"${ab("nome")}>Procedimento</button><button type="button" data-pord="n"${ab("n")}>Devolvidas</button><button type="button" data-pord="aps"${ab("aps")}>Da APS (n)</button><button type="button" data-pord="pctaps"${ab("pctaps")} title="Devolvidas de UBS e PSR ÷ total de devolvidas do procedimento">Da APS (%)</button><button type="button" data-pord="fila"${ab("fila")}>Na fila</button><button type="button" data-pord="taxa12"${ab("taxa12")} title="${TIT_12}">Devolvidas (12 m)</button></div>`;
+  $("pr-cab").innerHTML=`<div class="lin dv c5"><button type="button" data-pord="nome"${ab("nome")}>Procedimento</button><button type="button" data-pord="n"${ab("n")}>Devolvidas</button><button type="button" data-pord="aps"${ab("aps")} title="Devolvidas de UBS e PSR (n) e % do total do procedimento">Da APS (n e %)</button><button type="button" data-pord="fila"${ab("fila")}>Na fila</button><button type="button" data-pord="taxa12"${ab("taxa12")} title="${TIT_12}">Devolvidas (12 m)</button></div>`;
   const abertos=[...document.querySelectorAll("#pr-lista .fila.aberta")].map(c=>c.dataset.pid);
   $("pr-lista").innerHTML=L.slice(0,visPr).map((x,i)=>itemPr(x,rank?i+1:0)).join("")||"<p>Nenhum procedimento encontrado.</p>";
   abertos.forEach(id=>{ const c=document.querySelector(`#pr-lista .fila[data-pid="${id}"]`); if(c){ c.classList.add("aberta"); preencherReg(c.querySelector(".reg-sub")); } });
@@ -1106,12 +1137,11 @@ function itemOf(f,pos){
   const e=f.espera, ss=sinais(f), desde=e?desdeEspera(f.id):null, nd=diasDesde(desde);
   const us=e?e.unidades.map(([u,n])=>`<tr><td>${esc(u)}</td><td>${fmt(n)}</td><td>${fmt(n/e.n*100,1)}%</td></tr>`).join(""):"";
   return `<div class="fila" tabindex="0" data-pid="${f.id}">
-    <div class="lin dv">
+    <div class="lin dv c4">
       <div class="nome">${pos?pos+"º · ":""}${esc(f.p)}<small>${esc(f.tipo||"")} · ${ss.map(x=>`<span class="tag">${ROT_SINAL[x]}</span>`).join(" ")}</small></div>
-      <div class="num"><b>${e?fmt(e.n):"0"}</b><small>em fila de espera</small></div>
+      <div class="num" title="${desde?"No registro diário do painel desde "+dd(desde)+" ("+fmt(Math.max(0,nd))+" dias)":"Ainda não consta no registro diário"}"><b>${e?fmt(e.n):"0"}</b><small>em fila de espera</small></div>
       <div class="num"><b>${e&&e.dias!=null?fmt(e.dias)+" d":"–"}</b><small>espera mais antiga</small></div>
       <div class="num"><b>${fmt(f.fila)}</b><small>na fila do regulador</small></div>
-      <div class="num" title="${desde?"No registro diário desde "+dd(desde):"Ainda não consta no registro diário"}"><b>${nd!=null?fmt(Math.max(0,nd))+" d":"–"}</b><small>no registro${desde?" desde "+dd(desde).slice(0,5):""}</small></div>
       <div class="num"><b>${dd(f.ult_ag)}</b><small>último agendamento</small></div>
     </div>
     <div class="det">
@@ -1126,6 +1156,7 @@ function renderOf(){
   $("of-lista").innerHTML=L.slice(0,visOf).map((f,i)=>itemOf(f,rank?i+1:0)).join("")||"<p>Nenhum procedimento encontrado.</p>";
   abertos.forEach(id=>{ const c=document.querySelector(`#of-lista .fila[data-pid="${id}"]`); if(c) c.classList.add("aberta"); });
   $("of-mais").hidden=L.length<=visOf; $("of-mais").textContent=`Mostrar mais (${fmt(L.length-visOf)} restantes)`;
+  { const ds=ESP&&ESP.dias||[]; $("of-nota").textContent=ds.length?`Registro diário da fila de espera desde ${dd(ds[0].data)} (${fmt(ds.length)} ${ds.length===1?"dia":"dias"}); passe o cursor sobre o número em fila de espera para ver desde quando cada procedimento consta.`:""; }
   $("of-cont").textContent=`${fmt(L.length)} procedimentos · ${fmt(L.reduce((s,f)=>s+(f.espera?f.espera.n:0),0))} solicitações em fila de espera`;
 }
 function kpisOf(){
@@ -1232,9 +1263,9 @@ const PRONTO=fetch("dados.json",{cache:"no-store"}).then(r=>{if(!r.ok) throw new
   $("kpis").innerHTML=kpiHtml([
     [fmt(ativos.length),"filas com solicitações aguardando"],
     [fmt(ativos.reduce((s,f)=>s+f.fila,0)),"solicitações na fila (pendentes + reenviadas)"],
+    [fmt(d.filas.reduce((s,f)=>s+f.devolvidas,0)),"devolvidas aguardando correção (fora da fila; todas, sem recorte de período)"],
     [fmt(d.filas.filter(f=>f.alertas.length).length),"filas com alertas"],
     [fmt(d.filas.filter(f=>f.alertas.some(a=>TIPO_ALERTA.semsaida.test(a))).length),JT("semsaida","filas sem saída há mais de 1 ano")],
-    [fmt(d.filas.reduce((s,f)=>s+f.devolvidas,0)),"solicitações devolvidas hoje (todas, sem recorte de período)"],
     [fmt(d.filas.reduce((s,f)=>s+(f.espera?f.espera.n:0),0)),"em fila de espera (aguardando pactuação)"]
   ]);
   const tipos=[...new Set(d.filas.map(f=>f.tipo).filter(Boolean))].sort();
