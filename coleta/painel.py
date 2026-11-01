@@ -55,7 +55,8 @@ MIN_FILAS = 500        # abaixo disso a coleta é considerada falha (não public
 # no registro diário, marcaria ~47 mil devolvidas como "canceladas"). Valores bem abaixo do observado em out/2026
 # (579 filas com fila, 94 mil na fila, 769 filas com devolvidas, 47 mil devolvidas).
 MIN_COM_FILA, MIN_NA_FILA, MIN_COM_DEV, MIN_DEVOLVIDAS = 300, 20000, 300, 10000
-MIN_ESTOQUE_REL = 0.5  # estoque de devolvidas abaixo desta fração do anterior = coleta suspeita, o registro não é alterado
+MIN_ESTOQUE_REL = 0.98  # queda de mais de 2% no estoque de devolvidas (o normal é ~0,04%/dia) = coleta suspeita, o registro não é alterado
+TOLERANCIA_MES = 10     # depois deste dia, o mês anterior conta como completo mesmo que a fonte não tenha chegado ao último dia
 ANOS_SERIE = 5         # série da análise: de janeiro de (ano - 5) até o mês anterior
 SEM_SAIDA_DIAS = 365   # alerta "sem saída há mais de 1 ano"
 
@@ -67,8 +68,18 @@ def _mes_inicial_painel(hoje):
     return date(a, mm, 1)
 
 
+def mes_referencia(hoje, ultima):
+    """1º dia do mês seguinte ao último mês completo. O mês anterior só é completo quando a última solicitação
+    registrada chega ao último dia dele; com a fonte atrasada na virada do mês, ele fica de fora das séries e médias."""
+    ini = hoje.replace(day=1)
+    fim_ant = ini - timedelta(days=1)
+    if _valido(ultima) and _br(ultima) < fim_ant and hoje.day <= TOLERANCIA_MES:
+        return fim_ant.replace(day=1)
+    return ini
+
+
 def janela12(hoje):
-    """Os 12 meses completos anteriores ao mês corrente, como (ano, mês)."""
+    """Os 12 meses completos anteriores ao mês de hoje (aqui, o mês de referência), como (ano, mês)."""
     a, mm = hoje.year, hoje.month - 12
     if mm < 1:
         a, mm = a - 1, mm + 12
@@ -80,6 +91,7 @@ def janela12(hoje):
 
 
 def coletar(hoje):
+    ano12 = (hoje - timedelta(days=45)).year - 1   # primeiro ano necessário para a janela de 12 meses, mesmo com janeiro incompleto
     ini = hoje.year - ANOS_SERIE
     P, PA, U = "descrição_procedimento_solicitacao", "descrição_procedimento_agendamento", "nome_unidade_solicitante"
     ano_det = _mes_inicial_painel(hoje).year
@@ -101,11 +113,11 @@ def coletar(hoje):
         # Razão de devolvidas (aba Devolvidas): solicitações feitas por unidade × mês da solicitação, nos
         # últimos 12 meses completos — total (pendentes + reenviadas + devolvidas + agendadas) e só devolvidas
         ["sol12", [P, U, "Calendar.Ano_Solicitacao", "Calendar.Mes_Solicitacao"],
-         ['Count({<%s,%s,[Calendar.Ano_Solicitacao]={">=%d"}>} distinct codigo_solicitacao)' % (R, FILA_DEV, hoje.year - 1)]],
+         ['Count({<%s,%s,[Calendar.Ano_Solicitacao]={">=%d"}>} distinct codigo_solicitacao)' % (R, FILA_DEV, ano12)]],
         ["dev12", [P, U, "Calendar.Ano_Solicitacao", "Calendar.Mes_Solicitacao"],
-         ['Count({<%s,%s,[Calendar.Ano_Solicitacao]={">=%d"}>} distinct codigo_solicitacao)' % (R, DEV, hoje.year - 1)]],
+         ['Count({<%s,%s,[Calendar.Ano_Solicitacao]={">=%d"}>} distinct codigo_solicitacao)' % (R, DEV, ano12)]],
         ["ag12", [PA, U, "Calendar.Ano_Solicitacao", "Calendar.Mes_Solicitacao"],
-         ['Count({<%s,[Calendar.Ano_Solicitacao]={">=%d"}>} distinct codigo_solicitacao)' % (R, hoje.year - 1)]],
+         ['Count({<%s,[Calendar.Ano_Solicitacao]={">=%d"}>} distinct codigo_solicitacao)' % (R, ano12)]],
         ["tipo", [P, "tipo_procedimento_solicitacao"], ["Count({<%s>} distinct codigo_solicitacao)" % R]],
         ["ultima", [], ["Date(Max(data_solicitacao))"]],
         ["det_sol", [P, "codigo_solicitacao", "data_solicitacao", "status_solicitacao_solicitacao",
@@ -151,7 +163,9 @@ def _curto(st):
 def montar(b, hoje, ref=None):
     ref = ref or {}
     metas = ref.get("metas", {})
-    fim = (hoje.year, hoje.month - 1) if hoje.month > 1 else (hoje.year - 1, 12)
+    ultima = b["ultima"]["rows"][0][0]
+    ref_mes = mes_referencia(hoje, ultima)
+    fim = (ref_mes.year, ref_mes.month - 1) if ref_mes.month > 1 else (ref_mes.year - 1, 12)
     meses, a, mm = [], hoje.year - ANOS_SERIE, 1
     while (a, mm) <= fim:
         meses.append((a, mm))
@@ -191,7 +205,7 @@ def montar(b, hoje, ref=None):
             k = (int(ano), MESES.index(mes) + 1)
             if k in idx:
                 procs[p][campo][idx[k]] += int(q)
-            elif campo == "out" and k > fim:
+            elif campo == "out" and k >= (hoje.year, hoje.month):
                 procs[p]["futuros"] += int(q)
     for p, ult in b["ult_ag"]["rows"]:
         if _valido(p) and _valido(ult):
@@ -226,7 +240,7 @@ def montar(b, hoje, ref=None):
         u12 = [i - o for i, o in zip(ent, sai)][-12:]
         pos = sum(1 for s in u12 if s > 0)
         alertas = []
-        if pos >= 9:
+        if pos >= 9 and sum(u12) > 0:   # meses positivos E saldo do ano positivo: um mês muito negativo pode anular os demais
             alertas.append("Fila crescendo: saldo positivo em %d dos últimos 12 meses" % pos)
         meta = metas.get(p) or {}   # só há meta quando uma norma a define (aba Metas_espera); sem norma, sem alerta de meta
         for cor in ("vermelho", "amarelo", "verde", "azul"):
@@ -260,17 +274,18 @@ def montar(b, hoje, ref=None):
         detalhes[i] = {"p": p, "tipo": d["tipo"], "meses": rot, "in": d["in"], "out": d["out"], "cores": cores,
                        "cid": d["cid"], "devolvidas_unidade": d["dev_un"], "unidades": sorted(d["unidades"])}
     resumo.sort(key=lambda x: -x["fila"])
-    ultima = b["ultima"]["rows"][0][0]
     meta = {"gerado_em": datetime.now().strftime("%d/%m/%Y %H:%M"), "data": hoje.isoformat(),
             "solicitacoes_ate": ultima, "recarga_painel": b.get("_reload", ""),
             "atraso_dias": (hoje - _br(ultima)).days if _valido(ultima) else None}
+    if ref_mes != hoje.replace(day=1):   # mês que acabou mas ainda não chegou inteiro da fonte
+        meta["mes_incompleto"] = "%s/%s" % (MESES[ref_mes.month - 1], str(ref_mes.year)[2:])
 
     # Devolvidas por fila × unidade solicitante (abas de devolvidas)
     niveis, esf = ref.get("niveis", []), ref.get("esf", {})
     # Razão de devolvidas: das solicitações feitas pela unidade nos últimos 12 meses completos (pela data da
     # solicitação), quantas estão devolvidas hoje. Cada código conta uma vez; a que foi agendada depois de uma
     # devolução conta como não devolvida (o Mapa Social só guarda a situação atual).
-    j12 = set(janela12(hoje))
+    j12 = set(janela12(ref_mes))
     tot12, dev12 = defaultdict(int), defaultdict(int)
     for chave, alvo in (("sol12", tot12), ("ag12", tot12), ("dev12", dev12)):
         for p, u, ano, mes, q in b[chave]["rows"]:
@@ -282,7 +297,7 @@ def montar(b, hoje, ref=None):
     for (p, u), t in sorted(tot12.items()):
         if p in procs and t:
             d12[ident(p)].append([pos_u[u], min(dev12.get((p, u), 0), t), t])
-    r12 = ["%s/%s" % (MESES[mm - 1], str(a)[2:]) for a, mm in janela12(hoje)]
+    r12 = ["%s/%s" % (MESES[mm - 1], str(a)[2:]) for a, mm in janela12(ref_mes)]
     devolvidas = dict(meta, unidades=[[u, nivel(u, niveis), esf.get(u)] for u in nomes],
                       filas={ident(p): sorted(([pos_u[u], q] for u, q in d["dev_un"].items()), key=lambda x: -x[1])
                              for p, d in procs.items() if d["dev_un"]},
@@ -293,14 +308,14 @@ def montar(b, hoje, ref=None):
 ATEND_DIAS = 90   # janela dos atendimentos usados no "tempo até o atendimento"
 
 
-def estatisticas_cores(b, hoje):
+def estatisticas_cores(b, hoje, ref_mes):
     """Por procedimento e cor: espera de quem está na fila, espera até o atendimento (agendados nos últimos
     90 dias) e entrada/saída mensais médias dos últimos 12 meses completos (base da simulação por cor)."""
-    a_, m_ = hoje.year, hoje.month - 12
+    a_, m_ = ref_mes.year, ref_mes.month - 12
     if m_ < 1:
         a_, m_ = a_ - 1, m_ + 12
     ini = date(a_, m_, 1)                     # 12 meses completos: do mesmo mês do ano anterior até o mês passado
-    lim_fim = date(hoje.year, hoje.month, 1)  # primeiro dia do mês atual (exclusivo)
+    lim_fim = ref_mes                         # primeiro dia depois do último mês completo (exclusivo)
     corte_at = hoje - timedelta(days=ATEND_DIAS)
     acc = defaultdict(lambda: defaultdict(lambda: {"fila": [], "atend": [], "ent": 0, "sai": 0}))
     todos = defaultdict(list)                 # dias de espera de toda a fila (pendentes + reenviadas) por procedimento
@@ -536,7 +551,7 @@ def historico_devolvidas(dev_det, det, hoje, anterior=None):
     atual = {r[1]: (dev_det["p"][r[0]], r[5], r[6]) for r in dev_det["r"]}
     antes = {r[1]: (anterior["p"][r[0]], r[5], r[6]) for r in anterior["r"]}
     if len(atual) < MIN_ESTOQUE_REL * len(antes):   # queda brusca do estoque = falha de coleta, não 'canceladas'
-        print("Registro de devolvidas: estoque caiu de %d para %d; coleta suspeita, dia sem comparação." % (len(antes), len(atual)))
+        print("::warning::Registro de devolvidas: estoque caiu de %d para %d; coleta suspeita, dia sem comparação." % (len(antes), len(atual)))
         return reg
     status = {}
     for d in det.values():
@@ -597,7 +612,7 @@ def main():
     print("[tempo] coleta: %.0f s" % (time.monotonic() - t), flush=True)
     t = time.monotonic()
     dados, detalhes, devolvidas, meta = montar(b, hoje, referencias())
-    est = estatisticas_cores(b, hoje)
+    est = estatisticas_cores(b, hoje, mes_referencia(hoje, dados["solicitacoes_ate"]))
     for f in dados["filas"]:
         cs = dict(est.get(f["id"], {}))
         f["esp_fila"] = cs.pop("_fila", None)   # espera de quem está na fila hoje, fila inteira (média, mediana, n)

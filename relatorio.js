@@ -23,9 +23,9 @@
   const dataBr = d => `${d.getDate()} ${MESES[d.getMonth()]}. ${d.getFullYear()}`;
   const dd = s => s ? s.split("-").reverse().join("/") : "";
   const cmp = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
-  const atrasoUnico = d => d.atraso_dias == null ? "atraso de 6 a 7 dias" : d.atraso_dias === 0 ? "sem atraso" : d.atraso_dias === 1 ? "atraso de 1 dia" : `atraso de ${d.atraso_dias} dias`;
+  const atrasoUnico = d => d.atraso_dias == null ? "atraso não medido" : d.atraso_dias === 0 ? "sem atraso" : d.atraso_dias === 1 ? "atraso de 1 dia" : `atraso de ${d.atraso_dias} dias`;
   const atrasoTxt = d => { const u = (d.atraso_ultimos || []).filter(x => x != null), mn = Math.min(...u), mx = Math.max(...u);
-    return u.length > 1 && mn !== mx ? `atraso de ${mn} a ${mx} ${mx === 1 ? "dia" : "dias"} (últimas ${u.length} medições)` : atrasoUnico(d); };
+    return u.length > 1 && mn !== mx ? `${atrasoUnico(d)} hoje (${mn} a ${mx} ${mx === 1 ? "dia" : "dias"} nas últimas ${u.length} medições)` : atrasoUnico(d); };
 
   function lib(url) {
     if (!carregadas[url]) carregadas[url] = new Promise((ok, erro) => {
@@ -47,13 +47,13 @@
     const s = [...v].sort((p, q) => p - q), m = s.length >> 1;
     return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
   }
-  // ---- Meses aberrantes e tendência corrigida (definido com a Rebeca em 24/10/2026) ----------------------
+  // ---- Meses aberrantes e tendência corrigida ----------------------
   // Janela: últimos 24 meses. Theil-Sen iterativo (só para ACHAR os aberrantes): mede o afastamento de cada mês à própria reta, a escala é a
   // oscilação típica (MAD × 1,4826, com piso de √nível por ser contagem) e um mês é aberrante se passar de k = 4
   // escalas acima da reta (no saldo, acima ou abaixo). Os aberrantes ficam de fora do ajuste da reta (mas continuam
   // no gráfico). Sequências de mais de 3 meses seguidos contam como mudança de patamar e não são marcadas.
   // Filas pequenas (< 12 meses com movimento ou < 120 solicitações na janela) não são avaliadas.
-  // A reta final e o R² são de mínimos quadrados (como no Excel) calculados SEM os aberrantes (decisão de 24/10/2026).
+  // A reta final e o R² são de mínimos quadrados (como no Excel) calculados SEM os aberrantes.
   // Manter em sincronia com analise.py (aberrantes / analisar_aberrantes).
   const ABERR = {k: 4, janela: 24, minMeses: 12, minTotal: 120, maxSeq: 3};
   // Theil-Sen sobre os meses não marcados: inclinação = mediana das inclinações entre pares; intercepto = mediana de y − a·x
@@ -249,7 +249,7 @@
     t.fig1 = `A média mensal dos últimos 24 meses (${s.meses[n - 24 < 0 ? 0 : n - 24]} a ${s.meses[n - 1]}) foi de ${fmt(media(s.in.slice(-24)), 1)} solicitações na entrada (INPUT), ${fmt(media(s.out.slice(-24)), 1)} na saída (OUTPUT) e ${sinal(media(s.saldo.slice(-24)))} no saldo regulatório. ` +
       `Comparando as médias anuais, ${comp("entrada", s.in)}; ${comp("saída", s.out)}. ` +
       `Nos últimos 12 meses, o saldo regulatório foi positivo em ${us.filter(x => x > 0).length} meses, somando ${fmt(us.reduce((a, b) => a + b, 0))} solicitações a mais do que as agendadas no período. ` +
-      `Média e tendência respondem a perguntas diferentes: a média dos últimos 12 meses mostra o nível atual e é a base das projeções do painel; a linha de tendência dos últimos ${nj} meses (mínimos quadrados, sem os meses aberrantes) mostra a direção e não é usada para projetar:${retaTxt("INPUT", ab.in)}, ${retaTxt("OUTPUT", ab.out)}, ${retaTxt("SALDO", ab.saldo)}. Quanto menor o R², menos a reta explica a oscilação mensal.`;
+      `Média e tendência respondem a perguntas diferentes: a média dos últimos 12 meses mostra o nível atual e é a base das projeções do painel; a linha de tendência dos últimos ${nj} meses (mínimos quadrados, sem os meses aberrantes) mostra a direção e não é usada para projetar: ${retaTxt("INPUT", ab.in)}, ${retaTxt("OUTPUT", ab.out)}, ${retaTxt("SALDO", ab.saldo)}. Quanto menor o R², menos a reta explica a oscilação mensal.`;
     const ext = [];
     for (const [k, a, chave] of [["INPUT", s.in, "in"], ["OUTPUT", s.out, "out"], ["SALDO REGULATÓRIO", s.saldo, "saldo"]]) {
       ab[chave].flag.forEach((x, i) => { if (x) ext.push(`${k} de ${s.meses[ab.ini + i]} (${fmt(a[ab.ini + i])})`); });
@@ -441,7 +441,7 @@
   }
 
   // ------------------------------------------------------------------------------ PDF
-  // chrome = cabeçalho e rodapé institucionais em todas as páginas (padrão desde 28/10/2026; false gera o documento sem eles)
+  // chrome = cabeçalho e rodapé institucionais em todas as páginas (false gera o documento sem eles)
   async function gerarPdf(r, chrome = true) {
     for (const u of LIBS.pdf) await lib(u);
     const {jsPDF} = window.jspdf, N = notas(r);
@@ -572,7 +572,7 @@
         return new D.TableRow({children: [cel(x.cat ? x.c : "      " + x.c, {...o, al: L_}), cel(fmt(x.n), {...o, al: R_}),
           cel(fmt(x.pct, 1) + "%", {...o, al: R_}), cel(x.acum != null ? fmt(x.acum, 1) + "%" : "", {...o, al: R_}), cel(x.g, {...o, al: L_})]}); }),
     ]});
-    // cabeçalho e rodapé institucionais (padrão desde 28/10/2026); w = largura útil da página em DXA, para o texto à direita
+    // cabeçalho e rodapé institucionais; w = largura útil da página em DXA, para o texto à direita
     const ext = r.extracao.toLocaleDateString("pt-BR"), tab = () => (typeof D.Tab === "function" ? new D.Tab() : "\t");
     const linha = (lado, cor = "808080") => ({[lado]: {style: D.BorderStyle.SINGLE, size: 4, color: cor, space: 2}});
     const cab = w => new D.Header({children: [new D.Paragraph({tabStops: [{type: D.TabStopType.RIGHT, position: w}], border: linha("bottom"),
@@ -710,7 +710,7 @@
     return L.length;
   };
 
-  fetch("referencias.json", {cache: "no-store"}).then(x => x.json()).then(j => { REF = REF || j; }).catch(() => {});
+  fetch("referencias.json", {cache: "no-store"}).then(x => x.json()).then(j => { REF = REF || j; if (window._aoCarregarRef) window._aoCarregarRef(); }).catch(() => {});
   window._analiseMeta = p => REF && REF.metas && REF.metas[p] || null;
   window._analiseNomeCurto = p => (REF && REF.notas[p] && REF.notas[p].nome) || nomeCurto(p);
 })();
