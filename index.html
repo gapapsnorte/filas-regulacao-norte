@@ -106,7 +106,7 @@ table.tab{width:100%}
 table.tab td:nth-child(2),table.tab th:nth-child(2){text-align:left}
 .rolagem{max-height:360px;overflow:auto}
 .acima{color:var(--saldo);font-weight:600}
-.un-esp{margin-top:8px}.un-esp summary{list-style:none;cursor:pointer}.un-esp summary::-webkit-details-marker{display:none}.un-esp summary::before{content:"▸ "}.un-esp[open] summary::before{content:"▾ "}
+.un-esp{margin-top:8px}.un-esp summary{list-style:none;cursor:pointer;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-weight:600}.un-esp summary:hover{border-color:var(--accent)}.un-esp summary::-webkit-details-marker{display:none}.un-esp summary::before{content:"▸ "}.un-esp[open] summary::before{content:"▾ "}
 .gerar{margin-top:8px;padding:8px 10px;border:1px dashed var(--line);border-radius:10px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;cursor:default}
 .gerar label{font-size:.85rem;color:var(--muted);display:flex;gap:6px;align-items:center;flex:1 1 240px}
 .gerar input{flex:1;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--txt)}
@@ -733,7 +733,7 @@ function saidaHtml(f){
 function espUnHtml(f){
   const u=f.esp_un, d=f.dif_un; if(!u||!d) return "";
   const blocos=COR.filter(c=>u[c]).map(c=>`<tr><th colspan="3" style="text-align:left">${c}</th></tr>`+u[c].map(([n,q,m])=>`<tr><td>${esc(n)}</td><td>${fmt(q)}</td><td>${fmt(m)}</td></tr>`).join("")).join("");
-  return `<details class="un-esp"><summary class="sim-abrir">Espera por unidade: ${esc(d.cor)}, de ${fmt(d.min)} a ${fmt(d.max)} dias (mediana)</summary>
+  return `<details class="un-esp"><summary>Espera por unidade: ${esc(d.cor)}, de ${fmt(d.min)} a ${fmt(d.max)} dias (mediana)</summary>
     <p class="nota">Na mesma fila e na mesma prioridade, a ordem é de chegada, então a espera deveria ser parecida entre as unidades. Diferença grande pede verificação; este número sozinho não diz a causa: pode haver pedidos antigos parados, ordem não seguida, oferta exclusiva para parte das unidades ou perfil clínico distinto. Mostra só unidades com ${MIN_UN}+ solicitações na fila, e só prioridades com duas unidades ou mais.</p>
     <div class="rolagem"><table class="cores"><tr><th>Unidade solicitante</th><th>Solicitações na fila</th><th>Espera mediana (dias)</th></tr>${blocos}</table></div></details>`;
 }
