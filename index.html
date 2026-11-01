@@ -223,6 +223,7 @@ table.rank.regtab td:last-child{text-align:left;padding-left:26px}table.rank.reg
     <option value="esperando">Espera acima da meta</option>
     <option value="parada">Fila parada</option>
     <option value="semsaida">Sem saída há mais de 1 ano</option>
+    <option value="naoag">Prioridade não agendada em 5 anos</option>
   </select>
   <select id="ordem">
     <option value="fila">Maior fila</option>
@@ -561,6 +562,11 @@ function cascata(f,cap,M,H=60){
   }
   return {cores,esp,zera,f12,ent,H};
 }
+// cores com 20+ na fila que, no ritmo atual e com as vagas indo primeiro às mais urgentes, não seriam todas agendadas no horizonte da cascata
+function coresNaoAgendadas(f){ if(!f.fila) return []; const c=cascata(f,baseSim(f).sai,0); return c.cores.filter(k=>(f.cores[k]||{n:0}).n>=MIN_UN&&c.esp[k]==null); }
+function seloNaoAgendado(f){ const l=coresNaoAgendadas(f); if(!l.length) return "";
+  const nomes=l.map(c=>c.charAt(0).toUpperCase()+c.slice(1)), txt=nomes.length>1?nomes.slice(0,-1).join(", ")+" e "+nomes[nomes.length-1]:nomes[0];
+  return `<span class="alerta" title="No ritmo dos últimos 12 meses, com as vagas indo primeiro às prioridades mais urgentes, as solicitações que estão hoje na fila nessa prioridade não seriam todas agendadas em 5 anos. A espera do cartão vale para a fila inteira, não para esta prioridade. Veja a tabela por cor no simulador.">⚠ ${txt}: não ${l.length>1?"agendados":"agendado"} em 5 anos</span>`; }
 function projSim(b,delta,meses=24,mutirao=0){
   const pts=[b.fila]; let L=b.fila;
   for(let i=0;i<meses;i++){ if(i===0) L=Math.max(0,L-mutirao); L=Math.max(0,L+b.ent-(b.sai+delta)); pts.push(L); }
@@ -782,7 +788,7 @@ function item(f){
      <div class="num s"><b style="color:${f.saldo12>0?"var(--saldo)":"var(--out)"}">${f.saldo12>0?"+":""}${fmt(f.saldo12)}</b><small class="dica" title="Saldo = entrada − saída nos últimos 12 meses completos; positivo = a fila cresceu nesse período. ${JAN.m12}">saldo 12 meses</small></div>
      <div class="sp">${spark(f)}</div>
    </div>
-   ${f.alertas.length?`<div class="alertas">${f.alertas.map(a=>{const m=a.match(/^Fila crescendo: saldo positivo em (\d+) dos/); return m?`<span class="alerta cresc" title="${tituloAlerta(a)} · ${esc(JAN.cresce75)}">⚠ Crescendo <b>+${fmt(f.saldo12/12,1)}/mês</b> · saldo positivo em ${m[1]} de 12 meses</span>`:`<span class="alerta" title="${tituloAlerta(a)}">⚠ ${esc(a)}</span>`;}).join("")}</div>`:""}
+   ${f.alertas.length||coresNaoAgendadas(f).length?`<div class="alertas">${f.alertas.map(a=>{const m=a.match(/^Fila crescendo: saldo positivo em (\d+) dos/); return m?`<span class="alerta cresc" title="${tituloAlerta(a)} · ${esc(JAN.cresce75)}">⚠ Crescendo <b>+${fmt(f.saldo12/12,1)}/mês</b> · saldo positivo em ${m[1]} de 12 meses</span>`:`<span class="alerta" title="${tituloAlerta(a)}">⚠ ${esc(a)}</span>`;}).join("")}${seloNaoAgendado(f)}</div>`:""}
    ${diagHtml(f,false)}
    <div class="det">
      ${diagHtml(f,true)}
@@ -804,7 +810,7 @@ function item(f){
 function filtrar(){
   const q=norm($("busca").value.trim()), t=$("tipo").value, al=$("alerta").value, o=$("ordem").value;
   const L=D.filas.filter(f=>(!q||norm(f.p).includes(q))&&(!t||f.tipo===t)&&
-    (!al || (al==="com-fila" ? f.fila>0 : al==="qualquer" ? f.alertas.length : al==="nenhum" ? !f.alertas.length : al==="sem-meta" ? !f.meta_normativa : al==="com-meta" ? f.meta_normativa : f.alertas.some(a=>TIPO_ALERTA[al].test(a)))));
+    (!al || (al==="naoag" ? coresNaoAgendadas(f).length>0 : al==="com-fila" ? f.fila>0 : al==="qualquer" ? f.alertas.length : al==="nenhum" ? !f.alertas.length : al==="sem-meta" ? !f.meta_normativa : al==="com-meta" ? f.meta_normativa : f.alertas.some(a=>TIPO_ALERTA[al].test(a)))));
   const k={fila:f=>-f.fila,espera:f=>-(f.espera_max||0),saldo:f=>-f.saldo12,devolvidas:f=>-f.devolvidas,semsaida:f=>-diasSemSaida(f),difun:f=>-(f.dif_un?f.dif_un.d:-1),falta:f=>-faltaPct(f)};
   L.sort(o==="nome"?(a,b)=>a.p.localeCompare(b.p,"pt"):(a,b)=>k[o](a)-k[o](b)||b.fila-a.fila);
   return L;
@@ -841,11 +847,11 @@ function lerHash(){
 }
 async function baixarLista(){
   await xlsx();
-  const L=filtrar(), cab=["Procedimento","Tipo","Na fila","Vermelho","Vermelho – dias","Amarelo","Amarelo – dias","Verde","Verde – dias","Azul","Azul – dias","Sem risco","Devolvidas","Saldo 12 meses","Espera estimada (dias)","Agendados à frente","Último agendamento","Agendamentos 12 meses","Faltas 12 meses (%)","Sem confirmação 12 meses (%)","Diferença de espera entre unidades (dias)","Alertas"];
+  const L=filtrar(), cab=["Procedimento","Tipo","Na fila","Vermelho","Vermelho – dias","Amarelo","Amarelo – dias","Verde","Verde – dias","Azul","Azul – dias","Sem risco","Devolvidas","Saldo 12 meses","Espera estimada (dias)","Agendados à frente","Último agendamento","Agendamentos 12 meses","Faltas 12 meses (%)","Sem confirmação 12 meses (%)","Diferença de espera entre unidades (dias)","Prioridades não agendadas em 5 anos","Alertas"];
   const g=(f,c,k)=>f.cores[c]?f.cores[c][k]:"";
-  const linhas=L.map(f=>[f.p,f.tipo,f.fila,g(f,"vermelho","n"),g(f,"vermelho","dias"),g(f,"amarelo","n"),g(f,"amarelo","dias"),g(f,"verde","n"),g(f,"verde","dias"),g(f,"azul","n"),g(f,"azul","dias"),g(f,"sem risco","n"),f.devolvidas,f.saldo12,baseSim(f).espera!=null&&f.fila>0?Math.round(baseSim(f).espera):"",f.futuros,dataXl(f.ult_ag),f.ag12?f.ag12.n:"",f.ag12&&f.ag12.n?Math.round(f.ag12.falta/f.ag12.n*1000)/10:"",f.ag12&&f.ag12.n?Math.round(f.ag12.pend/f.ag12.n*1000)/10:"",f.dif_un?f.dif_un.d:"",f.alertas.join(" | ")]);
+  const linhas=L.map(f=>[f.p,f.tipo,f.fila,g(f,"vermelho","n"),g(f,"vermelho","dias"),g(f,"amarelo","n"),g(f,"amarelo","dias"),g(f,"verde","n"),g(f,"verde","dias"),g(f,"azul","n"),g(f,"azul","dias"),g(f,"sem risco","n"),f.devolvidas,f.saldo12,baseSim(f).espera!=null&&f.fila>0?Math.round(baseSim(f).espera):"",f.futuros,dataXl(f.ult_ag),f.ag12?f.ag12.n:"",f.ag12&&f.ag12.n?Math.round(f.ag12.falta/f.ag12.n*1000)/10:"",f.ag12&&f.ag12.n?Math.round(f.ag12.pend/f.ag12.n*1000)/10:"",f.dif_un?f.dif_un.d:"",coresNaoAgendadas(f).join(", "),f.alertas.join(" | ")]);
   const wb=XLSX.utils.book_new(), ws=XLSX.utils.aoa_to_sheet([cab,...linhas]);
-  ws["!cols"]=[{wch:50},{wch:10},{wch:9},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:11},{wch:13},{wch:16},{wch:14},{wch:16},{wch:13},{wch:13},{wch:16},{wch:18},{wch:80}];
+  ws["!cols"]=[{wch:50},{wch:10},{wch:9},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:11},{wch:13},{wch:16},{wch:14},{wch:16},{wch:13},{wch:13},{wch:16},{wch:18},{wch:18},{wch:80}];
   XLSX.utils.book_append_sheet(wb,ws,"Filas");
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Filtro",`${$("busca").value||"(todos)"} · ${$("tipo").value||"todos os tipos"} · ${$("alerta").options[$("alerta").selectedIndex].text}`]])),"Leia-me");
   XLSX.writeFile(wb,`Filas Região Norte (${D.data.split("-").reverse().join("-")}).xlsx`);
