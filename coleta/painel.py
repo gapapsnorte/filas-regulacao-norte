@@ -306,6 +306,14 @@ def montar(b, hoje, ref=None):
 
 
 ATEND_DIAS = 90   # janela dos atendimentos usados no "tempo até o atendimento"
+MIN_UNIDADE = 20  # solicitações na fila, por unidade e cor, para comparar a espera entre unidades
+
+
+def resultado_agendamento(st):
+    """Situação registrada do agendamento: confirmado, falta, sem confirmação do executante, cancelado ou outro."""
+    s = (st or "").upper()   # o status bruto traz prefixo (ex.: "AGENDAMENTO / FALTA / EXECUTANTE")
+    return ("canc" if "CANCEL" in s else "falta" if "FALTA" in s else "pend" if "PENDENTE" in s
+            else "conf" if "CONFIRMADO" in s else "outros")
 
 
 def estatisticas_cores(b, hoje, ref_mes):
@@ -319,8 +327,10 @@ def estatisticas_cores(b, hoje, ref_mes):
     corte_at = hoje - timedelta(days=ATEND_DIAS)
     acc = defaultdict(lambda: defaultdict(lambda: {"fila": [], "atend": [], "ent": 0, "sai": 0}))
     todos = defaultdict(list)                 # dias de espera de toda a fila (pendentes + reenviadas) por procedimento
+    por_un = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))   # procedimento > cor > unidade > dias de espera
+    ag12 = defaultdict(lambda: {"n": 0, "conf": 0, "falta": 0, "pend": 0, "canc": 0, "outros": 0})
     vistos, entradas = set(), set()   # entradas: solicitações já contadas na entrada, para nenhuma contar duas vezes
-    for p, cod, dt, st, risco, *_ in b["det_sol"]["rows"]:
+    for p, cod, dt, st, risco, _cid, u, *_ in b["det_sol"]["rows"]:
         if not _valido(p) or (p, cod) in vistos or not _valido(dt):
             continue
         vistos.add((p, cod))
@@ -329,11 +339,13 @@ def estatisticas_cores(b, hoje, ref_mes):
         if st in (PEND, REENV):
             acc[p][cor]["fila"].append((hoje - d).days)
             todos[p].append((hoje - d).days)
+            if _valido(u):
+                por_un[p][cor][u].append((hoje - d).days)
             if ini <= d < lim_fim:
                 entradas.add((p, cod))
                 acc[p][cor]["ent"] += 1
     vistos = set()
-    for p, cod, dsol, dag, _st, risco, *_ in b["det_ag"]["rows"]:
+    for p, cod, dsol, dag, st_ag, risco, *_ in b["det_ag"]["rows"]:
         if not _valido(p) or not _valido(dag) or (p, cod, dag) in vistos:
             continue
         vistos.add((p, cod, dag))
@@ -341,6 +353,8 @@ def estatisticas_cores(b, hoje, ref_mes):
         da = _br(dag)
         if ini <= da < lim_fim:
             acc[p][cor]["sai"] += 1           # saída = cada agendamento, como no OUTPUT da série
+            ag12[p]["n"] += 1
+            ag12[p][resultado_agendamento(st_ag)] += 1
         if _valido(dsol):
             ds = _br(dsol)
             if ini <= ds < lim_fim and (p, cod) not in entradas:
@@ -358,6 +372,15 @@ def estatisticas_cores(b, hoje, ref_mes):
                       "atend_media": round(statistics.mean(a)) if a else None,
                       "atend_mediana": round(statistics.median(a)) if a else None,
                       "atend_n": len(a), "ent": round(v["ent"] / 12, 1), "sai": round(v["sai"] / 12, 1)}
+        un, dif = {}, None
+        for cor, us in por_un.get(p, {}).items():
+            med = sorted(([u, len(x), round(statistics.median(x))] for u, x in us.items() if len(x) >= MIN_UNIDADE), key=lambda z: -z[2])
+            if len(med) >= 2:     # só há o que comparar com duas unidades ou mais
+                un[cor] = med
+                d = med[0][2] - med[-1][2]
+                if dif is None or d > dif["d"]:
+                    dif = {"cor": cor, "d": d, "max": med[0][2], "umax": med[0][0], "min": med[-1][2], "umin": med[-1][0]}
+        r["_un"], r["_dif"], r["_ag"] = un or None, dif, dict(ag12[p]) if p in ag12 else None
         t = todos.get(p, [])
         r["_fila"] = {"media": round(statistics.mean(t)) if t else None,
                       "mediana": round(statistics.median(t)) if t else None, "n": len(t)}
@@ -616,6 +639,7 @@ def main():
     for f in dados["filas"]:
         cs = dict(est.get(f["id"], {}))
         f["esp_fila"] = cs.pop("_fila", None)   # espera de quem está na fila hoje, fila inteira (média, mediana, n)
+        f["esp_un"], f["dif_un"], f["ag12"] = cs.pop("_un", None), cs.pop("_dif", None), cs.pop("_ag", None)
         f["cor_stats"] = cs
     dados["atend_dias"] = ATEND_DIAS
     if len(dados["filas"]) < MIN_FILAS or not dados["solicitacoes_ate"] or dados["solicitacoes_ate"] == "-":

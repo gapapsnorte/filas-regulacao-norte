@@ -212,6 +212,7 @@
       return {u, n, pct: n / Math.max(totA, 1) * 100, esf: e ?? null, taxa: e ? n / e : null, d12: q ? q[0] : null, t12: q ? q[1] : null, pct12: q && q[1] ? q[0] / q[1] * 100 : null};
     }).sort((a, b) => (b.taxa ?? -1) - (a.taxa ?? -1) || b.n - a.n);  // ranking: quem mais devolve por eSF primeiro
     r.janela12 = d.dev12 ? d.dev12.janela : null;
+    r.ag12 = d.ag12 || null;
     // total da APS: todas as UBS da referência (também as sem devolvidas), como no programa local
     const apsQ = d.dev12 ? Object.entries(d.dev12.u).filter(([u]) => REF.esf[u] != null) : [];
     r.d12Aps = apsQ.reduce((t, [, q]) => t + q[0], 0); r.t12Aps = apsQ.reduce((t, [, q]) => t + q[1], 0);
@@ -234,6 +235,12 @@
     return r;
   }
 
+  // resultado dos agendamentos: a saída efetiva é faixa porque parte deles nunca foi confirmada pelo executante
+  function agTxt(a) {
+    if (!a || !a.n) return "";
+    const pc = x => fmt(x / a.n * 100);
+    return `Dos ${fmt(a.n)} agendamentos dos últimos 12 meses, ${pc(a.conf)}% foram confirmados, ${pc(a.falta)}% foram faltas, ${pc(a.pend)}% seguem sem confirmação do executante e ${pc(a.canc)}% foram cancelados; a saída efetiva ficou entre ${fmt(a.conf / 12, 1)} e ${fmt((a.conf + a.pend) / 12, 1)} atendimentos/mês. `;
+  }
   function textos(r) {
     const s = r.serie, n = s.in.length, t = {};
     const media = a => a.reduce((x, y) => x + y, 0) / Math.max(a.length, 1);
@@ -248,7 +255,7 @@
     const retaTxt = (nome, t) => `${nome} ${sinal(t.a)}/mês` + (t.r2 != null ? ` (R² ${fmt(t.r2, 2)})` : " (R² não calculável)");
     t.fig1 = `A média mensal dos últimos 24 meses (${s.meses[n - 24 < 0 ? 0 : n - 24]} a ${s.meses[n - 1]}) foi de ${fmt(media(s.in.slice(-24)), 1)} solicitações na entrada (INPUT), ${fmt(media(s.out.slice(-24)), 1)} na saída (OUTPUT) e ${sinal(media(s.saldo.slice(-24)))} no saldo regulatório. ` +
       `Comparando as médias anuais, ${comp("entrada", s.in)}; ${comp("saída", s.out)}. ` +
-      `Nos últimos 12 meses, o saldo regulatório foi positivo em ${us.filter(x => x > 0).length} meses, somando ${fmt(us.reduce((a, b) => a + b, 0))} solicitações a mais do que as agendadas no período. ` +
+      `Nos últimos 12 meses, o saldo regulatório foi positivo em ${us.filter(x => x > 0).length} meses, somando ${fmt(us.reduce((a, b) => a + b, 0))} solicitações a mais do que as agendadas no período. ` + agTxt(r.ag12) +
       `Média e tendência respondem a perguntas diferentes: a média dos últimos 12 meses mostra o nível atual e é a base das projeções do painel; a linha de tendência dos últimos ${nj} meses (mínimos quadrados, sem os meses aberrantes) mostra a direção e não é usada para projetar: ${retaTxt("INPUT", ab.in)}, ${retaTxt("OUTPUT", ab.out)}, ${retaTxt("SALDO", ab.saldo)}. Quanto menor o R², menos a reta explica a oscilação mensal.`;
     const ext = [];
     for (const [k, a, chave] of [["INPUT", s.in, "in"], ["OUTPUT", s.out, "out"], ["SALDO REGULATÓRIO", s.saldo, "saldo"]]) {
@@ -604,6 +611,9 @@
       ["Gerado pelo painel", location.href.split("#")[0]]], [30, 90]);
     aba("Saldo Regulatório", [["Mês/Ano", "INPUT", "OUTPUT", "SALDO REGULATÓRIO", "Mês aberrante em"], ...r.serie.meses.map((m, i) => [m, r.serie.in[i], r.serie.out[i], r.serie.saldo[i],
       [["INPUT", "in"], ["OUTPUT", "out"], ["SALDO", "saldo"]].filter(([, k]) => i >= r.aberr.ini && r.aberr[k].flag[i - r.aberr.ini]).map(([t]) => t).join("; ")])], [10, 10, 10, 20, 24]);
+    if (r.ag12) aba("Agendamentos 12 meses", [["Situação do agendamento", "Agendamentos", "%"],
+      ...[["Confirmado", "conf"], ["Falta", "falta"], ["Sem confirmação do executante", "pend"], ["Cancelado", "canc"], ["Outra situação", "outros"]].map(([t, k]) => [t, r.ag12[k], Math.round(r.ag12[k] / r.ag12.n * 1000) / 10]),
+      ["TOTAL", r.ag12.n, 100]], [34, 14, 8]);
     aba("Tempo de espera por risco", [["Classificação", "Mais antiga", "Solicitações", "Espera média (dias)", "Espera mediana (dias)", "Espera da mais antiga (dias)", "Meta do protocolo (dias, mediana)", "Mediana acima da meta?"],
       ...r.risco.map(x => [x.cor, dataXl(x.antiga), x.n, x.n ? x.media ?? "" : "", x.n ? x.mediana ?? "" : "", x.dias ?? "", x.meta ?? "", x.meta && x.n && x.mediana != null ? (x.acima ? "Sim" : "Não") : ""]),
       ["TOTAL", "", r.risco.reduce((a, x) => a + x.n, 0), "", "", "", "", ""]], [14, 12, 12, 22, 20, 22, 22, 14]);
@@ -629,7 +639,7 @@
   // analises/<id>.json não traz a média/mediana de espera por prioridade (cor_stats): vem do dados.json
   async function carregarAnalise(id, cache) {
     const d = await (await fetch(`analises/${id}.json`, cache ? {cache} : undefined)).json();
-    try { const dj = await (await fetch("dados.json", cache ? {cache} : undefined)).json(); d.cor_stats = (dj.filas.find(x => x.id === id) || {}).cor_stats || null; } catch { d.cor_stats = null; }
+    try { const dj = await (await fetch("dados.json", cache ? {cache} : undefined)).json(); const fj = dj.filas.find(x => x.id === id) || {}; d.cor_stats = fj.cor_stats || null; d.ag12 = fj.ag12 || null; } catch { d.cor_stats = null; d.ag12 = null; }
     // % de devolvidas nos últimos 12 meses por unidade (Tabela 1): devolvidas.json, d12[id] = [[índice da unidade, devolvidas, solicitações], ...]
     try { const dv = await (await fetch("devolvidas.json", cache ? {cache} : undefined)).json(); const u = {};
       (dv.d12 && dv.d12[id] || []).forEach(([ui, dd_, tt]) => { u[dv.unidades[ui][0]] = [dd_, tt]; }); d.dev12 = {janela: dv.janela12 || null, u}; } catch { d.dev12 = null; }
