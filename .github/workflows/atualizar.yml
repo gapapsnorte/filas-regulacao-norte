@@ -51,7 +51,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add atraso.json espera.json devolvidas_reg.json
+          git add atraso.json espera.json devolvidas_reg.json fila_reg.json
           if ! git diff --cached --quiet; then
             git commit -q -m "Históricos do painel – $(TZ=America/Sao_Paulo date '+%d/%m/%Y')"
             if ! { git pull -q --rebase origin main && git push -q origin HEAD:main; }; then
@@ -65,6 +65,6 @@ jobs:
         run: |
           git checkout --orphan gh-pages
           git rm -r -q --cached .
-          git add -A -f -- index.html relatorio.js referencias.json dados.json devolvidas.json atraso.json espera.json devolvidas_reg.json analises detalhe README.md
+          git add -A -f -- index.html relatorio.js referencias.json dados.json devolvidas.json atraso.json espera.json devolvidas_reg.json fila_reg.json analises detalhe README.md
           git commit -q -m "Painel – dados de $(TZ=America/Sao_Paulo date '+%F %H:%M')"
           git push -f origin gh-pages

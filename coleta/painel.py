@@ -17,6 +17,9 @@ Gera:
   atraso.json               histórico do atraso do Mapa Social (uma medição por dia); fica no branch main, versionado
   devolvidas_reg.json       registro diário da resolução das devolvidas (códigos que entraram e que saíram do status
                             devolvida, comparando com a publicação anterior); versionado em main como atraso.json
+  fila_reg.json             saídas da fila por mês e por fila, com o destino de cada código, comparando com a publicação
+                            anterior (base do saldo inexplicado); versionado em main como atraso.json
+  detalhe/fila.json         códigos que estão na fila hoje, para a comparação da próxima coleta
 """
 import hashlib
 import json
@@ -123,6 +126,11 @@ def coletar(hoje):
         ["ag12", [PA, U, "Calendar.Ano_Solicitacao", "Calendar.Mes_Solicitacao"],
          ['Count({<%s,[Calendar.Ano_Solicitacao]={">=%d"}>} distinct codigo_solicitacao)' % (R, ano12)]],
         ["tipo", [P, "tipo_procedimento_solicitacao"], ["Count({<%s>} distinct codigo_solicitacao)" % R]],
+        # Quem regula a fila de hoje e onde os agendamentos foram marcados (filtros da aba Filas)
+        ["cen", [P, "nome_central_reguladora_solictacao"], ["Count({<%s,%s>} distinct codigo_solicitacao)" % (R, FILA)]],
+        # Sem o nome SISREG do executante: uma unidade tem vários nomes lá e as contagens por nome se repetem
+        ["exe", [PA, "nome_unidade_executante", "regiao_saude_executante", "Ano_Agendamento", "Mes_Agendamento"],
+         ['Count({<%s,[Ano_Agendamento]={">=%d"}>} distinct codigo_solicitacao)' % (R, ano12)]],
         ["ultima", [], ["Date(Max(data_solicitacao))"]],
         ["det_sol", [P, "codigo_solicitacao", "data_solicitacao", "status_solicitacao_solicitacao",
                      "classificacao_risco", "CID_solicitacao", U, "data_devolucao"],
@@ -166,6 +174,23 @@ def nivel(u, niveis):
 def _curto(st):
     """'SOLICITAÇÃO / PENDENTE / REGULADOR' -> 'PENDENTE / REGULADOR'"""
     return st.split(" / ", 1)[1] if " / " in st else st
+
+
+def central_executante(b, resumo, j12):
+    """Grava em cada fila quem regula quem está na fila hoje (cen = [central, n]) e onde os agendamentos dos últimos
+    12 meses completos foram marcados (exe = [unidade executante, grupo do Mapa Social, n])."""
+    por = {f["p"]: f for f in resumo}
+    cen, exe = defaultdict(lambda: defaultdict(int)), defaultdict(lambda: defaultdict(int))
+    for p, c, q in b["cen"]["rows"]:
+        if p in por and _valido(c):
+            cen[p][c] += int(q)
+    for p, nome, reg, ano, mes, q in b["exe"]["rows"]:
+        if p not in por or not _valido(nome) or mes not in MESES or not ano.isdigit() or (int(ano), MESES.index(mes) + 1) not in j12:
+            continue
+        exe[p][(nome, reg if _valido(reg) else "Sem grupo")] += int(q)
+    for p, f in por.items():
+        f["cen"] = sorted(([c, q] for c, q in cen[p].items()), key=lambda x: -x[1])
+        f["exe"] = sorted(([n, r, q] for (n, r), q in exe[p].items()), key=lambda x: -x[2])
 
 
 def montar(b, hoje, ref=None):
@@ -299,6 +324,7 @@ def montar(b, hoje, ref=None):
     for (p, u), t in sorted(tot12.items()):
         if p in procs and t:
             d12[ident(p)].append([pos_u[u], min(dev12.get((p, u), 0), t), t])
+    central_executante(b, resumo, j12)
     r12 = ["%s/%s" % (MESES[mm - 1], str(a)[2:]) for a, mm in janela12(ref_mes)]
     devolvidas = dict(meta, unidades=[[u, nivel(u, niveis), esf.get(u)] for u in nomes],
                       filas={ident(p): sorted(([pos_u[u], q] for u, q in d["dev_un"].items()), key=lambda x: -x[1])
@@ -495,6 +521,8 @@ def _destino(st):
         return "reenviada"
     if "AGENDADA" in st:
         return "agendada"
+    if "DEVOLVIDA" in st:
+        return "devolvida"
     if "FILA DE ESPERA" in st:
         return "fila de espera"
     if "PENDENTE" in st:
@@ -608,6 +636,82 @@ def historico_devolvidas(dev_det, det, hoje, anterior=None):
     return reg
 
 
+DESTINOS_FILA = ("agendada", "devolvida", "fila de espera", "ausente")   # ordem das contagens em fila_reg.json
+
+
+def _fila_atual(det):
+    """{código SISREG: id da fila} de quem está na fila hoje (pendentes + reenviadas ao regulador)."""
+    return {s[0]: i for i, d in det.items() for s in d["s"] if s[2] in (_curto(PEND), _curto(REENV))}
+
+
+def historico_fila(det, hoje, anterior=None, publicado=None):
+    """Saldo inexplicado (fila_reg.json, versionado em main): compara os códigos que estavam na fila na publicação anterior
+    com os de hoje e conta, por mês e por fila, o destino de quem saiu: agendada, devolvida, fila de espera ou ausente (o
+    código deixou de constar no Mapa Social sem agendamento). Comparar códigos evita somar séries mensais, que mudam
+    para trás a cada recarga. Quem saiu da fila e voltou entre duas coletas não aparece."""
+    arq = PAINEL / "fila_reg.json"
+    try:
+        reg = json.loads(arq.read_text(encoding="utf-8"))
+        assert isinstance(reg.get("meses"), dict)
+    except (OSError, ValueError, AssertionError) as e:
+        print("fila_reg.json ausente ou ilegível (%s); começando o registro." % e)
+        reg = {"inicio": None, "ultima": None, "meses": {}}
+    if anterior is None:
+        try:   # o commit em main pode ter falhado: o que já foi publicado prevalece se estiver mais adiante
+            with urllib.request.urlopen(PUBLICADO + "fila_reg.json", timeout=60) as r:
+                publicado = json.loads(r.read().decode("utf-8"))
+        except Exception as e:
+            print("Saldo inexplicado: não li o registro publicado (%s)." % e)
+        try:
+            with urllib.request.urlopen(PUBLICADO + "detalhe/fila.json", timeout=180) as r:
+                anterior = json.loads(r.read().decode("utf-8"))
+        except Exception as e:   # primeira coleta ou site fora: hoje só grava a base da próxima comparação
+            print("Saldo inexplicado: sem publicação anterior para comparar (%s)." % e)
+            return reg
+    if publicado and (publicado.get("ultima") or "") > (reg.get("ultima") or ""):
+        reg = publicado
+    if not anterior.get("r"):
+        return reg
+    atual = _fila_atual(det)
+    antes = {cod: anterior["ids"][k] for k, cod in anterior["r"]}
+    if len(atual) < MIN_ESTOQUE_REL * len(antes):   # queda brusca da fila = falha de coleta, não saída de verdade
+        print("::warning::Saldo inexplicado: fila caiu de %d para %d; coleta suspeita, dia sem comparação." % (len(antes), len(atual)))
+        return reg
+    status = {}
+    for d in det.values():
+        for sl in d["s"]:
+            status[sl[0]] = sl[2]
+        for ag in d["a"]:
+            status.setdefault(ag[0], "AGENDADA")
+    mes, total = reg["meses"].setdefault(hoje.isoformat()[:7], {}), [0, 0, 0, 0]
+    for cod, i in antes.items():
+        if cod not in atual:
+            dest = _destino(status.get(cod))
+            if dest in DESTINOS_FILA:
+                k = DESTINOS_FILA.index(dest)
+                mes.setdefault(i, [0, 0, 0, 0])[k] += 1
+                total[k] += 1
+    reg["inicio"] = reg["inicio"] or anterior.get("data")
+    reg["ultima"] = hoje.isoformat()
+    print("Saldo inexplicado: saíram %d da fila (%s)" % (sum(total), ", ".join("%s %d" % x for x in zip(DESTINOS_FILA, total))))
+    return reg
+
+
+def acumular_fila(dados, reg):
+    """Soma o registro por fila: sx = [agendadas, devolvidas, fila de espera, ausentes]."""
+    soma = {}
+    for mes in reg["meses"].values():
+        for i, v in mes.items():
+            s = soma.setdefault(i, [0, 0, 0, 0])
+            for k, q in enumerate(v):
+                s[k] += q
+    for f in dados["filas"]:
+        if f["id"] in soma:
+            f["sx"] = soma[f["id"]]
+    if reg.get("inicio"):
+        dados["sx_desde"] = reg["inicio"]
+
+
 def trava_relativa(dados, anterior=None):
     """Compara a coleta com a publicação anterior; devolve a lista de quedas suspeitas (vazia = pode publicar)."""
     if anterior is None:
@@ -709,6 +813,9 @@ def main():
     _grava(PAINEL / "atraso.json", hist)
     _grava(PAINEL / "espera.json", historico_espera(dados, hoje))
     _grava(PAINEL / "devolvidas_reg.json", historico_devolvidas(dev_det, det, hoje))
+    reg_fila = historico_fila(det, hoje)
+    _grava(PAINEL / "fila_reg.json", reg_fila)
+    acumular_fila(dados, reg_fila)
     ultimos = [h["atraso_dias"] for h in hist["medicoes"][-7:]]
     for d in (meta, dados, devolvidas):
         d["atraso_ultimos"] = ultimos
@@ -722,6 +829,10 @@ def main():
         _grava(PAINEL / "detalhe" / f"{i}.json", dict(meta, agendamentos_desde=dev_det["agendamentos_desde"], **d))
     _grava(PAINEL / "detalhe" / "espera.json", dict(meta, **dev_det.pop("espera")))
     _grava(PAINEL / "detalhe" / "devolvidas.json", dict(meta, **dev_det))
+    atual = _fila_atual(det)
+    ids = sorted(set(atual.values()))
+    pos = {i: k for k, i in enumerate(ids)}
+    _grava(PAINEL / "detalhe" / "fila.json", dict(meta, ids=ids, r=[[pos[i], c] for c, i in atual.items()]))
     print("[tempo] gravação: %.0f s" % (time.monotonic() - t), flush=True)
     _saida_actions(publicar="sim")
     print(f"{dados['gerado_em']}: {len(dados['filas'])} filas, solicitações até {dados['solicitacoes_ate']}, "

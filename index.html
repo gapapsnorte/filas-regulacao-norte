@@ -176,6 +176,7 @@ footer details>p:first-of-type{margin-top:12px}
 .botoes button{background:transparent;color:var(--accent);font-weight:600}
 .botoes button.pri{background:var(--accent);color:#fff}
 .botoes button.lnk{border-color:transparent;text-decoration:underline;text-underline-offset:3px;font-weight:500;padding-left:6px;padding-right:6px}
+#central,#exec{max-width:230px}
 /* 5. barra de filtros fixa ao rolar (Filas e Priorização) */
 .ctrl.fixa{position:sticky;top:0;z-index:4;background:var(--bg);padding:6px 0 4px;margin:0 0 8px;box-shadow:0 6px 8px -8px rgba(0,0,0,.25)}
 /* 7. ponto de cor na tabela de prioridades */
@@ -214,6 +215,8 @@ table.rank.regtab td:last-child{text-align:left;padding-left:26px}table.rank.reg
 <div class="ctrl fixa">
   <input type="search" id="busca" placeholder="Buscar procedimento (ex.: cirurgia, holter, oftalmo)">
   <select id="tipo"><option value="">Todos os tipos</option></select>
+  <select id="central" title="Mostra as filas com solicitações aguardando nesta central reguladora"><option value="">Todas as centrais reguladoras</option></select>
+  <select id="exec" title="Mostra as filas com agendamentos nesta unidade nos últimos 12 meses completos"><option value="">Todas as unidades executantes</option></select>
   <select id="alerta">
     <option value="">Com ou sem alerta</option>
     <option value="com-fila">Só com solicitações aguardando</option>
@@ -235,6 +238,7 @@ table.rank.regtab td:last-child{text-align:left;padding-left:26px}table.rank.reg
     <option value="semsaida">Mais tempo sem saída</option>
     <option value="difun">Maior diferença de espera entre unidades</option>
     <option value="falta">Maior percentual de faltas</option>
+    <option value="inexplicado">Maior saldo inexplicado</option>
     <option value="nome">Nome (A–Z)</option>
   </select>
   <select id="periodo" class="periodo" title="Agrupamento dos gráficos de entrada, saída e saldo"><option value="m">Gráficos por mês</option><option value="q">Gráficos por quadrimestre</option></select>
@@ -774,6 +778,36 @@ function espUnHtml(f){
     <p class="nota">Na mesma fila e na mesma prioridade, a ordem é de chegada, então a espera deveria ser parecida entre as unidades. Diferença grande pede verificação; este número sozinho não diz a causa: pode haver pedidos antigos parados, ordem não seguida, oferta exclusiva para parte das unidades ou perfil clínico distinto. Mostra só unidades com ${MIN_UN}+ solicitações na fila, e só prioridades com duas unidades ou mais.</p>
     <div class="rolagem"><table class="cores"><tr><th>Unidade solicitante</th><th>Solicitações na fila</th><th>Espera mediana (dias)</th></tr>${blocos}</table></div></details>`;
 }
+// quem regula a fila de hoje e onde os agendamentos dos últimos 12 meses foram marcados
+function partes(lista,n,top){
+  const tot=lista.reduce((a,x)=>a+x[n],0), v=lista.slice(0,top).map(x=>`${esc(x[0])} ${fmt(x[n])} (${fmt(x[n]/tot*100)}%)`), resto=lista.slice(top).reduce((a,x)=>a+x[n],0);
+  return v.join(" · ")+(resto?` · outras ${fmt(resto)} (${fmt(resto/tot*100)}%)`:"");
+}
+function reguladoraHtml(f){
+  const c=f.cen||[], e=f.exe||[]; if(!c.length&&!e.length) return "";
+  const a=c.length?`<b class="dica" title="Central reguladora de cada solicitação que está na fila hoje. Central fora da Região Norte indica que a regulação não depende só da região.">Quem regula a fila</b>: ${partes(c,1,3)}.`:"";
+  const b=e.length?` <b class="dica" title="Unidade executante dos agendamentos dos últimos 12 meses completos, conforme o Mapa Social. Quando aparece CRDF, ele pode não ser o local real do atendimento.">Onde foi agendado (12 meses)</b>: ${partes(e,2,5)}.`:"";
+  return `<p class="nota" style="margin:4px 0 0">${a}${b}</p>`;
+}
+// saldo inexplicado: quem saiu da fila sem agendamento, devolução ou passagem à fila de espera
+function saldoInexplicadoHtml(f){
+  const s=f.sx; if(!s) return "";
+  const tot=s[0]+s[1]+s[2]+s[3];
+  return `<p class="nota" style="margin:4px 0 0"><b class="dica" title="A cada atualização, o painel compara os códigos que estavam na fila com os de agora e registra o destino de quem saiu. Inexplicado = o código deixou de constar no Mapa Social, sem agendamento, devolução ou passagem à fila de espera. Pode ser cancelamento, duplicidade, mudança para unidade de outra região ou erro de registro; o número sozinho não diz qual. Quem saiu e voltou entre duas atualizações não aparece.">Saldo inexplicado</b> (registro desde ${dd(D.sx_desde)}): <b>${fmt(s[3])}</b> de ${fmt(tot)} que saíram da fila. As demais: ${fmt(s[0])} agendadas, ${fmt(s[1])} devolvidas, ${fmt(s[2])} para a fila de espera.</p>`;
+}
+function montarFiltrosRegulacao(){
+  const sel=$("central"); if(sel.dataset.ok) return; sel.dataset.ok=1;
+  const c={}, g={};
+  D.filas.forEach(f=>{ (f.cen||[]).forEach(([n,q])=>{c[n]=(c[n]||0)+q;}); (f.exe||[]).forEach(([n,r,q])=>{const k=g[r]=g[r]||{t:0,u:{}}; k.t+=q; k.u[n]=(k.u[n]||0)+q;}); });
+  Object.entries(c).sort((a,b)=>b[1]-a[1]).forEach(([n,q])=>sel.add(new Option(`${n} (${fmt(q)} na fila)`,n)));
+  Object.entries(g).sort((a,b)=>b[1].t-a[1].t).forEach(([r,k])=>{
+    const og=document.createElement("optgroup"); og.label=r;
+    og.appendChild(new Option(`Todas: ${r} (${fmt(k.t)})`,"r:"+r));
+    Object.entries(k.u).sort((a,b)=>b[1]-a[1]).forEach(([n,q])=>og.appendChild(new Option(`${n} (${fmt(q)})`,"u:"+n)));
+    $("exec").appendChild(og);
+  });
+}
+const naExec=(x,ex)=>ex==="r:"+x[1]||ex==="u:"+x[0];
 function item(f){
   const meta = (window._analiseMeta && window._analiseMeta(f.p)) || {};
   const linhas = COR.filter(c=>f.cores[c]).map(c=>{const k=f.cores[c], m=meta[c];
@@ -796,7 +830,7 @@ function item(f){
      <div class="rolagem"><table class="cores"><tr><th>Prioridade</th><th>Solicitações</th><th>Mais antiga</th><th title="Dias entre a solicitação mais antiga dessa prioridade e a data da coleta">Espera da mais antiga (dias)</th><th title="Tempo médio que quem está na fila hoje já esperou. ${JAN.esp}">Média na fila hoje (dias)</th><th title="Mediana do tempo que quem está na fila hoje já esperou. É o número comparado com a meta, quando há meta">Mediana na fila hoje (dias)</th><th title="Tempo médio entre a solicitação e o atendimento, nos agendamentos com atendimento nos últimos ${D.atend_dias||90} dias. n = quantos agendamentos entraram na média: com n pequeno (abaixo de 20) a média diz pouco. ${JAN.d90}">Média até o atendimento (dias)</th><th title="Mediana do tempo entre a solicitação e o atendimento, nos agendados dos últimos 90 dias. É o número comparado com a meta, quando há meta, porque o protocolo calcula da inserção à execução">Mediana até o atendimento (dias)</th><th title="Tempo máximo de espera (mediana) definido em normativa da SES-DF para a prioridade">Meta (dias)</th></tr>${linhas}</table></div>
      <p class="nota" style="margin:2px 0 0">“Média na fila hoje” = há quanto tempo, em média, esperam as solicitações que ainda estão na fila. “Média até o atendimento” = tempo entre a solicitação e o atendimento nos agendados com atendimento ${JT("d90",`nos últimos ${D.atend_dias||90} dias`)} (n = quantos). A meta é comparada com a mediana até o atendimento, como no cálculo do protocolo.</p>
      <p style="font-size:.8rem;color:var(--muted);margin:2px 0 0">Devolvidas aguardando correção (fora da fila; todas as de hoje, sem recorte de período): ${fmt(f.devolvidas)} · ${resumoReg(f)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Sem meta de tempo de espera definida em normativa da SES-DF para este procedimento"}</p>
-     ${saidaHtml(f)}${espUnHtml(f)}
+     ${reguladoraHtml(f)}${saidaHtml(f)}${saldoInexplicadoHtml(f)}${espUnHtml(f)}
      ${f.fila>0?simHtml(f):""}
      <div class="gerar" data-id="${f.id}" data-p="${esc(f.p)}">
        <b>Gerar análise completa</b>
@@ -807,21 +841,25 @@ function item(f){
    </div></div>`;
 }
 function filtrar(){
-  const q=norm($("busca").value.trim()), t=$("tipo").value, al=$("alerta").value, o=$("ordem").value;
+  const q=norm($("busca").value.trim()), t=$("tipo").value, al=$("alerta").value, o=$("ordem").value, ce=$("central").value, ex=$("exec").value;
   const L=D.filas.filter(f=>(!q||norm(f.p).includes(q))&&(!t||f.tipo===t)&&
+    (!ce||(f.cen||[]).some(x=>x[0]===ce))&&(!ex||(f.exe||[]).some(x=>naExec(x,ex)))&&
     (!al || (al==="naoag" ? coresNaoAgendadas(f).length>0 : al==="com-fila" ? f.fila>0 : al==="qualquer" ? f.alertas.length : al==="nenhum" ? !f.alertas.length : al==="sem-meta" ? !f.meta_normativa : al==="com-meta" ? f.meta_normativa : f.alertas.some(a=>TIPO_ALERTA[al].test(a)))));
-  const k={fila:f=>-f.fila,espera:f=>-(f.espera_max||0),saldo:f=>-f.saldo12,devolvidas:f=>-f.devolvidas,semsaida:f=>-diasSemSaida(f),difun:f=>-(f.dif_un?f.dif_un.d:-1),falta:f=>-faltaPct(f)};
+  const k={fila:f=>-f.fila,espera:f=>-(f.espera_max||0),saldo:f=>-f.saldo12,devolvidas:f=>-f.devolvidas,semsaida:f=>-diasSemSaida(f),difun:f=>-(f.dif_un?f.dif_un.d:-1),falta:f=>-faltaPct(f),inexplicado:f=>-(f.sx?f.sx[3]:0)};
   L.sort(o==="nome"?(a,b)=>a.p.localeCompare(b.p,"pt"):(a,b)=>k[o](a)-k[o](b)||b.fila-a.fila);
   return L;
 }
 function render(){
+  montarFiltrosRegulacao();
   const L = ultimaLista = filtrar();
   const abertos=[...document.querySelectorAll("#lista .fila.aberta")].map(c=>c.dataset.id);   // cartões abertos continuam abertos
   $("lista").innerHTML=L.slice(0,vis).map(item).join("")||"<p>Nenhuma fila encontrada.</p>";
   abertos.forEach(id=>{ const c=$("f-"+id); if(c) abrir(c); });
   $("mais").hidden=L.length<=vis;
   $("mais").textContent=`Mostrar mais (${fmt(L.length-vis)} restantes)`;
-  $("cont").textContent=`${fmt(L.length)} de ${fmt(D.filas.length)} filas`;
+  const ce=$("central").value, ex=$("exec").value;
+  const nCe=ce?L.reduce((a,f)=>a+(f.cen||[]).filter(x=>x[0]===ce).reduce((s,x)=>s+x[1],0),0):0, nEx=ex?L.reduce((a,f)=>a+(f.exe||[]).filter(x=>naExec(x,ex)).reduce((s,x)=>s+x[2],0),0):0;
+  $("cont").textContent=`${fmt(L.length)} de ${fmt(D.filas.length)} filas`+(ce?` · ${fmt(nCe)} na fila nesta central`:"")+(ex?` · ${fmt(nEx)} agendamentos em 12 meses nesta seleção`:"");
 }
 function abrir(c){
   c.classList.add("aberta");
@@ -831,7 +869,7 @@ function abrir(c){
 function irParaFila(id){
   const f=porId[id]; if(!f) return;
   mostrarAba("filas");
-  if(!ultimaLista.slice(0,vis).includes(f)){ $("busca").value=f.p; $("tipo").value=""; $("alerta").value=""; vis=60; render(); }
+  if(!ultimaLista.slice(0,vis).includes(f)){ $("busca").value=f.p; $("tipo").value=""; $("central").value=""; $("exec").value=""; $("alerta").value=""; vis=60; render(); }
   const c=$("f-"+id); if(c){ abrir(c); c.classList.add("destaque"); c.scrollIntoView({block:"start",behavior:"smooth"}); }
 }
 function lerHash(){
@@ -846,13 +884,13 @@ function lerHash(){
 }
 async function baixarLista(){
   await xlsx();
-  const L=filtrar(), cab=["Procedimento","Tipo","Na fila","Vermelho","Vermelho – dias","Amarelo","Amarelo – dias","Verde","Verde – dias","Azul","Azul – dias","Sem risco","Devolvidas","Saldo 12 meses","Tempo para agendar a fila atual (dias)","Agendados à frente","Último agendamento","Agendamentos 12 meses","Faltas 12 meses (%)","Sem confirmação 12 meses (%)","Diferença de espera entre unidades (dias)","Prioridades com previsão de agendamento acima de 5 anos","Alertas"];
+  const L=filtrar(), cab=["Procedimento","Tipo","Na fila","Vermelho","Vermelho – dias","Amarelo","Amarelo – dias","Verde","Verde – dias","Azul","Azul – dias","Sem risco","Devolvidas","Saldo 12 meses","Tempo para agendar a fila atual (dias)","Agendados à frente","Último agendamento","Agendamentos 12 meses","Faltas 12 meses (%)","Sem confirmação 12 meses (%)","Diferença de espera entre unidades (dias)","Prioridades com previsão de agendamento acima de 5 anos","Central reguladora (na fila)","Unidades executantes (agendamentos em 12 meses)","Saldo inexplicado","Saíram da fila (registro do painel)","Alertas"];
   const g=(f,c,k)=>f.cores[c]?f.cores[c][k]:"";
-  const linhas=L.map(f=>[f.p,f.tipo,f.fila,g(f,"vermelho","n"),g(f,"vermelho","dias"),g(f,"amarelo","n"),g(f,"amarelo","dias"),g(f,"verde","n"),g(f,"verde","dias"),g(f,"azul","n"),g(f,"azul","dias"),g(f,"sem risco","n"),f.devolvidas,f.saldo12,baseSim(f).espera!=null&&f.fila>0?Math.round(baseSim(f).espera):"",f.futuros,dataXl(f.ult_ag),f.ag12?f.ag12.n:"",f.ag12&&f.ag12.n?Math.round(f.ag12.falta/f.ag12.n*1000)/10:"",f.ag12&&f.ag12.n?Math.round(f.ag12.pend/f.ag12.n*1000)/10:"",f.dif_un?f.dif_un.d:"",coresNaoAgendadas(f).join(", "),f.alertas.join(" | ")]);
+  const linhas=L.map(f=>[f.p,f.tipo,f.fila,g(f,"vermelho","n"),g(f,"vermelho","dias"),g(f,"amarelo","n"),g(f,"amarelo","dias"),g(f,"verde","n"),g(f,"verde","dias"),g(f,"azul","n"),g(f,"azul","dias"),g(f,"sem risco","n"),f.devolvidas,f.saldo12,baseSim(f).espera!=null&&f.fila>0?Math.round(baseSim(f).espera):"",f.futuros,dataXl(f.ult_ag),f.ag12?f.ag12.n:"",f.ag12&&f.ag12.n?Math.round(f.ag12.falta/f.ag12.n*1000)/10:"",f.ag12&&f.ag12.n?Math.round(f.ag12.pend/f.ag12.n*1000)/10:"",f.dif_un?f.dif_un.d:"",coresNaoAgendadas(f).join(", "),(f.cen||[]).map(x=>`${x[0]}: ${x[1]}`).join("; "),(f.exe||[]).map(x=>`${x[0]}: ${x[2]}`).join("; "),f.sx?f.sx[3]:"",f.sx?f.sx[0]+f.sx[1]+f.sx[2]+f.sx[3]:"",f.alertas.join(" | ")]);
   const wb=XLSX.utils.book_new(), ws=XLSX.utils.aoa_to_sheet([cab,...linhas]);
-  ws["!cols"]=[{wch:50},{wch:10},{wch:9},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:11},{wch:13},{wch:16},{wch:14},{wch:16},{wch:13},{wch:13},{wch:16},{wch:18},{wch:18},{wch:80}];
+  ws["!cols"]=[{wch:50},{wch:10},{wch:9},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:11},{wch:13},{wch:16},{wch:14},{wch:16},{wch:13},{wch:13},{wch:16},{wch:18},{wch:18},{wch:36},{wch:60},{wch:12},{wch:14},{wch:80}];
   XLSX.utils.book_append_sheet(wb,ws,"Filas");
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Filtro",`${$("busca").value||"(todos)"} · ${$("tipo").value||"todos os tipos"} · ${$("alerta").options[$("alerta").selectedIndex].text}`]])),"Leia-me");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Filtro",`${$("busca").value||"(todos)"} · ${$("tipo").value||"todos os tipos"} · ${$("central").value||"todas as centrais"} · ${$("exec").value?$("exec").options[$("exec").selectedIndex].text:"todas as executantes"} · ${$("alerta").options[$("alerta").selectedIndex].text}`]])),"Leia-me");
   XLSX.writeFile(wb,`Filas Região Norte (${D.data.split("-").reverse().join("-")}).xlsx`);
 }
 
@@ -1280,7 +1318,7 @@ const PRONTO=fetch("dados.json",{cache:"no-store"}).then(r=>{if(!r.ok) throw new
   $("info").textContent="não foi possível carregar os dados";
   $("aviso").hidden=false; $("aviso").textContent="Erro ao carregar dados.json ("+err.message+"). Tente recarregar a página; se persistir, a atualização automática falhou.";
 });
-["busca","tipo","alerta","ordem"].forEach(id=>$(id).addEventListener("input",()=>{vis=60;render();}));
+["busca","tipo","central","exec","alerta","ordem"].forEach(id=>$(id).addEventListener("input",()=>{vis=60;render();}));
 ["un-busca","un-nivel","un-tipo","un-ordem"].forEach(id=>$(id).addEventListener("input",()=>{ if(id==="un-ordem") unOrd={k:null,dir:-1}; DV&&renderUn(); }));
 ["pr-busca","pr-tipo","pr-nivel","pr-ordem"].forEach(id=>$(id).addEventListener("input",()=>{ if(id==="pr-ordem") prOrd={k:null,dir:-1}; visPr=60;DV&&renderPr();}));
 document.querySelectorAll("select.periodo").forEach(s=>s.addEventListener("input",()=>mudarPeriodo(s.value)));
