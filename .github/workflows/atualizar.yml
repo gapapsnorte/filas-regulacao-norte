@@ -10,6 +10,10 @@ on:
         description: "Coletar mesmo sem recarga nova do Mapa Social"
         type: boolean
         default: true
+      liberar_trava:
+        description: "Publicar mesmo com queda brusca em relação à publicação anterior (use só se a queda for real)"
+        type: boolean
+        default: false
 permissions:
   contents: write
 concurrency:
@@ -32,9 +36,13 @@ jobs:
           PAINEL_DIR: ${{ github.workspace }}
           TZ: America/Sao_Paulo
           MODO: ${{ (github.event_name == 'workflow_dispatch' && inputs.forcar) && '--forcar' || '--se-mudou' }}
+          LIBERAR: ${{ (github.event_name == 'workflow_dispatch' && inputs.liberar_trava) && '--liberar-trava' || '' }}
         run: |
           for i in 1 2 3; do
-            python coleta/painel.py $MODO && exit 0
+            rc=0
+            python coleta/painel.py $MODO $LIBERAR || rc=$?
+            [ "$rc" -eq 0 ] && exit 0
+            [ "$rc" -eq 3 ] && exit 3   # trava da coleta: repetir agora não adianta
             echo "Tentativa $i falhou"; sleep 90
           done
           exit 1

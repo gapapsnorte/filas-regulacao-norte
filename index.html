@@ -20,11 +20,11 @@
   --bg:#12161c;--card:#1b2129;--txt:#e6e9ee;--muted:#9aa4b2;--line:#2c3440;--accent:#6ea8ff;
   --in:#e6e9ee;--out:#3ccf8e;--saldo:#ff6b5e;--alerta-bg:#3a2a12;--alerta-txt:#ffc27a;--aviso-bg:#3d1b1b;--aviso-txt:#ffb3b3;}
 *{box-sizing:border-box}
-html{font-size:14px}
-body{margin:0;background:var(--bg);color:var(--txt);font:13px/1.3 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+html{font-size:16px}
+body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 .wrap{max-width:1180px;margin:0 auto;padding:14px 14px 28px}
 header h1{font-size:1.45rem;margin:0}
-header p{margin:4px 0 0;color:var(--muted);font-size:.72rem}
+header p{margin:4px 0 0;color:var(--muted);font-size:.75rem}
 .cred{font-size:.75rem;font-weight:400;margin-left:6px;vertical-align:middle;opacity:.85}
 .piloto{display:inline-block;background:var(--accent);color:#fff;border-radius:999px;padding:1px 9px;font-size:.75rem;font-weight:600;margin-left:6px;vertical-align:middle}
 .aviso{background:var(--aviso-bg);color:var(--aviso-txt);border-radius:10px;padding:10px 14px;margin-top:12px;font-size:.9rem}
@@ -39,7 +39,7 @@ header p{margin:4px 0 0;color:var(--muted);font-size:.72rem}
 .ctrl input[type=search]{flex:1 1 180px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt);font-size:.9rem}
 .ctrl select,.ctrl button{padding:5px 7px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt);font-size:.9rem;cursor:pointer}
 .ctrl .cont{color:var(--muted);font-size:.85rem;margin-left:auto}
-.lista{display:flex;flex-direction:column;gap:5px}
+.lista{display:flex;flex-direction:column;gap:8px}
 .fila{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 12px;cursor:pointer}
 .fila:hover,.fila:focus-visible{border-color:var(--accent);outline:none}
 .fila.destaque{box-shadow:0 0 0 2px var(--accent)}
@@ -52,11 +52,11 @@ header p{margin:4px 0 0;color:var(--muted);font-size:.72rem}
 .num small{display:block;color:var(--muted);font-size:.75rem}
 .chips{display:flex;flex-wrap:wrap;gap:4px}
 .chip{display:inline-flex;flex-direction:column;align-items:flex-start;gap:0;border-radius:6px;padding:2px 7px;font-size:.78rem;line-height:1.2;font-variant-numeric:tabular-nums;color:#111;cursor:help}
-.chip small{font-size:.64rem;font-weight:400;opacity:.9;white-space:nowrap}
+.chip small{font-size:.75rem;font-weight:400;opacity:.9;white-space:nowrap}
 .chip.vermelho{background:var(--vermelho);color:#fff}.chip.amarelo{background:var(--amarelo)}.chip.verde{background:var(--verde)}
 .chip.azul{background:var(--azul)}.chip.semrisco{background:var(--semrisco)}
 .alertas{margin-top:3px;display:flex;flex-wrap:wrap;gap:4px}
-.tag{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:0 7px;font-size:.7rem;color:var(--muted);white-space:nowrap}
+.tag{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:0 7px;font-size:.75rem;color:var(--muted);white-space:nowrap}
 .tag.ok{border-color:var(--out);color:var(--out)}
 .sim-wrap{margin-top:8px}.sim-abrir{width:100%;text-align:left;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font:inherit;font-weight:600;cursor:pointer;color:var(--txt)}.sim-abrir:hover{border-color:var(--accent)}
 .sim{margin-top:6px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);cursor:default}.sim[hidden]{display:none}
@@ -80,7 +80,7 @@ header p{margin:4px 0 0;color:var(--muted);font-size:.72rem}
 .alerta{background:var(--alerta-bg);color:var(--alerta-txt);border-radius:6px;padding:2px 8px;font-size:.78rem}
 .det{display:none;margin-top:6px;border-top:1px solid var(--line);padding-top:6px;cursor:default}
 .fila.aberta .det{display:block}
-.leg{display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;font-size:.72rem;color:var(--muted);margin:2px 0}
+.leg{display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;font-size:.75rem;color:var(--muted);margin:2px 0}
 .leg i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:4px}
 .leg svg{vertical-align:middle;margin-right:4px;color:var(--muted)}
 .ajuda{border:1px solid var(--line);background:var(--card);color:var(--accent);border-radius:50%;width:22px;height:22px;font-size:.8rem;font-weight:700;cursor:pointer;line-height:1;padding:0}
@@ -92,7 +92,7 @@ header p{margin:4px 0 0;color:var(--muted);font-size:.72rem}
 .serie-dv .ctrl select{max-width:100%}
 .busca-proc{display:inline-flex;align-items:center;gap:4px;max-width:100%;flex:1 1 300px}#rg-proc-txt{flex:1 1 auto;width:auto;min-width:0;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--card);color:var(--txt)}
 .serie-dv .nota{margin:6px 0 0;font-size:.82rem;color:var(--muted)}
-.periodo-nota{font-size:.74rem;color:var(--muted);margin:2px 0 0}
+.periodo-nota{font-size:.75rem;color:var(--muted);margin:2px 0 0}
 .dica{text-decoration:underline dotted;text-underline-offset:2px;cursor:help}
 .fraco{color:var(--muted)}
 .graf svg{display:block;touch-action:pan-y}
@@ -100,10 +100,12 @@ header p{margin:4px 0 0;color:var(--muted);font-size:.72rem}
 .tip b{display:block;margin-bottom:2px}
 .tip i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
 table.cores,table.tab{border-collapse:collapse;font-size:.82rem;margin-top:4px}
-table.cores td,table.cores th,table.tab td,table.tab th{padding:2px 8px;border-bottom:1px solid var(--line);text-align:right}
+table.cores td,table.cores th,table.tab td,table.tab th{padding:4px 8px;border-bottom:1px solid var(--line);text-align:right}
 table.cores td:first-child,table.cores th:first-child,table.tab td:first-child,table.tab th:first-child{text-align:left}
 table.tab{width:100%}
 table.tab td:nth-child(2),table.tab th:nth-child(2){text-align:left}
+#un-lista table.rank>tbody>tr.u>td:nth-child(2),table.regtab>tbody>tr>td:nth-child(2){text-align:right}
+.sim-aviso{margin:0 0 8px;font-size:.82rem;font-weight:600;color:var(--muted)}
 .rolagem{max-height:360px;overflow:auto}
 .acima{color:var(--saldo);font-weight:600}
 .un-esp{margin-top:8px}.un-esp summary{list-style:none;cursor:pointer;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-weight:600}.un-esp summary:hover{border-color:var(--accent)}.un-esp summary::-webkit-details-marker{display:none}.un-esp summary::before{content:"▸ "}.un-esp[open] summary::before{content:"▾ "}
@@ -158,7 +160,7 @@ footer details>p:first-of-type{margin-top:12px}
   .ctrl .cont{margin-left:0;flex-basis:100%}
   .kpis{display:flex;overflow-x:auto;scroll-snap-type:x proximity;gap:8px;margin:10px -14px;padding:0 14px 4px}
   .kpi{flex:0 0 150px;scroll-snap-align:start;padding:6px 10px}
-  .kpi b{font-size:1.15rem}.kpi span{font-size:.74rem}
+  .kpi b{font-size:1.15rem}.kpi span{font-size:.75rem}
   .pr-cab{display:none}
 }
 /* ajustes de leitura: legendas, botões, filtros fixos, celular */
@@ -204,8 +206,8 @@ table.rank.regtab td:last-child{text-align:left;padding-left:26px}table.rank.reg
 <nav class="abas" role="tablist">
   <button role="tab" data-aba="filas" aria-selected="true">Filas</button>
   <button role="tab" data-aba="dev" aria-selected="false">Devolvidas</button>
-  <button role="tab" data-aba="oferta" aria-selected="false" title="Fila de espera (aguardando pactuação), filas sem saída e filas paradas">Sem oferta</button>
-  <button role="tab" data-aba="prio" aria-selected="false" title="Todas as filas lado a lado: dano acumulado e esforço para corrigir">Priorização</button>
+  <button role="tab" data-aba="oferta" aria-selected="false" title="Fila de espera (aguardando pactuação), filas sem saída e filas paradas">Oferta interrompida ou não pactuada</button>
+  <button role="tab" data-aba="prio" aria-selected="false" title="Todas as filas lado a lado: tempo de espera acumulado e esforço para corrigir">Priorização</button>
 </nav>
 
 <section id="aba-filas">
@@ -217,13 +219,13 @@ table.rank.regtab td:last-child{text-align:left;padding-left:26px}table.rank.reg
     <option value="com-fila">Só com solicitações aguardando</option>
     <option value="qualquer">Só com alertas</option>
     <option value="nenhum">Só sem alertas</option>
-    <option value="sem-meta">Sem meta normativa</option>
+    <option value="sem-meta">Sem meta nos protocolos consultados</option>
     <option value="com-meta">Com meta normativa</option>
     <option value="crescendo">Fila crescendo</option>
     <option value="esperando">Espera acima da meta</option>
     <option value="parada">Fila parada</option>
     <option value="semsaida">Sem saída há mais de 1 ano</option>
-    <option value="naoag">Prioridade não agendada em 5 anos</option>
+    <option value="naoag">Prioridade com previsão de agendamento acima de 5 anos</option>
   </select>
   <select id="ordem">
     <option value="fila">Maior fila</option>
@@ -245,9 +247,9 @@ table.rank.regtab td:last-child{text-align:left;padding-left:26px}table.rank.reg
 
 <section id="aba-dev" hidden>
 <div class="serie-dv" id="dv-reg">
-<button type="button" class="sim-abrir" id="rg-abrir" aria-expanded="false">▸ Resolução das devolvidas (registro diário do painel)</button>
+<button type="button" class="sim-abrir" id="rg-abrir" aria-expanded="false">▸ Saída das devolvidas (registro diário do painel)</button>
 <div id="rg-corpo" hidden>
-<p class="nota" style="margin-top:8px">O Mapa Social só mostra a situação atual de cada solicitação: uma devolvida que foi corrigida, reenviada e agendada deixa de aparecer como devolvida. Por isso o painel passou a registrar, a cada coleta, os códigos que <b>entram</b> no status devolvida e os que <b>saem</b> dele, e para onde vão (reenviada, agendada, pendente, fila de espera ou <span class="dica" data-jan="canc">cancelada presumida</span>). É a linha de base para medir quantas devoluções cada unidade corrige e em quanto tempo. <button type="button" class="ajuda" aria-expanded="false" title="Como as medidas são calculadas">?</button><span class="nota12" hidden><b>Novas</b> = devolvidas que apareceram depois do início do registro (o estoque que já existia no início fica à parte). <b>Resolvidas</b> = novas que depois saíram do status devolvida; a <b data-jan="d30">coorte de 30 dias</b> considera só as novas com 30 dias ou mais de registro, para que todas tenham tido o mesmo prazo. <b>Dias até sair</b> = da entrada no registro até a saída (mediana). As saídas do estoque inicial também são contadas, mas sem prazo, porque não se sabe quando cada uma foi devolvida em relação ao registro. <b>Cancelada (presumida)</b>: como o painel chega a essa classificação, passo a passo. <br>1) O Mapa Social mostra só a situação de hoje de cada solicitação, e só em quatro status: pendente, reenviada, devolvida e fila de espera (os agendamentos ficam em outra base). Ele não guarda histórico.<br>2) Por isso o painel guarda o seu próprio histórico: a cada coleta, compara a lista de códigos devolvidos de hoje com a da coleta anterior.<br>3) Um código que estava devolvido ontem e não está mais devolvido hoje 'saiu' do status. O painel então procura esse código nos outros status de hoje: se está como reenviada, o destino é 'reenviada'; se tem agendamento, 'agendada'; se está pendente ou em fila de espera, 'pendente' ou 'fila de espera'.<br>4) Se o código não aparece em lugar nenhum, ele sumiu do Mapa Social. Esse caso é chamado de 'cancelada (presumida)'.<br><b>Por que 'presumida'</b>: uma devolvida só deixa de aparecer quando alguém a reenvia (e então ela reaparece em outro status) ou a cancela no SISREG (a unidade desiste, o regulador cancela ou há negativa). Como o sumiço não tem outra explicação comum, o cancelamento é a hipótese mais provável. Mas o painel não vê o cancelamento, só vê o código desaparecer.<br><b>O que pode enganar</b>: (a) a unidade passar a pertencer a outra região, e o código sair da Região Norte sem ter sido cancelado; (b) uma recarga do Mapa Social falhar ou vir incompleta num dia, fazendo códigos sumirem e voltarem depois; (c) o código ser agendado e a base de agendamentos ainda não ter atualizado.<br><b>Como usar</b>: trate o número como estimativa do que foi cancelado, útil para comparar unidades e acompanhar a tendência, e não como contagem oficial. Cancelamentos conferidos um a um só no SISREG.</span></p>
+<p class="nota" style="margin-top:8px">O Mapa Social só mostra a situação atual de cada solicitação: uma devolvida que foi corrigida, reenviada e agendada deixa de aparecer como devolvida. Por isso o painel passou a registrar, a cada coleta, os códigos que <b>entram</b> no status devolvida e os que <b>saem</b> dele, e para onde vão (reenviada, agendada, pendente, fila de espera ou <span class="dica" data-jan="canc">cancelada presumida</span>). É a linha de base para medir quantas devoluções cada unidade corrige e em quanto tempo. <button type="button" class="ajuda" aria-expanded="false" title="Como as medidas são calculadas">?</button><span class="nota12" hidden><b>Novas</b> = devolvidas que apareceram depois do início do registro (o estoque que já existia no início fica à parte). <b>Saíram</b> = novas que depois saíram do status devolvida; a <b data-jan="d30">coorte de 30 dias</b> considera só as novas com 30 dias ou mais de registro, para que todas tenham tido o mesmo prazo. <b>Dias até sair</b> = da entrada no registro até a saída (mediana). As saídas do estoque inicial também são contadas, mas sem prazo, porque não se sabe quando cada uma foi devolvida em relação ao registro. <b>Cancelada (presumida)</b>: como o painel chega a essa classificação, passo a passo. <br>1) O Mapa Social mostra só a situação de hoje de cada solicitação, e só em quatro status: pendente, reenviada, devolvida e fila de espera (os agendamentos ficam em outra base). Ele não guarda histórico.<br>2) Por isso o painel guarda o seu próprio histórico: a cada coleta, compara a lista de códigos devolvidos de hoje com a da coleta anterior.<br>3) Um código que estava devolvido ontem e não está mais devolvido hoje 'saiu' do status. O painel então procura esse código nos outros status de hoje: se está como reenviada, o destino é 'reenviada'; se tem agendamento, 'agendada'; se está pendente ou em fila de espera, 'pendente' ou 'fila de espera'.<br>4) Se o código não aparece em lugar nenhum, ele sumiu do Mapa Social. Esse caso é chamado de 'cancelada (presumida)'.<br><b>Por que 'presumida'</b>: uma devolvida só deixa de aparecer quando alguém a reenvia (e então ela reaparece em outro status) ou a cancela no SISREG (a unidade desiste, o regulador cancela ou há negativa). Como o sumiço não tem outra explicação comum, o cancelamento é a hipótese mais provável. Mas o painel não vê o cancelamento, só vê o código desaparecer.<br><b>O que pode enganar</b>: (a) a unidade passar a pertencer a outra região, e o código sair da Região Norte sem ter sido cancelado; (b) uma recarga do Mapa Social falhar ou vir incompleta num dia, fazendo códigos sumirem e voltarem depois; (c) o código ser agendado e a base de agendamentos ainda não ter atualizado.<br><b>Como usar</b>: trate o número como estimativa do que foi cancelado, útil para comparar unidades e acompanhar a tendência, e não como contagem oficial. Cancelamentos conferidos um a um só no SISREG.</span></p>
 <div class="ctrl">
   <select id="rg-nivel"><option value="APS">APS (UBS e PSR)</option><option value="">Todos os níveis</option></select>
   <select id="rg-tipo"><option value="">Consultas e exames</option></select>
@@ -267,7 +269,7 @@ table.rank.regtab td:last-child{text-align:left;padding-left:26px}table.rank.reg
 </div>
 
 <div id="dv-un" hidden>
-<p class="nota">Solicitações devolvidas pelo regulador, por unidade que solicitou (use o filtro para ver só consultas ou só exames). <i>Por eSF</i> = devolvidas ÷ número de equipes de Saúde da Família da UBS (só para a APS). <button type="button" class="ajuda" aria-expanded="false" title="Como é calculada a % de devolvidas (12 m)">?</button><span class="nota12" hidden></span> Clique no cabeçalho para ordenar e na unidade para ver os procedimentos que ela mais devolve.</p>
+<p class="nota">Solicitações devolvidas pelo regulador, por unidade que solicitou (use o filtro para ver só consultas ou só exames). <i>Por eSF</i> = devolvidas ÷ número de equipes de Saúde da Família da UBS (só para a APS; referência das eSF: RH APS Norte, junho/2026). <button type="button" class="ajuda" aria-expanded="false" title="Como é calculada a % de devolvidas (12 m)">?</button><span class="nota12" hidden></span> Clique no cabeçalho para ordenar e na unidade para ver os procedimentos que ela mais devolve.</p>
 <div class="ctrl">
   <input type="search" id="un-busca" placeholder="Buscar unidade (ex.: UBS 2, PSR, policlínica)">
   <select id="un-nivel"><option value="APS">APS (UBS e PSR)</option><option value="">Todos os níveis</option></select>
@@ -308,7 +310,7 @@ table.rank.regtab td:last-child{text-align:left;padding-left:26px}table.rank.reg
 </section>
 
 <section id="aba-oferta" hidden>
-<p class="nota">Procedimentos em que falta oferta pactuada para a Região Norte, reunindo três sinais: <b>fila de espera</b> (solicitações no status “pendente / fila de espera” do SISREG, que aguardam pactuação), <b>sem saída há mais de 1 ano</b> e <b>fila parada</b>. <button type="button" class="ajuda" aria-expanded="false" title="O que cada sinal significa">?</button><span class="nota12" hidden><b>Fila de espera</b>: a solicitação foi feita, mas o procedimento não tem vaga pactuada para a região; ela espera a pactuação e por isso fica fora da fila mostrada na aba Filas. <b>Sem saída há mais de 1 ano</b>: há solicitações aguardando e o último agendamento registrado tem <span data-jan="semsaida">mais de 365 dias</span>, ou não há nenhum. <b>Fila parada</b>: 20 ou mais aguardando, ninguém agendado <span data-jan="parada">nos últimos 3 meses</span> nem marcado à frente. Os dois últimos sinais também aparecem como alertas na aba Filas. O Mapa Social só mostra a situação atual; o registro diário da fila de espera é feito pelo próprio painel a cada coleta e mostra desde quando cada procedimento está nela.</span></p>
+<p class="nota">Procedimentos com sinais de oferta interrompida ou não pactuada para a Região Norte, reunindo três sinais: <b>fila de espera</b> (solicitações no status “pendente / fila de espera” do SISREG, que aguardam pactuação), <b>sem saída há mais de 1 ano</b> e <b>fila parada</b>. <button type="button" class="ajuda" aria-expanded="false" title="O que cada sinal significa">?</button><span class="nota12" hidden><b>Fila de espera</b>: a solicitação foi feita, mas o procedimento não tem vaga pactuada para a região; ela espera a pactuação e por isso fica fora da fila mostrada na aba Filas. <b>Sem saída há mais de 1 ano</b>: há solicitações aguardando e o último agendamento registrado tem <span data-jan="semsaida">mais de 365 dias</span>, ou não há nenhum. <b>Fila parada</b>: 20 ou mais aguardando, ninguém agendado <span data-jan="parada">nos últimos 3 meses</span> nem marcado à frente. Os dois últimos sinais também aparecem como alertas na aba Filas. O Mapa Social só mostra a situação atual; o registro diário da fila de espera é feito pelo próprio painel a cada coleta e mostra desde quando cada procedimento está nela.</span></p>
 <div class="kpis" id="of-kpis"></div>
 <div class="ctrl">
   <input type="search" id="of-busca" placeholder="Buscar procedimento">
@@ -326,12 +328,12 @@ table.rank.regtab td:last-child{text-align:left;padding-left:26px}table.rank.reg
 </section>
 
 <section id="aba-prio" hidden>
-<p class="nota">Todas as filas com solicitações aguardando, lado a lado, para decidir onde concentrar o esforço de gestão. O painel não classifica nem pondera: mostra o dano acumulado e o esforço para corrigir; o julgamento é da gestão. Uma vaga de um procedimento não vira vaga de outro. <button type="button" class="ajuda" aria-expanded="false" title="O que cada coluna mostra">?</button><span class="nota12" hidden><b>Dano</b>: <i>pessoas-ano de espera</i>: cada pessoa na fila carrega o tempo que já esperou; somando o de todas, temos quanto tempo de vida a fila já custou (100 pessoas esperando 1 ano = 100 pessoas-ano; 10 pessoas esperando 10 anos também). É a medida que junta tamanho e tempo da fila num número só, sem pesar prioridades. É uma medida construída por este painel (soma das esperas individuais de quem está na fila); a unidade é a mesma que a epidemiologia usa para somar tempo de acompanhamento de pessoas (pessoas-ano), e não consta de normativa da SES-DF. Ao lado, a <i>espera mediana</i> de quem está na fila. <b>Situação</b>: três sinais que se combinam: <i>sem oferta</i> (sem saída há mais de 1 ano ou fila parada), <i>crescendo</i> (saldo positivo em 9 ou mais dos últimos 12 meses) e <i>fila de espera (n)</i> (solicitações aguardando pactuação, fora da fila do regulador). <b>Esforço</b>: quantas vagas por mês a mais seriam necessárias para <i>estabilizar</i> (a fila parar de crescer), na média dos últimos 12 meses. O esforço para zerar a fila em 12 meses, o cenário pior, os meses de estoque e os vermelhos e amarelos continuam na ficha de cada fila e na planilha Excel desta aba. Passe o cursor sobre cada cabeçalho para ver a conta. Clique no cabeçalho para ordenar.</span></p>
+<p class="nota">Todas as filas com solicitações aguardando, lado a lado, para decidir onde concentrar o esforço de gestão. O painel não classifica nem pondera: mostra o tempo de espera acumulado e o esforço para corrigir; o julgamento é da gestão. Uma vaga de um procedimento não vira vaga de outro. <button type="button" class="ajuda" aria-expanded="false" title="O que cada coluna mostra">?</button><span class="nota12" hidden><b>Solicitações-ano de espera</b>: soma do tempo que cada solicitação da fila já esperou (100 solicitações esperando 1 ano = 100 solicitações-ano; 10 esperando 10 anos também). Junta tamanho e tempo da fila num número só, sem pesar prioridades. Mede tempo administrativo acumulado, não dano clínico: uma pessoa pode ter mais de uma solicitação, e o dano depende da gravidade de cada caso. É uma medida construída por este painel (soma das esperas individuais de quem está na fila); a unidade é a mesma que a epidemiologia usa para somar tempo de acompanhamento de pessoas (solicitações-ano), e não consta de normativa da SES-DF. Ao lado, a <i>espera mediana</i> de quem está na fila. <b>Situação</b>: três sinais que se combinam: <i>oferta interrompida</i> (sem saída há mais de 1 ano ou fila parada), <i>crescendo</i> (saldo positivo em 9 ou mais dos últimos 12 meses) e <i>fila de espera (n)</i> (solicitações aguardando pactuação, fora da fila do regulador). <b>Esforço</b>: quantas vagas por mês a mais seriam necessárias para <i>estabilizar</i> (a fila parar de crescer), na média dos últimos 12 meses. O esforço para zerar a fila em 12 meses, o cenário pior, o tempo para agendar a fila atual e os vermelhos e amarelos continuam na ficha de cada fila e na planilha Excel desta aba. Passe o cursor sobre cada cabeçalho para ver a conta. Clique no cabeçalho para ordenar.</span></p>
 <div class="kpis" id="pz-kpis"></div>
 <div class="ctrl fixa">
   <input type="search" id="pz-busca" placeholder="Buscar procedimento">
   <select id="pz-tipo"><option value="">Todos os tipos</option></select>
-  <label title="Oculta as filas sem saída há mais de 1 ano ou paradas"><input type="checkbox" id="pz-sem"> ocultar filas sem oferta</label>
+  <label title="Oculta as filas sem saída há mais de 1 ano ou paradas"><input type="checkbox" id="pz-sem"> ocultar filas com oferta interrompida</label>
   <button id="pz-baixar" title="Tabela filtrada em Excel, com as contas explicadas">Baixar (Excel)</button>
   <span class="cont" id="pz-cont"></span>
 </div>
@@ -346,8 +348,8 @@ table.rank.regtab td:last-child{text-align:left;padding-left:26px}table.rank.reg
   <p id="atraso"><b>Atraso dos dados:</b> o Mapa Social fica alguns dias atrás do SISREG: as solicitações mais recentes ainda não aparecem, por isso os totais podem diferir do SISREG.</p>
   <p><b>Como ler:</b> <i>Fila</i> = solicitações elegíveis para regulação: pendentes + reenviadas ao regulador da Região Norte (não inclui devolvidas nem as em fila de espera). Cores: Prioridade 1 = vermelho, 2 = amarelo, 3 = verde, 4 = azul; em cada cor, o número de dias é a espera da solicitação mais antiga e, abaixo, a média e a mediana do tempo que as solicitações dessa cor já esperam.
   <i>Entrada</i> = solicitações pela data da solicitação (pendentes, reenviadas e agendadas); <i>saída</i> = agendamentos pela data do atendimento; <i>saldo</i> = entrada − saída, em meses completos. Passe o cursor sobre o gráfico para ver os valores de cada mês. O seletor <i>Gráficos por quadrimestre</i> soma os meses de cada quadrimestre (jan–abr, mai–ago, set–dez); quadrimestres incompletos na <span data-jan="m24">janela de 24 meses</span> ficam marcados com asterisco e ponto vazado.</p>
-  <p><b>Alertas:</b> <i>fila crescendo</i> = <span data-jan="cresc">saldo positivo em 9 ou mais dos últimos 12 meses e na soma do período</span>; <i>espera acima da meta</i> = solicitação mais antiga de uma cor com espera maior que a meta do protocolo do procedimento (só existe quando uma normativa da SES-DF define meta de espera por prioridade para o procedimento; hoje, apenas Consulta em Cirurgia Geral e em Pequena Cirurgia, conforme a Portaria SES-DF 79/2026 – demais filas ficam marcadas como <i>sem meta normativa</i> e não geram esse alerta); <i>fila parada</i> = 20+ solicitações aguardando, ninguém agendado <span data-jan="parada">nos últimos 3 meses</span> nem marcado à frente; <i>sem saída há mais de 1 ano</i> = há solicitações aguardando e o último agendamento registrado tem <span data-jan="semsaida">mais de 365 dias</span> (ou não há nenhum). A aba <i>Sem oferta</i> reúne esses dois últimos alertas com a <i>fila de espera</i> (solicitações aguardando pactuação, fora da fila do regulador).</p>
-  <p><b>Espera estimada e simulador:</b> a espera estimada (~N d no cartão) é a fila dividida pela <span data-jan="med12">saída mensal média dos últimos 12 meses</span>, isto é, quanto tempo a fila levaria para ser agendada no ritmo atual. No detalhe de cada fila, o botão <i>Simulador</i> abre uma área que mostra o efeito de uma oferta adicional de agendamentos por mês na espera estimada e na <span data-jan="proj24">projeção da fila em 24 meses</span>; a estimativa principal é para a fila toda; a tabela por cor distribui as vagas em cascata de prioridade (vermelhos primeiro, depois amarelos, e assim por diante). O <i>plano de intervenção</i> responde a pergunta inversa: para estabilizar a fila, zerá-la em um prazo (com ou sem mutirão inicial) ou levá-la a uma espera-alvo, quantos agendamentos a mais por mês são necessários e quantos bastam, depois, para a fila não voltar a crescer; mostra também um cenário pior que o normal.</p>
+  <p><b>Alertas:</b> <i>fila crescendo</i> = <span data-jan="cresc">saldo positivo em 9 ou mais dos últimos 12 meses e na soma do período</span>; <i>espera acima da meta</i> = mediana da espera de quem está numa cor na fila hoje, maior que a meta do protocolo do procedimento (só existe quando encontramos meta de espera por prioridade em normativa da SES-DF; nos 33 protocolos e 323 notas técnicas consultados em outubro/2026, apenas Consulta em Cirurgia Geral e em Pequena Cirurgia, conforme a Portaria SES-DF 79/2026 – demais filas ficam marcadas como <i>sem meta nos protocolos consultados</i> e não geram esse alerta); <i>fila parada</i> = 20+ solicitações aguardando, ninguém agendado <span data-jan="parada">nos últimos 3 meses</span> nem marcado à frente; <i>sem saída há mais de 1 ano</i> = há solicitações aguardando e o último agendamento registrado tem <span data-jan="semsaida">mais de 365 dias</span> (ou não há nenhum). A aba <i>Oferta interrompida ou não pactuada</i> reúne esses dois últimos alertas com a <i>fila de espera</i> (solicitações aguardando pactuação, fora da fila do regulador).</p>
+  <p><b>Tempo para agendar a fila atual e simulador:</b> esse tempo (~N d no cartão) é a fila dividida pela <span data-jan="med12">saída mensal média dos últimos 12 meses</span>, isto é, quanto tempo levaria para agendar todos que já estão na fila, no ritmo atual, sem contar quem entrar depois. Não é previsão de quanto cada pessoa vai esperar. No detalhe de cada fila, o botão <i>Simulador</i> abre uma área que mostra o efeito de uma oferta adicional de agendamentos por mês nesse tempo e na <span data-jan="proj24">projeção da fila em 24 meses</span>; a estimativa principal é para a fila toda; a tabela por cor distribui as vagas em cascata de prioridade (vermelhos primeiro, depois amarelos, e assim por diante). O <i>plano de intervenção</i> responde a pergunta inversa: para estabilizar a fila, zerá-la em um prazo (com ou sem mutirão inicial) ou levá-la a uma espera-alvo, quantos agendamentos a mais por mês são necessários e quantos bastam, depois, para a fila não voltar a crescer; mostra também um cenário pior que o normal.</p>
   <p><b>Gerar análise completa:</b> abra uma fila e escolha PDF, Word ou Excel (tabelas). O documento segue a metodologia padronizada (Figuras 1 a 4 e Tabela 1, com as UBS ordenadas de quem mais devolve por eSF); os parágrafos de interpretação saem em amarelo, como rascunho para revisão. <i>Dados detalhados</i> baixa as linhas da fila: solicitações pendentes, reenviadas, devolvidas e em fila de espera, e agendamentos dos últimos 24 meses.</p>
   <p id="rodape-atualizacao">Versão piloto. O painel confere o Mapa Social a cada 2 horas e se atualiza sozinho assim que ele recarrega com solicitações novas (normalmente uma ou duas vezes por dia).</p>
 </details>
@@ -364,8 +366,8 @@ const dataXl = s => { if(!s) return ""; let a,m,d, q=/^(\d{4})-(\d{2})-(\d{2})/.
   if(q) [a,m,d]=[+q[1],+q[2],+q[3]]; else { q=/^(\d{2})\/(\d{2})\/(\d{4})/.exec(s); if(!q) return s; [d,m,a]=[+q[1],+q[2],+q[3]]; }
   return {t:"n",v:(Date.UTC(a,m-1,d)-Date.UTC(1899,11,30))/864e5,z:"dd/mm/yyyy"}; };
 const COR = ["vermelho","amarelo","verde","azul","sem risco"];
-const TIPO_ALERTA = {crescendo:/^Fila crescendo/, esperando:/esperando há/, parada:/^Fila parada/, semsaida:/^Sem saída há mais de 1 ano/};
-const tituloAlerta=a=>TIPO_ALERTA.crescendo.test(a)?JAN.cresc:TIPO_ALERTA.parada.test(a)?JAN.parada:TIPO_ALERTA.semsaida.test(a)?JAN.semsaida:"Espera da solicitação mais antiga da cor acima da meta de espera (mediana) definida em normativa da SES-DF para o procedimento";
+const TIPO_ALERTA = {crescendo:/^Fila crescendo/, esperando:/ na fila \(meta: /, parada:/^Fila parada/, semsaida:/^Sem saída há mais de 1 ano/};
+const tituloAlerta=a=>TIPO_ALERTA.crescendo.test(a)?JAN.cresc:TIPO_ALERTA.parada.test(a)?JAN.parada:TIPO_ALERTA.semsaida.test(a)?JAN.semsaida:"Mediana da espera de quem está nessa cor na fila hoje, acima da meta de espera (mediana) definida em normativa da SES-DF para o procedimento";
 const NIVEIS = ["APS","DIRASE","HRS","HRPL","UPA","OUTROS"];
 const MIN12=20;   // mínimo de solicitações em 12 meses para a razão de devolvidas valer na ordenação (abaixo disso sai em cinza)
 // Justificativa de cada janela temporal usada no painel (aparece ao passar o cursor; elementos estáticos usam data-jan)
@@ -385,9 +387,8 @@ const JAN={
   h5:"Por que 5 anos: horizonte máximo da cascata; o que não zera em 5 anos é tratado como ‘não zera’.",
   esp:"Por que a espera é medida até a data da coleta: é o tempo que a solicitação já esperou, não uma previsão.",
   pess:"Cenário pior que o normal: entrada 18% maior e saída 25% menor que a média. São os erros típicos da projeção nas filas da região (teste com os dados de dois anos atrás): a entrada real passou desses 18% em cerca de 1 caso em 5 nas filas com 100 ou mais solicitações por mês e em mais de 4 em 10 nas filas com menos de 20 por mês (na saída, os 25% foram passados em 2 de 10 casos nas filas maiores e em 4 de 10 nas filas com menos de 5 por mês). Quanto menor a fila, mais provável é esse cenário. Não é um limite, é um ‘pior razoável’.",
-  cresce75:"Por que 3 em 4: nas filas da região com saldo positivo em 9 a 12 dos últimos 12 meses, 75% continuaram crescendo nos 12 meses seguintes. É um sinal forte, não uma certeza.",
-  pm:"Pessoas-ano de espera = soma do tempo que cada pessoa da fila já esperou (nº na fila de cada cor × espera média da cor ÷ 365). Por que mede dano: cada pessoa carrega o tempo que já perdeu esperando; somando o de todas, temos quanto tempo de vida a fila já custou. 100 pessoas esperando 1 ano = 100 pessoas-ano; 10 pessoas esperando 10 anos também. Junta tamanho e tempo numa só medida, sem pesar prioridades: não diz quem sofre mais, diz quanto a fila já custou no total.",
-  estoque:"Meses de estoque = fila ÷ saída média mensal dos últimos 12 meses: quantos meses de agendamento, no ritmo atual, a fila de hoje representa."
+  pm:"Solicitações-ano de espera = soma do tempo que cada solicitação da fila já esperou (nº na fila de cada cor × espera média da cor ÷ 365). 100 solicitações esperando 1 ano = 100 solicitações-ano; 10 esperando 10 anos também. Junta tamanho e tempo numa só medida, sem pesar prioridades. Mede tempo administrativo acumulado, não dano clínico: uma pessoa pode ter mais de uma solicitação, e o dano depende da gravidade de cada caso.",
+  estoque:"Tempo para agendar a fila atual = fila ÷ saída média mensal dos últimos 12 meses: quantos meses levaria para agendar todos que já estão na fila, no ritmo atual, sem contar quem entrar depois."
 };
 const JT=(k,txt)=>`<span class="dica" title="${JAN[k]}">${txt}</span>`;
 document.addEventListener("DOMContentLoaded",()=>document.querySelectorAll("[data-jan]").forEach(e=>{ e.title=JAN[e.dataset.jan]; e.classList.add("dica"); }));
@@ -466,7 +467,7 @@ function legenda(f){
     <button type="button" class="ajuda" aria-expanded="false" title="Como ler este gráfico: média, tendência e mês aberrante">?</button></div>
    <div class="ajuda-txt" hidden>
     <p><b>Média e tendência são coisas diferentes.</b> A <b>média</b> responde “quanto entra ou sai, em geral, por mês?”. A <b>tendência</b> responde “para onde a curva está indo?”. Uma não substitui a outra. Exemplo: duas filas recebem, em média, 100 solicitações por mês. Na primeira, são 100 todo mês. Na segunda, foram 45 em janeiro e subiram 10 por mês até 155 em dezembro. A média é igual nas duas; só a tendência (zero na primeira, +10/mês na segunda) mostra a diferença.</p>
-    <p><b>Por que as projeções usam a média.</b> Prolongar a reta supõe que a subida ou a descida vai continuar no mesmo ritmo, e nas filas isso costuma falhar: mutirões, mudanças de oferta e picos desviam a curva. No teste com o passado das filas da região, prever os 12 meses seguintes pela média errou menos (18% na entrada e 26% na saída, em mediana) do que prolongar a reta (21% e 36%). Isso não torna a média uma tendência: ela é a previsão mais segura, mas não enxerga a direção. Por isso as duas estão no gráfico.</p>
+    <p><b>Por que as projeções usam a média.</b> Prolongar a reta supõe que a subida ou a descida vai continuar no mesmo ritmo, e nas filas isso costuma falhar: mutirões, mudanças de oferta e picos desviam a curva. No teste com o passado das filas da região, prever os 12 meses seguintes pela média errou menos (17% na entrada e 24% na saída, em mediana) do que prolongar a reta (21% e 36%). Isso não torna a média uma tendência: ela é a previsão mais segura, mas não enxerga a direção. Por isso as duas estão no gráfico.</p>
     <p><b>Quando a média fica abaixo do que acontece.</b> A média olha para trás. Na segunda fila do exemplo, ela projeta 100 por mês para o ano seguinte, ou 1.200 no ano. Se a subida continuar no mesmo ritmo, entrariam 165 em janeiro e 275 em dezembro, em média 220 por mês, ou 2.640 no ano: faltariam 1.440 solicitações na conta. Isso acontece porque a média mistura os meses baixos do começo do ano com os altos do fim: em dezembro já entravam 155, e ela diz 100. Na prática, o simulador diria que certa oferta de vagas basta para estabilizar a fila, e ela continuaria crescendo. Esse é o caso extremo: nas filas reais as subidas costumam desacelerar, e por isso a média errou menos no teste. Mas, quando a tendência da entrada está bem inclinada para cima, trate a projeção como um piso, não como o número certo. O mesmo vale ao contrário para uma saída que vem caindo: a saída real tende a ficar abaixo da média.</p>
     <p><b>Como ler as linhas.</b> <i>Pontilhada horizontal:</i> média dos últimos 12 meses, o nível atual, usada nas projeções. <i>Fina inclinada:</i> tendência, a direção da curva, que serve de aviso e não entra nas projeções. <i>R²:</i> aparece só na linha inclinada e diz o quanto ela acompanha os meses; a média não tem R² porque não tenta acompanhá-los, e a qualidade dela é medida pelo erro do teste acima. As médias de 24 meses no alto do gráfico descrevem o período.</p>
     <p><b>O que é um mês aberrante.</b> É um mês que foge muito do padrão da própria fila: fica <b>mais de 4 vezes a oscilação típica</b> ${JT("m24","dos últimos 24 meses")} acima da linha de tendência (no saldo, acima ou abaixo). Costuma ser mutirão, suspensão de agenda ou carga atípica de solicitações, e vale explicá-lo na análise. Quando a saída de um mês é aberrante, o saldo daquele mês também é marcado.</p>
@@ -538,7 +539,7 @@ function sairHover(e){
 
 // ---------------------------------------------------------------- simulador de oferta
 // Premissas: entrada e saída mensais = média dos últimos 12 meses completos, mantidas constantes;
-// espera estimada = fila ÷ saída mensal (lei de Little, em dias de 30,4); acréscimo = agendamentos a mais por mês.
+// tempo para agendar a fila atual = fila ÷ saída mensal (lei de Little, em dias de 30,4); acréscimo = agendamentos a mais por mês.
 const DIAS_MES=30.4, DIAS_ANO=365.25;
 function baseSim(f){
   const m=a=>a.slice(-12).reduce((s,x)=>s+x,0)/Math.max(1,Math.min(12,a.length));
@@ -566,7 +567,7 @@ function cascata(f,cap,M,H=60){
 function coresNaoAgendadas(f){ if(!f.fila) return []; const c=cascata(f,baseSim(f).sai,0); return c.cores.filter(k=>(f.cores[k]||{n:0}).n>=MIN_UN&&c.esp[k]==null); }
 function seloNaoAgendado(f){ const l=coresNaoAgendadas(f); if(!l.length) return "";
   const nomes=l.map(c=>c.charAt(0).toUpperCase()+c.slice(1)), txt=nomes.length>1?nomes.slice(0,-1).join(", ")+" e "+nomes[nomes.length-1]:nomes[0];
-  return `<span class="alerta" title="No ritmo dos últimos 12 meses, com as vagas indo primeiro às prioridades mais urgentes, as solicitações que estão hoje na fila nessa prioridade não seriam todas agendadas em 5 anos. A espera do cartão vale para a fila inteira, não para esta prioridade. Veja a tabela por cor no simulador.">⚠ ${txt}: não ${l.length>1?"agendados":"agendado"} em 5 anos</span>`; }
+  return `<span class="alerta" title="No ritmo dos últimos 12 meses, com as vagas indo primeiro às prioridades mais urgentes, as solicitações que estão hoje na fila nessa prioridade não seriam todas agendadas em 5 anos. A espera do cartão vale para a fila inteira, não para esta prioridade. Veja a tabela por cor no simulador.">⚠ ${txt}: previsão de agendamento acima de 5 anos</span>`; }
 function projSim(b,delta,meses=24,mutirao=0){
   const pts=[b.fila]; let L=b.fila;
   for(let i=0;i<meses;i++){ if(i===0) L=Math.max(0,L-mutirao); L=Math.max(0,L+b.ent-(b.sai+delta)); pts.push(L); }
@@ -654,14 +655,14 @@ function simHtml(f){
   const b=baseSim(f), maxD=Math.max(20,Math.ceil(Math.max(b.sai,b.ent)*1.5/10)*10), passo=Math.max(1,Math.round(maxD/300));
   const eMax=b.espera?Math.min(3650,Math.max(30,Math.ceil(b.espera/10)*10)):180;
   return `<div class="sim-wrap"><button type="button" class="sim-abrir" aria-expanded="false">▸ Simulador: oferta, espera e plano para zerar a fila</button>
-   <div class="sim" data-id="${f.id}" hidden><h4>Simulador de oferta × tempo de espera</h4>
+   <div class="sim" data-id="${f.id}" hidden><h4>Simulador de oferta × tempo para agendar a fila</h4><p class="sim-aviso">Simulação condicionada às premissas. Não é previsão individual nem garantia de capacidade assistencial.</p>
    <p class="nota">Estimativa para a fila inteira do procedimento, com a entrada e a saída ${JT("med12","médias dos últimos 12 meses")} mantidas. Mova uma barra e a outra acompanha. A tabela por cor, abaixo, distribui as vagas na ordem de prioridade. Dúvidas? Clique no “?” para ver como usar. <button type="button" class="ajuda" aria-expanded="false" title="Como usar o simulador, passo a passo">?</button></p>
    <div class="ajuda-txt" hidden>
     <p><b>Para que serve.</b> Responde a duas perguntas: “se o serviço agendar mais vagas por mês, quanto cai a espera?” e “quantas vagas a mais por mês são necessárias para estabilizar, zerar ou chegar a uma espera aceitável?”. É uma conta simples, feita com o ritmo dos últimos 12 meses; não é uma previsão do futuro.</p>
     <p><b>A base da conta.</b> Três números: <i>entrada</i> (quantas solicitações chegam por mês), <i>saída</i> (quantos agendamentos saem por mês) e <i>fila</i> (quantas pessoas aguardam hoje). Entrada e saída são as médias dos últimos 12 meses, e o simulador as mantém constantes daqui para a frente (linha pontilhada horizontal no gráfico da fila). Se a entrada é maior que a saída, a fila cresce; se é menor, a fila diminui.</p>
-    <p><b>As duas barras.</b> A de cima é a <i>oferta adicional</i>: quantos agendamentos por mês somar à saída de hoje. A de baixo é a <i>espera estimada</i> da fila toda. As duas andam juntas: quanto mais vagas, menor a espera. Mexa em qualquer uma e a outra acompanha.</p>
+    <p><b>As duas barras.</b> A de cima é a <i>oferta adicional</i>: quantos agendamentos por mês somar à saída de hoje. A de baixo é o <i>tempo para agendar a fila atual</i>. As duas andam juntas: quanto mais vagas, menor esse tempo. Mexa em qualquer uma e a outra acompanha.</p>
     <p><b>Plano de intervenção.</b> Em vez de mexer nas barras, você pode informar um prazo (em quantos meses quer resolver), um mutirão (vagas extras de uma vez, no 1º mês) e uma espera-alvo (em dias). O plano diz quantas vagas a mais por mês cada objetivo exige: só estabilizar a fila, zerá-la no prazo ou levá-la a uma espera dentro da meta. A barra de oferta se ajusta ao resultado do plano, e os cartões, a tabela por cor e o gráfico mostram o efeito.</p>
-    <p><b>Os cinco cartões.</b> <i>Espera estimada hoje</i> e <i>com a oferta</i> (fila ÷ saída mensal); <i>saldo mensal com a oferta</i> (vagas − entrada: negativo é bom, a fila diminui); <i>fila em 12 meses</i> e <i>meses para zerar</i>.</p>
+    <p><b>Os cinco cartões.</b> <i>Tempo para agendar a fila hoje</i> e <i>com a oferta</i> (fila ÷ saída mensal); <i>saldo mensal com a oferta</i> (vagas − entrada: negativo é bom, a fila diminui); <i>fila em 12 meses</i> e <i>meses para zerar</i>.</p>
     <p><b>Tabela por cor.</b> Mostra o que acontece com cada prioridade quando as vagas são distribuídas como a regulação faz: vermelho primeiro, depois amarelo, verde e azul. Uma cor menos prioritária pode esperar muito mesmo com a fila total diminuindo, porque as vagas vão antes para as mais urgentes.</p>
     <p><b>Gráfico.</b> A linha cinza tracejada é a fila sem nenhuma oferta adicional; a linha colorida é a fila com a oferta simulada, mês a mês, por 24 meses. Onde a linha chega a zero, a fila acabou.</p>
     <p><b>O que o simulador não faz.</b> Não prevê aumento ou queda da demanda, sazonalidade, falta de médicos ou de salas, nem considera que parte das vagas é perdida por falta de pacientes (faltas e cancelamentos contam como saída). Serve para dimensionar a ordem de grandeza e comparar alternativas, não para prometer resultado.</p>
@@ -669,20 +670,20 @@ function simHtml(f){
    <div class="sim-grid">
     <div><label><span class="dica" title="Agendamentos a mais por mês, somados à saída média atual">Oferta adicional</span>: <b class="v-delta">0</b> agendamentos/mês <span class="v-pct"></span></label>
       <input type="range" class="s-delta" min="0" max="${maxD}" step="${passo}" value="0"></div>
-    <div><label><span class="dica" title="Fila ÷ saída mensal (lei de Little): quanto tempo a fila de hoje levaria para ser agendada nesse ritmo">Tempo de espera estimado</span> (fila toda): <b class="v-esp">–</b></label>
+    <div><label><span class="dica" title="Fila ÷ saída mensal (lei de Little): quanto tempo a fila de hoje levaria para ser agendada nesse ritmo">Tempo para agendar a fila atual</span>: <b class="v-esp">–</b></label>
       <input type="range" class="s-esp" min="1" max="${eMax}" step="1" value="${b.espera?Math.min(eMax,Math.round(b.espera)):eMax}" ${b.espera?"":"disabled"}></div>
    </div>
    ${planoHtml(f)}
    <div class="sim-res"></div><div class="sim-cor"></div><div class="sim-graf"></div>
    <p class="nota"><b>Metodologia e justificativas</b> <button type="button" class="ajuda" aria-expanded="false" title="Como e por que o simulador calcula assim">?</button></p>
    <div class="ajuda-txt" hidden>
-    <p><b>1. Por que usamos a média dos últimos 12 meses, e não a tendência.</b> Para projetar a fila, precisamos estimar quantas pessoas vão entrar e sair por mês daqui para a frente. Há dois jeitos: repetir a média dos últimos 12 meses, ou prolongar a linha de tendência do gráfico (“se vem subindo, vai continuar subindo”). Testamos os dois com o passado das filas da região: voltamos dois anos no tempo, fizemos cada previsão e comparamos com o que de fato aconteceu nos 12 meses seguintes. A média errou menos (18% na entrada e 26% na saída, em mediana). Prolongar a tendência errou mais (21% e 36%), e errou mais ainda nas filas em que a linha parecia bem desenhada, porque na vida real as subidas e descidas quase sempre desaceleram antes do que a linha sugere. Por isso a tendência fica nos gráficos como aviso, mas as contas usam a média. Média e tendência não são a mesma coisa: a média diz o nível, a tendência diz a direção. Ela é a previsão mais segura, mas, se uma subida continuar de verdade, a média fica abaixo do que vai acontecer (há um exemplo com números no “?” do gráfico) e a projeção deve ser lida como um piso; nesse caso, vale olhar o sinal de fila crescente e o cenário pior que o normal.</p>
-    <p><b>2. Fila que cresce.</b> ${JT("cresc","Saldo positivo em 9 ou mais dos últimos 12 meses")}: nas filas da região com esse padrão, 3 em 4 continuaram crescendo nos 12 meses seguintes. É um sinal forte, não uma certeza.</p>
-    <p><b>3. Como estimamos o tempo de espera.</b> Pense numa fila de banco com 30 pessoas e um caixa que atende 10 por hora: quem chega agora espera cerca de 3 horas (30 ÷ 10). A regra vale para qualquer fila em que o ritmo se mantém (é a chamada lei de Little): <b>espera ≈ tamanho da fila ÷ quantos saem por mês</b>. Exemplo: 300 pessoas na fila e 30 agendamentos por mês → quem entra hoje espera cerca de 10 meses. Essa conta tem um limite: se entram mais pessoas do que saem, a fila cresce enquanto a pessoa espera, e ela demora mais do que a conta diz. Nas filas que crescem, use a tabela por cor: ela simula mês a mês as vagas atendendo primeiro os vermelhos, depois amarelos, verdes e azuis, e diz em que mês alguém que entra hoje seria atendido. Quando comparamos a espera com uma meta, usamos a espera mediana (a do paciente que está no meio da fila), porque as metas da SES-DF são escritas em mediana.</p>
+    <p><b>1. Por que usamos a média dos últimos 12 meses, e não a tendência.</b> Para projetar a fila, precisamos estimar quantas pessoas vão entrar e sair por mês daqui para a frente. Há dois jeitos: repetir a média dos últimos 12 meses, ou prolongar a linha de tendência do gráfico (“se vem subindo, vai continuar subindo”). Testamos os dois com o passado das filas da região: voltamos dois anos no tempo, fizemos cada previsão e comparamos com o que de fato aconteceu nos 12 meses seguintes. A média errou menos (17% na entrada e 24% na saída, em mediana). Prolongar a tendência errou mais (21% e 36%), e errou mais ainda nas filas em que a linha parecia bem desenhada, porque na vida real as subidas e descidas quase sempre desaceleram antes do que a linha sugere. Por isso a tendência fica nos gráficos como aviso, mas as contas usam a média. Média e tendência não são a mesma coisa: a média diz o nível, a tendência diz a direção. Ela é a previsão mais segura, mas, se uma subida continuar de verdade, a média fica abaixo do que vai acontecer (há um exemplo com números no “?” do gráfico) e a projeção deve ser lida como um piso; nesse caso, vale olhar o sinal de fila crescente e o cenário pior que o normal. O script e o resultado do teste estão na pasta <i>validacao</i> do repositório do painel.</p>
+    <p><b>2. Fila que cresce.</b> ${JT("cresc","Saldo positivo em 9 ou mais dos últimos 12 meses")}.</p>
+    <p><b>3. Como calculamos o tempo para agendar a fila atual.</b> Pense numa fila de banco com 30 pessoas e um caixa que atende 10 por hora: quem chega agora espera cerca de 3 horas (30 ÷ 10). A regra vale para qualquer fila em que o ritmo se mantém (é a chamada lei de Little): <b>tempo ≈ tamanho da fila ÷ quantos saem por mês</b>. Exemplo: 300 pessoas na fila e 30 agendamentos por mês → cerca de 10 meses para agendar quem já está na fila. É o tamanho da fila expresso em tempo, não a previsão de quanto cada pessoa vai esperar. Essa conta tem um limite: se entram mais pessoas do que saem, a fila cresce enquanto a pessoa espera, e ela demora mais do que a conta diz. Nas filas que crescem, use a tabela por cor: ela simula mês a mês as vagas atendendo primeiro os vermelhos, depois amarelos, verdes e azuis, e diz em que mês alguém que entra hoje seria atendido. Quando comparamos a espera com uma meta, usamos a espera mediana (a do paciente que está no meio da fila), porque as metas da SES-DF são escritas em mediana.</p>
     <p><b>4. Como calculamos o plano.</b> Toda fila tem dois problemas separados: o que <b>entra</b> todo mês e o que <b>já está acumulado</b>. <i>Estabilizar</i>: para a fila parar de crescer, é preciso agendar por mês pelo menos o que entra por mês; se entram 50 e saem 40, faltam 10 vagas por mês, para sempre. <i>Zerar</i>: além de estabilizar, é preciso escoar o acumulado; dividimos a fila pelo prazo: 600 pessoas em 12 meses são mais 50 vagas por mês durante um ano; depois de zerar, basta manter a oferta igual à entrada. <i>Mutirão</i>: tira pessoas do acumulado de uma vez, mas não muda o que entra; numa fila que cresce 10 por mês, um mutirão de 120 vagas compra 12 meses até a fila voltar ao tamanho de hoje; se a fila cresce, mutirão sem oferta regular é alívio temporário. <i>Espera-alvo</i>: em vez de zerar, pode-se mirar um tamanho de fila em que a espera fique dentro de uma meta; essa fila-alvo = entrada mensal × meta em meses (a mesma regra do banco, invertida); quando o procedimento tem meta normativa, ela vem preenchida; nas demais filas, o campo fica livre para testar uma meta gerencial, e o texto diz que ela não é normativa. <i>Faixa pessimista</i>: como toda projeção erra, mostramos também o plano para um cenário pior que o normal, com a entrada 18% maior e a saída 25% menor que a média. São os erros típicos do teste do item 1. A entrada real passou desses 18% em cerca de 1 caso em 5 nas filas com 100 ou mais solicitações por mês e em mais de 4 em 10 nas filas com menos de 20 por mês; quanto menor a fila, mais provável é esse cenário. Não é um limite, é um "pior razoável".</p>
-    <p><b>5. O que o painel não decide.</b> Não classifica a espera como alta nem pesa as prioridades: mostra espera mediana e pessoas-ano de espera (meses de estoque e vermelhos e amarelos ficam na ficha e no Excel). O julgamento é da gestão. Saída = agendamentos do Mapa Social, com faltas e cancelados; não considera custo, vagas físicas nem mudança da demanda.</p>
+    <p><b>5. O que o painel não decide.</b> Não classifica a espera como alta nem pesa as prioridades: mostra espera mediana e solicitações-ano de espera (o tempo para agendar a fila atual e os vermelhos e amarelos ficam na ficha e no Excel). O julgamento é da gestão. Saída = agendamentos do Mapa Social, com faltas e cancelados; não considera custo, vagas físicas nem mudança da demanda.</p>
    </div>
-   <small class="nota">Premissas: saída = agendamentos do Mapa Social (inclui cancelados e faltas, o que pode superestimar a capacidade real); a espera estimada da fila toda não separa prioridades e não é o “tempo médio” do Mapa Social (que usa os agendamentos dos últimos 15 dias). Não considera custo, vagas físicas nem mudança na demanda.</small></div></div>`;
+   <small class="nota">Premissas: saída = agendamentos do Mapa Social (inclui cancelados e faltas, o que pode superestimar a capacidade real); o tempo para agendar a fila atual não separa prioridades e não é o “tempo médio” do Mapa Social (que usa os agendamentos dos últimos 15 dias). Não considera custo, vagas físicas nem mudança na demanda.</small></div></div>`;
 }
 function atualizarSim(box,origem){
   const f=porId[box.dataset.id], b=baseSim(f), sd=box.querySelector(".s-delta"), se=box.querySelector(".s-esp");
@@ -703,8 +704,8 @@ function atualizarSim(box,origem){
   const cel=(t,v,c="")=>`<div class="${c}"><b>${v}</b><span>${t}</span></div>`;
   const ttl=(t,tit)=>`<span class="dica" title="${tit}">${t}</span>`;
   box.querySelector(".sim-res").innerHTML=
-    cel(ttl("espera estimada hoje","Fila ÷ saída média mensal dos últimos 12 meses (lei de Little), em dias"),b.espera!=null?dias10(b.espera)+(b.espera>3650?"":" dias"):"–")+
-    cel(ttl("espera estimada com a oferta","Fila ÷ (saída média + oferta adicional), em dias"),esp!=null?dias10(esp)+(esp>3650?"":" dias"):"–",esp!=null&&b.espera!=null&&esp<b.espera?"bom":"")+
+    cel(ttl("tempo para agendar a fila hoje","Fila ÷ saída média mensal dos últimos 12 meses (lei de Little), em dias"),b.espera!=null?dias10(b.espera)+(b.espera>3650?"":" dias"):"–")+
+    cel(ttl("tempo para agendar a fila com a oferta","Fila ÷ (saída média + oferta adicional), em dias"),esp!=null?dias10(esp)+(esp>3650?"":" dias"):"–",esp!=null&&b.espera!=null&&esp<b.espera?"bom":"")+
     cel(ttl("saldo mensal com a oferta","(Saída média + oferta adicional) − entrada média; negativo = a fila diminui a cada mês"),(Math.round(Math.abs(liq))===0?"":liq>=0?"−":"+")+fmt(Math.abs(liq))+" /mês",liq>0?"bom":liq<0?"ruim":"")+
     cel(ttl("fila em 12 meses"+(M?" (com o mutirão)":""),"Fila projetada mês a mês: fila + entrada − (saída + oferta), nunca abaixo de zero; o mutirão é abatido no 1º mês. "+JAN.f12),fmt(p1[12])+(p0[12]!==p1[12]?` (sem oferta: ${fmt(p0[12])})`:""))+
     cel(ttl("meses para zerar a fila"+(M?" (com o mutirão)":""),"Fila de hoje (menos o mutirão) ÷ (saída + oferta − entrada), arredondado para cima"),zero!=null?fmt(zero)+(zero0&&zero0!==zero?` (sem oferta: ${fmt(zero0)})`:zero0?"":" (sem oferta: não zera)"):(b.fila?"não zera":"–"),zero!=null?"bom":b.fila?"ruim":"");
@@ -746,16 +747,15 @@ function chips(f){
 function resumoReg(f){
   let n="";
   if(REG&&REG.p){ const A=aggReg({pi:REG.p.indexOf(f.p),por:"u"}); n=A.N?` (registro desde ${dd(REG.inicio).slice(0,5)}): ${fmt(A.N)} novas, ${fmt(A.RS/A.N*100)}% saíram${A.med!=null?`, mediana ${fmt(A.med)} d`:""}`:` (registro desde ${dd(REG.inicio).slice(0,5)}): sem devolvidas novas`; }
-  return `Resolução das devolvidas${n} — <a href="#aba-reg-${f.id}">por unidade</a>`;
+  return `Saída das devolvidas${n} — <a href="#aba-reg-${f.id}">por unidade</a>`;
 }
 // classe da fila no topo da ficha: sem oferta ou cresce (no máximo uma frase; não há classe "estável")
-function diagHtml(f,ficha){
-  const ss=sinais(f).filter(x=>x!=="espera"), m=f.alertas.map(a=>a.match(/Fila crescendo: saldo positivo em (\d+) dos/)).find(Boolean), en=f.espera&&f.espera.n>0;
+function diagHtml(f){
+  const ss=sinais(f).filter(x=>x!=="espera"), en=f.espera&&f.espera.n>0;
   const fr=[];
-  if(ficha){ return m?`<div class="diag"><span title="${esc(JAN.cresce75)}">Nas filas da região com saldo positivo em 9 ou mais dos últimos 12 meses, 3 em 4 continuaram crescendo nos 12 meses seguintes.</span></div>`:""; }
-  if(ss.length) fr.push(`<b>Sem oferta:</b> ${ss.map(x=>ROT_SINAL[x]).join("; ")}.`);
-  if(en) fr.push(`${fr.length?"· ":""}${fmt(f.espera.n)} em fila de espera (aguardando pactuação) — <a href="#aba-oferta">ver aba Sem oferta</a>`);
-  else if(ss.length) fr[0]+=` <a href="#aba-oferta">ver aba Sem oferta</a>`;
+  if(ss.length) fr.push(`<b>Oferta interrompida:</b> ${ss.map(x=>ROT_SINAL[x]).join("; ")}.`);
+  if(en) fr.push(`${fr.length?"· ":""}${fmt(f.espera.n)} em fila de espera (aguardando pactuação) — <a href="#aba-oferta">ver aba Oferta interrompida ou não pactuada</a>`);
+  else if(ss.length) fr[0]+=` <a href="#aba-oferta">ver aba Oferta interrompida ou não pactuada</a>`;
   return fr.length?`<div class="diag">${fr.join(" ")}</div>`:"";
 }
 // resultado dos agendamentos dos últimos 12 meses completos; a saída efetiva é faixa porque parte deles nunca foi confirmada pelo executante
@@ -778,23 +778,22 @@ function item(f){
   const meta = (window._analiseMeta && window._analiseMeta(f.p)) || {};
   const linhas = COR.filter(c=>f.cores[c]).map(c=>{const k=f.cores[c], m=meta[c];
     const cs=(f.cor_stats||{})[c]||{}, at=cs.atend_n?`${fmt(cs.atend_media)} <small class="${cs.atend_n<MIN12?"fraco":""}" title="n = ${fmt(cs.atend_n)} agendamentos com atendimento nos últimos ${D.atend_dias||90} dias entraram nesta média${cs.atend_n<MIN12?" (menos de 20: média pouco confiável)":""}; mediana ${fmt(cs.atend_mediana)} dias">(n=${fmt(cs.atend_n)})</small>`:"–";
-    return `<tr><td><i class="pt ${c.replace(" ","")}"></i>${c}</td><td>${fmt(k.n)}</td><td>${dd(k.antiga)}</td><td class="${m&&k.dias>m?"acima":""}">${fmt(k.dias)}</td><td title="mediana ${fmt(cs.fila_mediana)} dias">${cs.fila_media!=null?fmt(cs.fila_media):"–"}</td><td>${at}</td><td>${m?fmt(m):"–"}</td></tr>`}).join("");
+    return `<tr><td><i class="pt ${c.replace(" ","")}"></i>${c}</td><td>${fmt(k.n)}</td><td>${dd(k.antiga)}</td><td>${fmt(k.dias)}</td><td>${cs.fila_media!=null?fmt(cs.fila_media):"–"}</td><td class="${m&&cs.fila_mediana>m?"acima":""}">${cs.fila_mediana!=null?fmt(cs.fila_mediana):"–"}</td><td>${at}</td><td>${m?fmt(m):"–"}</td></tr>`}).join("");
   const semMeta=!f.meta_normativa, bs=baseSim(f);
   return `<div class="fila" tabindex="0" id="f-${f.id}" data-id="${f.id}">
    <div class="lin">
-     <div class="nome">${esc(f.p)}<small>${esc(f.tipo||"")}${semMeta?` · <span class="tag" title="Nenhuma normativa da SES-DF define meta de tempo de espera por prioridade para este procedimento">sem meta normativa</span>`:` · <span class="tag ok" title="Meta de espera definida em protocolo da SES-DF">meta normativa</span>`}</small></div>
-     <div class="num f"><b>${fmt(f.fila)}</b><small>na fila${f.fila>0&&bs.espera!=null?` · <span class="dica" title="Espera estimada = fila ÷ saída média mensal dos últimos 12 meses (lei de Little), em dias: quanto tempo a fila de hoje levaria para ser agendada no ritmo atual. ${JAN.med12}${bs.ent>bs.sai?" Piso: a fila cresce, a espera real tende a ser maior; veja a tabela por cor no simulador.":""}">${bs.ent>bs.sai?"≥ ":"~"}${fmt(bs.espera)} d</span>`:""}</small></div>
+     <div class="nome">${esc(f.p)}<small>${esc(f.tipo||"")}${semMeta?` · <span class="tag" title="Não encontramos meta de tempo de espera por prioridade para este procedimento nos 33 protocolos e 323 notas técnicas da SES-DF consultados em outubro/2026">sem meta nos protocolos consultados</span>`:` · <span class="tag ok" title="Meta de espera definida em protocolo da SES-DF">meta normativa</span>`}</small></div>
+     <div class="num f"><b>${fmt(f.fila)}</b><small>na fila${f.fila>0&&bs.espera!=null?` · <span class="dica" title="Tempo para agendar a fila atual = fila ÷ saída média mensal dos últimos 12 meses (lei de Little), em dias: quanto tempo levaria para agendar todos que já estão na fila, no ritmo atual, sem contar quem entrar depois. Não é previsão de quanto cada pessoa vai esperar. ${JAN.med12}${bs.ent>bs.sai?" Piso: a fila cresce, a espera real tende a ser maior; veja a tabela por cor no simulador.":""}">${bs.ent>bs.sai?"≥ ":"~"}${fmt(bs.espera)} d para agendar</span>`:""}</small></div>
      <div class="c chips">${chips(f)}</div>
      <div class="num s"><b style="color:${f.saldo12>0?"var(--saldo)":"var(--out)"}">${f.saldo12>0?"+":""}${fmt(f.saldo12)}</b><small class="dica" title="Saldo = entrada − saída nos últimos 12 meses completos; positivo = a fila cresceu nesse período. ${JAN.m12}">saldo 12 meses</small></div>
      <div class="sp">${spark(f)}</div>
    </div>
-   ${f.alertas.length||coresNaoAgendadas(f).length?`<div class="alertas">${f.alertas.map(a=>{const m=a.match(/^Fila crescendo: saldo positivo em (\d+) dos/); return m?`<span class="alerta cresc" title="${tituloAlerta(a)} · ${esc(JAN.cresce75)}">⚠ Crescendo <b>+${fmt(f.saldo12/12,1)}/mês</b> · saldo positivo em ${m[1]} de 12 meses</span>`:`<span class="alerta" title="${tituloAlerta(a)}">⚠ ${esc(a)}</span>`;}).join("")}${seloNaoAgendado(f)}</div>`:""}
-   ${diagHtml(f,false)}
+   ${f.alertas.length||coresNaoAgendadas(f).length?`<div class="alertas">${f.alertas.map(a=>{const m=a.match(/^Fila crescendo: saldo positivo em (\d+) dos/); return m?`<span class="alerta cresc" title="${tituloAlerta(a)}">⚠ Crescendo <b>+${fmt(f.saldo12/12,1)}/mês</b> · saldo positivo em ${m[1]} de 12 meses</span>`:`<span class="alerta" title="${tituloAlerta(a)}">⚠ ${esc(a)}</span>`;}).join("")}${seloNaoAgendado(f)}</div>`:""}
+   ${diagHtml(f)}
    <div class="det">
-     ${diagHtml(f,true)}
      ${legenda(f)}
      ${grafico(f)}
-     <div class="rolagem"><table class="cores"><tr><th>Prioridade</th><th>Solicitações</th><th>Mais antiga</th><th title="Dias entre a solicitação mais antiga dessa prioridade e a data da coleta">Espera da mais antiga (dias)</th><th title="Tempo médio que quem está na fila hoje já esperou. ${JAN.esp}">Média na fila hoje (dias)</th><th title="Tempo médio entre a solicitação e o atendimento, nos agendamentos com atendimento nos últimos ${D.atend_dias||90} dias. n = quantos agendamentos entraram na média: com n pequeno (abaixo de 20) a média diz pouco. ${JAN.d90}">Média até o atendimento (dias)</th><th title="Tempo máximo de espera (mediana) definido em normativa da SES-DF para a prioridade">Meta (dias)</th></tr>${linhas}</table></div>
+     <div class="rolagem"><table class="cores"><tr><th>Prioridade</th><th>Solicitações</th><th>Mais antiga</th><th title="Dias entre a solicitação mais antiga dessa prioridade e a data da coleta">Espera da mais antiga (dias)</th><th title="Tempo médio que quem está na fila hoje já esperou. ${JAN.esp}">Média na fila hoje (dias)</th><th title="Mediana do tempo que quem está na fila hoje já esperou. É o número comparado com a meta, quando há meta">Mediana na fila hoje (dias)</th><th title="Tempo médio entre a solicitação e o atendimento, nos agendamentos com atendimento nos últimos ${D.atend_dias||90} dias. n = quantos agendamentos entraram na média: com n pequeno (abaixo de 20) a média diz pouco. ${JAN.d90}">Média até o atendimento (dias)</th><th title="Tempo máximo de espera (mediana) definido em normativa da SES-DF para a prioridade">Meta (dias)</th></tr>${linhas}</table></div>
      <p class="nota" style="margin:2px 0 0">“Média na fila hoje” = há quanto tempo, em média, esperam as solicitações que ainda estão na fila. “Média até o atendimento” = tempo entre a solicitação e o atendimento nos agendados com atendimento ${JT("d90",`nos últimos ${D.atend_dias||90} dias`)} (n = quantos; passe o cursor para ver a mediana).</p>
      <p style="font-size:.8rem;color:var(--muted);margin:2px 0 0">Devolvidas aguardando correção (fora da fila; todas as de hoje, sem recorte de período): ${fmt(f.devolvidas)} · ${resumoReg(f)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Sem meta de tempo de espera definida em normativa da SES-DF para este procedimento"}</p>
      ${saidaHtml(f)}${espUnHtml(f)}
@@ -847,7 +846,7 @@ function lerHash(){
 }
 async function baixarLista(){
   await xlsx();
-  const L=filtrar(), cab=["Procedimento","Tipo","Na fila","Vermelho","Vermelho – dias","Amarelo","Amarelo – dias","Verde","Verde – dias","Azul","Azul – dias","Sem risco","Devolvidas","Saldo 12 meses","Espera estimada (dias)","Agendados à frente","Último agendamento","Agendamentos 12 meses","Faltas 12 meses (%)","Sem confirmação 12 meses (%)","Diferença de espera entre unidades (dias)","Prioridades não agendadas em 5 anos","Alertas"];
+  const L=filtrar(), cab=["Procedimento","Tipo","Na fila","Vermelho","Vermelho – dias","Amarelo","Amarelo – dias","Verde","Verde – dias","Azul","Azul – dias","Sem risco","Devolvidas","Saldo 12 meses","Tempo para agendar a fila atual (dias)","Agendados à frente","Último agendamento","Agendamentos 12 meses","Faltas 12 meses (%)","Sem confirmação 12 meses (%)","Diferença de espera entre unidades (dias)","Prioridades com previsão de agendamento acima de 5 anos","Alertas"];
   const g=(f,c,k)=>f.cores[c]?f.cores[c][k]:"";
   const linhas=L.map(f=>[f.p,f.tipo,f.fila,g(f,"vermelho","n"),g(f,"vermelho","dias"),g(f,"amarelo","n"),g(f,"amarelo","dias"),g(f,"verde","n"),g(f,"verde","dias"),g(f,"azul","n"),g(f,"azul","dias"),g(f,"sem risco","n"),f.devolvidas,f.saldo12,baseSim(f).espera!=null&&f.fila>0?Math.round(baseSim(f).espera):"",f.futuros,dataXl(f.ult_ag),f.ag12?f.ag12.n:"",f.ag12&&f.ag12.n?Math.round(f.ag12.falta/f.ag12.n*1000)/10:"",f.ag12&&f.ag12.n?Math.round(f.ag12.pend/f.ag12.n*1000)/10:"",f.dif_un?f.dif_un.d:"",coresNaoAgendadas(f).join(", "),f.alertas.join(" | ")]);
   const wb=XLSX.utils.book_new(), ws=XLSX.utils.aoa_to_sheet([cab,...linhas]);
@@ -868,7 +867,7 @@ async function carregarDV(){
     $("pr-nivel").insertAdjacentHTML("beforeend",`<option value="${n}">Só devolvidas da ${n==="OUTROS"?"outras unidades":n}</option>`);
   });
   const j=DV.janela12||[];
-  document.querySelectorAll("#dv-un .nota12, #dv-pr .nota12").forEach(el=>el.innerHTML=`<b>% devolvidas (12 m)</b> = das solicitações feitas${j.length?` de ${esc(j[0])} a ${esc(j[1])}`:" nos últimos 12 meses completos"} (pela data da solicitação), quantas estão devolvidas hoje. O total inclui tudo o que foi solicitado no período: pendentes, reenviadas, devolvidas e agendadas. Cada solicitação conta uma vez; a que foi devolvida, corrigida e depois agendada conta como não devolvida, porque o Mapa Social só guarda a situação atual (por isso o percentual é um piso). Na ordenação por esse percentual, só entram na frente unidades ou procedimentos com ${MIN12} ou mais solicitações no período; com menos, o percentual aparece em cinza. ${JAN.dev12}`);
+  document.querySelectorAll("#dv-un .nota12, #dv-pr .nota12").forEach(el=>el.innerHTML=`<b>% ainda devolvidas hoje (12 m)</b> = das solicitações feitas${j.length?` de ${esc(j[0])} a ${esc(j[1])}`:" nos últimos 12 meses completos"} (pela data da solicitação), quantas estão devolvidas hoje. O total inclui tudo o que foi solicitado no período: pendentes, reenviadas, devolvidas e agendadas. Cada solicitação conta uma vez; a que foi devolvida, corrigida e depois agendada conta como não devolvida, porque o Mapa Social só guarda a situação atual (por isso o percentual é um piso). Na ordenação por esse percentual, só entram na frente unidades ou procedimentos com ${MIN12} ou mais solicitações no período; com menos, o percentual aparece em cinza. ${JAN.dev12}`);
   return DV;
 }
 const pct12=(d,t)=>t?(t<MIN12?`<span class="fraco" title="menos de ${MIN12} solicitações no período: percentual pouco confiável">${fmt(d/t*100,1)}%</span>`:fmt(d/t*100,1)+"%"):"–";
@@ -924,8 +923,8 @@ function tabelaReg(L,por){
   if(!L.length) return vazioReg();
   const fr=k=>k.novas<MIN12?` class="fraco" title="menos de ${MIN12} devolvidas novas: percentual instável"`:"", pc=(k,a,b)=>b?fmt(a/b*100,1)+"%":"–";
   const th=(t,r,tit="")=>`<th data-rord="${r}"${tit?` title="${tit}"`:""}>${t}</th>`;
-  return `<table class="tab rank regtab"><thead><tr><th>#</th><th style="text-align:left" data-rord="txt">${por==="u"?"Unidade solicitante":"Procedimento"}</th>${th("Novas","num","Devolvidas que apareceram depois do início do registro")}${th("Saíram","num","Novas que depois saíram do status devolvida")}${th("% resolvidas","pct","Saíram ÷ novas")}${th("% em 30 d","pct","Entre as novas com 30 dias ou mais de registro, quantas saíram em até 30 dias. "+JAN.d30)}${th("Dias até sair","num","Mediana de dias entre a entrada e a saída do status")}<th>Destino das que saíram</th></tr></thead><tbody>${
-    L.map((k,i)=>`<tr data-w="${k.novas<MIN12?1:0}"><td>${i+1}</td><td style="text-align:left">${esc(por==="u"?k.u:k.p)}<small>${por==="u"?(nivelUn(k.u)==="OUTROS"?"Outras":nivelUn(k.u)):esc(tipoProc(k.p))}</small></td><td data-v="${k.novas}">${fmt(k.novas)}</td><td data-v="${k.res}">${fmt(k.res)}</td><td data-v="${k.novas?k.res/k.novas:-1}"${fr(k)}>${pc(k,k.res,k.novas)}</td><td data-v="${k.c30?k.r30/k.c30:-1}"${fr(k)}>${pc(k,k.r30,k.c30)}</td><td data-v="${k.med??-1}">${k.med!=null?fmt(k.med):"–"}</td><td style="text-align:left;font-size:.8rem">${destHtml(k.dest)}</td></tr>`).join("")}</tbody></table>`;
+  return `<table class="tab rank regtab"><thead><tr><th style="text-align:left" data-rord="txt">${por==="u"?"Unidade solicitante":"Procedimento"}</th>${th("Novas","num","Devolvidas que apareceram depois do início do registro")}${th("Saíram","num","Novas que depois saíram do status devolvida")}${th("% que saíram de devolvida","pct","Saíram ÷ novas")}${th("% em 30 d","pct","Entre as novas com 30 dias ou mais de registro, quantas saíram em até 30 dias. "+JAN.d30)}${th("Dias até sair","num","Mediana de dias entre a entrada e a saída do status")}<th>Destino das que saíram</th></tr></thead><tbody>${
+    L.map(k=>`<tr data-w="${k.novas<MIN12?1:0}"><td style="text-align:left">${esc(por==="u"?k.u:k.p)}<small>${por==="u"?(nivelUn(k.u)==="OUTROS"?"Outras":nivelUn(k.u)):esc(tipoProc(k.p))}</small></td><td data-v="${k.novas}">${fmt(k.novas)}</td><td data-v="${k.res}">${fmt(k.res)}</td><td data-v="${k.novas?k.res/k.novas:-1}"${fr(k)}>${pc(k,k.res,k.novas)}</td><td data-v="${k.c30?k.r30/k.c30:-1}"${fr(k)}>${pc(k,k.r30,k.c30)}</td><td data-v="${k.med??-1}">${k.med!=null?fmt(k.med):"–"}</td><td style="text-align:left;font-size:.8rem">${destHtml(k.dest)}</td></tr>`).join("")}</tbody></table>`;
 }
 document.addEventListener("click",e=>{
   const th=e.target.closest("table.regtab th[data-rord]"); if(!th) return;
@@ -933,40 +932,40 @@ document.addEventListener("click",e=>{
   const dir=th.getAttribute("aria-sort")==="descending"?1:th.getAttribute("aria-sort")==="ascending"?-1:(txt?1:-1);
   const linhas=[...tb.tBodies[0].rows].sort((a,b)=>(k==="pct"&&a.dataset.w!==b.dataset.w)?a.dataset.w-b.dataset.w:dir*(txt?a.cells[c].textContent.localeCompare(b.cells[c].textContent,"pt"):a.cells[c].dataset.v-b.cells[c].dataset.v));
   tb.querySelectorAll("th").forEach(t=>t.removeAttribute("aria-sort")); th.setAttribute("aria-sort",dir<0?"descending":"ascending");
-  linhas.forEach((r,i)=>{ r.cells[0].textContent=i+1; tb.tBodies[0].appendChild(r); });
+  linhas.forEach(r=>tb.tBodies[0].appendChild(r));
 });
 function renderReg(){
   const R=REG, nv=$("rg-nivel").value, tp=$("rg-tipo").value, id=$("rg-proc").value, f=id?porId[id]:null;
   if(!R){ $("rg-kpis").innerHTML=""; $("rg-lista").innerHTML=SEM_REG; $("rg-cont").textContent=""; return; }
   const dias=R.dias||[], A=aggReg({pi:f?R.p.indexOf(f.p):null,nv,tp,por:"u"});
-  $("rg-kpis").innerHTML=kpiHtml([[fmt(dias.length),`dias de registro desde ${dd(R.inicio)}`],[fmt(A.N),"devolvidas novas no período"],[A.N?fmt(A.RS/A.N*100,1)+"%":"–",`das novas já saíram do status devolvida (${fmt(A.RS)})`],[A.C30?fmt(A.R30/A.C30*100,1)+"%":"–",`resolvidas ${JT("d30","em até 30 dias")} (coorte de ${fmt(A.C30)} com 30+ dias)`],[fmt(A.saiEstoque),`saíram do estoque inicial (${destHtml(A.destEst)})`]]);
+  $("rg-kpis").innerHTML=kpiHtml([[fmt(dias.length),`dias de registro desde ${dd(R.inicio)}`],[fmt(A.N),"devolvidas novas no período"],[A.N?fmt(A.RS/A.N*100,1)+"%":"–",`das novas já saíram do status devolvida (${fmt(A.RS)})`],[A.C30?fmt(A.R30/A.C30*100,1)+"%":"–",`saíram ${JT("d30","em até 30 dias")} (coorte de ${fmt(A.C30)} com 30+ dias)`],[fmt(A.saiEstoque),`saíram do estoque inicial (${destHtml(A.destEst)})`]]);
   $("rg-lista").innerHTML=tabelaReg(A.L,"u");
-  $("rg-cont").textContent=`${f?"procedimento: "+f.p+" · ":""}estoque atual: ${fmt(dias.length?dias[dias.length-1].estoque:R.estoque_inicial)} devolvidas · no início do registro: ${fmt(R.estoque_inicial)}`;
+  $("rg-cont").textContent=`${dias.length<30?"registro recente, com menos de 30 dias: percentuais ainda instáveis · ":""}${f?"procedimento: "+f.p+" · ":""}estoque atual: ${fmt(dias.length?dias[dias.length-1].estoque:R.estoque_inicial)} devolvidas · no início do registro: ${fmt(R.estoque_inicial)}`;
 }
 // preenche (sob demanda) uma sub-tabela de resolução dentro da unidade ou do procedimento expandido
 async function preencherReg(el){
   const corpo=el.querySelector(".reg-corpo"); corpo.innerHTML='<p class="nota">carregando…</p>';
   const R=await carregarReg(); if(!R){ corpo.innerHTML=SEM_REG; return; }
   const h=el.querySelector("h5"), ini=` (registro diário desde ${dd(R.inicio)})`;
-  if(el.dataset.un){ h.textContent="Resolução das devolvidas desta unidade, por procedimento"+ini; corpo.innerHTML=tabelaReg(aggReg({ui:R.u.indexOf(el.dataset.un),por:"p"}).L,"p"); }
-  else { h.textContent="Resolução das devolvidas deste procedimento, por unidade solicitante"+ini; corpo.innerHTML=tabelaReg(aggReg({pi:R.p.indexOf(el.dataset.pr),nv:$("pr-nivel").value,por:"u"}).L,"u"); }
+  if(el.dataset.un){ h.textContent="Saída das devolvidas desta unidade, por procedimento"+ini; corpo.innerHTML=tabelaReg(aggReg({ui:R.u.indexOf(el.dataset.un),por:"p"}).L,"p"); }
+  else { h.textContent="Saída das devolvidas deste procedimento, por unidade solicitante"+ini; corpo.innerHTML=tabelaReg(aggReg({pi:R.p.indexOf(el.dataset.pr),nv:$("pr-nivel").value,por:"u"}).L,"u"); }
 }
 async function baixarReg(){
   await xlsx(); await carregarReg(); if(!REG) throw new Error("o registro diário ainda não foi iniciado");
   const R=REG, nv=$("rg-nivel").value, tp=$("rg-tipo").value, id=$("rg-proc").value, f=id?porId[id]:null, pi=f?R.p.indexOf(f.p):null, wb=XLSX.utils.book_new(), r1=v=>Math.round(v*10)/10;
-  const cab=["Novas","Saíram","% resolvidas","Coorte de 30 dias (novas com 30+ dias)","Resolvidas em até 30 dias","% em 30 d","Dias até sair (mediana)","Destino das que saíram"];
+  const cab=["Novas","Saíram","% que saíram de devolvida","Coorte de 30 dias (novas com 30+ dias)","Saíram em até 30 dias","% em 30 d","Dias até sair (mediana)","Destino das que saíram"];
   const vals=g=>[g.novas,g.res,g.novas?r1(g.res/g.novas*100):"",g.c30,g.r30,g.c30?r1(g.r30/g.c30*100):"",g.med??"",destTxt(g.dest)];
   const aba=(nome,por,cabId,linha,wch)=>{ const A=aggReg({pi,nv,tp,por}), ws=XLSX.utils.aoa_to_sheet([[...cabId,...cab],...A.L.map(g=>[...linha(g),...vals(g)])]); ws["!cols"]=wch.map(w=>({wch:w})); XLSX.utils.book_append_sheet(wb,ws,nome); return A; };
   const A=aba("Por unidade","u",["Unidade solicitante","Nível"],g=>[g.u,nivelUn(g.u)],[40,10,9,9,13,20,20,10,16,50]);
   aba("Por procedimento","p",["Procedimento","Tipo"],g=>[g.p,tipoProc(g.p)],[55,10,9,9,13,20,20,10,16,50]);
   aba("Unidade × procedimento","up",["Unidade solicitante","Procedimento"],g=>[g.u,g.p],[40,55,9,9,13,20,20,10,16,50]);
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Resolução das devolvidas","registro diário do painel: a cada coleta, os códigos que entram no status devolvida e os que saem dele"],["Início do registro",`${dd(R.inicio)} (${(R.dias||[]).length} dias de registro; estoque inicial de ${fmt(R.estoque_inicial)} devolvidas)`],["Filtro",`${$("rg-nivel").options[$("rg-nivel").selectedIndex].text} · ${tp||"consultas e exames"} · procedimento: ${f?f.p:"(todos)"}`],
-    ["Novas","devolvidas que apareceram depois do início do registro (o estoque que já existia fica à parte)"],["Saíram","novas que depois saíram do status devolvida"],["% resolvidas","saíram ÷ novas"],["% em 30 d","entre as novas com 30 dias ou mais de registro, quantas saíram em até 30 dias"],["Dias até sair","mediana de dias entre a entrada e a saída do status"],["Destino","para onde foram as que saíram: reenviada, agendada, pendente, fila de espera ou cancelada presumida (o código deixou de constar no Mapa Social sem reaparecer nos outros status; o Mapa Social só lista a solicitação em pendente, reenviada, devolvida e fila de espera, e uma devolvida só sai deles quando é reenviada ou cancelada, mas o painel não confirma o cancelamento)"],["Percentuais instáveis",`com menos de ${MIN12} devolvidas novas`]])),"Leia-me");
-  XLSX.writeFile(wb,`Resolução das devolvidas - Região Norte (${D.data.split("-").reverse().join("-")}).xlsx`);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Saída das devolvidas","registro diário do painel: a cada coleta, os códigos que entram no status devolvida e os que saem dele"],["Início do registro",`${dd(R.inicio)} (${(R.dias||[]).length} dias de registro; estoque inicial de ${fmt(R.estoque_inicial)} devolvidas)`],["Filtro",`${$("rg-nivel").options[$("rg-nivel").selectedIndex].text} · ${tp||"consultas e exames"} · procedimento: ${f?f.p:"(todos)"}`],
+    ["Novas","devolvidas que apareceram depois do início do registro (o estoque que já existia fica à parte)"],["Saíram","novas que depois saíram do status devolvida"],["% que saíram de devolvida","saíram ÷ novas"],["% em 30 d","entre as novas com 30 dias ou mais de registro, quantas saíram em até 30 dias"],["Dias até sair","mediana de dias entre a entrada e a saída do status"],["Destino","para onde foram as que saíram: reenviada, agendada, pendente, fila de espera ou cancelada presumida (o código deixou de constar no Mapa Social sem reaparecer nos outros status; o Mapa Social só lista a solicitação em pendente, reenviada, devolvida e fila de espera, e uma devolvida só sai deles quando é reenviada ou cancelada, mas o painel não confirma o cancelamento)"],["Percentuais instáveis",`com menos de ${MIN12} devolvidas novas`]])),"Leia-me");
+  XLSX.writeFile(wb,`Saída das devolvidas - Região Norte (${D.data.split("-").reverse().join("-")}).xlsx`);
   return A.L.length;
 }
-async function abrirReg(){ const c=$("rg-corpo"); c.hidden=false; $("rg-abrir").setAttribute("aria-expanded","true"); $("rg-abrir").textContent="▾ Resolução das devolvidas (registro diário do painel)"; await carregarReg(); renderReg(); }
-$("rg-abrir").onclick=async()=>{ const c=$("rg-corpo"); if(c.hidden) await abrirReg(); else { c.hidden=true; $("rg-abrir").setAttribute("aria-expanded","false"); $("rg-abrir").textContent="▸ Resolução das devolvidas (registro diário do painel)"; } };
+async function abrirReg(){ const c=$("rg-corpo"); c.hidden=false; $("rg-abrir").setAttribute("aria-expanded","true"); $("rg-abrir").textContent="▾ Saída das devolvidas (registro diário do painel)"; await carregarReg(); renderReg(); }
+$("rg-abrir").onclick=async()=>{ const c=$("rg-corpo"); if(c.hidden) await abrirReg(); else { c.hidden=true; $("rg-abrir").setAttribute("aria-expanded","false"); $("rg-abrir").textContent="▸ Saída das devolvidas (registro diário do painel)"; } };
 ["rg-nivel","rg-tipo"].forEach(id=>$(id).addEventListener("input",()=>REG!==null&&renderReg()));
 // busca de procedimento: o texto digitado (ou escolhido na lista) vira o id guardado no campo oculto
 function aplicarProc(){ const t=$("rg-proc-txt").value.trim(), id=PROC_ID[t]||""; $("rg-proc").value=id; $("rg-proc-x").hidden=!t; if(REG!==null) renderReg(); }
@@ -1006,26 +1005,26 @@ function filtrarUn(){
   L.sort(o==="nome"?(a,b)=>(unOrd.k?unOrd.dir:1)*a.u.localeCompare(b.u,"pt",{numeric:true}):(a,b)=>d*(ORD_UN[o](a)-ORD_UN[o](b))||b.n-a.n);
   return L;
 }
-function linhaUn(x,pos){
+function linhaUn(x){
   const t=v=>v!=null?fmt(v,1):"–";
-  return `<tr class="u" data-u="${esc(x.u)}" tabindex="0" title="Clique para ver os procedimentos"><td>${pos||""}</td><td>${esc(x.u)}<small>${x.nivel==="OUTROS"?"Outras":x.nivel}</small></td><td>${x.esf??"–"}</td>
+  return `<tr class="u" data-u="${esc(x.u)}" tabindex="0" title="Clique para ver os procedimentos"><td>${esc(x.u)}<small>${x.nivel==="OUTROS"?"Outras":x.nivel}</small></td><td>${x.esf??"–"}</td>
     <td class="sep"><b>${fmt(x.n)}</b></td><td>${t(x.taxa)}</td><td class="sep">${fmt(x.t12)}</td><td title="${fmt(x.d12)} devolvidas entre as ${fmt(x.t12)} solicitações dos últimos 12 meses">${pct12(x.d12,x.t12)}</td></tr>`;
 }
 function detalheUn(x){
   const procs=x.procs.map(([id,n])=>{const f=porId[id], q=x.p12[id]||[0,0]; return `<tr><td>${f?`<a class="irfila" href="#f-${id}">${esc(f.p)}</a>`:id}</td><td>${esc(f?f.tipo:"")}</td><td>${fmt(n)}</td><td>${fmt(n/x.n*100,1)}%</td><td>${x.esf?fmt(n/x.esf,1):"–"}</td><td title="${fmt(q[0])} devolvidas entre ${fmt(q[1])} solicitações nos últimos 12 meses">${pct12(q[0],q[1])}</td></tr>`;}).join("");
-  return `<tr class="sub"><td colspan="7"><div class="rolagem"><table class="tab ord"><tr><th>Procedimento</th><th>Tipo</th><th>Devolvidas</th><th title="Devolvidas do procedimento ÷ total de devolvidas da unidade">% da unidade</th><th title="${TIT_ESF}">Por eSF</th><th title="${TIT_12}">% devolvidas (12 m)</th></tr>${procs}</table></div>
-    <div class="reg-sub" data-un="${esc(x.u)}"><h5>Resolução das devolvidas desta unidade, por procedimento</h5><div class="reg-corpo"></div></div>
+  return `<tr class="sub"><td colspan="6"><div class="rolagem"><table class="tab ord"><tr><th>Procedimento</th><th>Tipo</th><th>Devolvidas</th><th title="Devolvidas do procedimento ÷ total de devolvidas da unidade">% da unidade</th><th title="${TIT_ESF}">Por eSF${x.esf?` (${x.esf} eSF)`:""}</th><th title="${TIT_12}">% ainda devolvidas hoje (12 m)</th></tr>${procs}</table></div>
+    <div class="reg-sub" data-un="${esc(x.u)}"><h5>Saída das devolvidas desta unidade, por procedimento</h5><div class="reg-corpo"></div></div>
     <div class="dv-acoes"><button data-dev-un="${esc(x.u)}">Baixar devolvidas desta unidade (Excel)</button><small class="status"></small></div></td></tr>`;
 }
-const TIT_ESF="Devolvidas ÷ número de equipes de Saúde da Família da UBS (só APS)", TIT_12="Devolvidas ÷ solicitações feitas nos últimos 12 meses completos (pela data da solicitação); cada solicitação conta uma vez. "+JAN.dev12;
-const CAB_UN=[["n","Devolvidas"],["taxa","por eSF",TIT_ESF],["t12","Solicitações"],["taxa12","% devolvidas",TIT_12]];
+const TIT_ESF="Devolvidas ÷ número de equipes de Saúde da Família da UBS (só APS; referência: RH APS Norte, junho/2026)", TIT_12="Devolvidas ÷ solicitações feitas nos últimos 12 meses completos (pela data da solicitação); cada solicitação conta uma vez. "+JAN.dev12;
+const CAB_UN=[["n","Devolvidas"],["taxa","por eSF",TIT_ESF],["t12","Solicitações"],["taxa12","% ainda devolvidas hoje",TIT_12]];
 function renderUn(){
-  const L=filtrarUn(), o=ordUn(), rank=o!=="nome", dsc=(unOrd.k?unOrd.dir:-1)<0?"descending":"ascending";
+  const L=filtrarUn(), o=ordUn(), dsc=(unOrd.k?unOrd.dir:-1)<0?"descending":"ascending";
   const abertas=[...document.querySelectorAll("#un-lista tr.u.aberta")].map(tr=>tr.dataset.u);   // linhas abertas continuam abertas
   const th=(k,t,extra="",tit="")=>`<th data-ord="${k}"${o===k?` aria-sort="${dsc}"`:""}${k==="t12"?' class="sep"':""}${tit?` title="${tit}"`:""} ${extra}>${t}</th>`;
   $("un-lista").innerHTML=L.length?`<table class="tab rank"><thead>
-    <tr><th rowspan="2">#</th>${th("nome","Unidade solicitante",'rowspan="2"')}<th rowspan="2" data-ord="esf"${o==="esf"?` aria-sort="${dsc}"`:""}>eSF</th><th colspan="2" class="sep">Todas as devolvidas de hoje${$("un-tipo").value?" ("+esc($("un-tipo").value.toLowerCase())+"s)":""}</th><th colspan="2" class="sep" title="Solicitações feitas pela unidade nos últimos 12 meses completos e quantas delas estão devolvidas hoje (devolvidas ÷ solicitações). ${JAN.dev12}">Últimos 12 meses</th></tr>
-    <tr>${CAB_UN.map(([k,t,tit])=>th(k,t,"",tit)).join("")}</tr></thead><tbody>${L.map((x,i)=>linhaUn(x,rank?i+1:0)).join("")}</tbody></table>`:'<p style="padding:12px">Nenhuma unidade encontrada.</p>';
+    <tr>${th("nome","Unidade solicitante",'rowspan="2"')}<th rowspan="2" data-ord="esf"${o==="esf"?` aria-sort="${dsc}"`:""}>eSF</th><th colspan="2" class="sep">Todas as devolvidas de hoje${$("un-tipo").value?" ("+esc($("un-tipo").value.toLowerCase())+"s)":""}</th><th colspan="2" class="sep" title="Solicitações feitas pela unidade nos últimos 12 meses completos e quantas delas estão devolvidas hoje (devolvidas ÷ solicitações). ${JAN.dev12}">Últimos 12 meses</th></tr>
+    <tr>${CAB_UN.map(([k,t,tit])=>th(k,t,"",tit)).join("")}</tr></thead><tbody>${L.map(x=>linhaUn(x)).join("")}</tbody></table>`:'<p style="padding:12px">Nenhuma unidade encontrada.</p>';
   UN_ATUAL=Object.fromEntries(L.map(x=>[x.u,x]));
   abertas.forEach(u=>{ const tr=document.querySelector(`#un-lista tr.u[data-u="${CSS.escape(u)}"]`); if(tr) alternarUn(tr); });
   $("un-cont").textContent=`${fmt(L.length)} unidades · ${fmt(L.reduce((s,x)=>s+x.n,0))} devolvidas${$("un-tipo").value?"":` (${fmt(L.reduce((s,x)=>s+x.c,0))} consultas, ${fmt(L.reduce((s,x)=>s+x.e,0))} exames)`}`;
@@ -1049,52 +1048,52 @@ function filtrarPr(){
   L.sort(o==="nome"?(a,b)=>(prOrd.k?prOrd.dir:1)*a.f.p.localeCompare(b.f.p,"pt"):(a,b)=>d*(V[o](a)-V[o](b))||b.n-a.n);
   return L;
 }
-function itemPr(x,pos){
-  const us=x.us.map(([ui,n])=>{const [u,nv,esf]=DV.unidades[ui], q=x.u12[ui]||[0,0]; return `<tr><td>${esc(u)}</td><td>${nv==="OUTROS"?"Outras":nv}</td><td>${fmt(n)}</td><td>${esf?fmt(n/esf,1):"–"}</td><td>${fmt(n/x.n*100,1)}%</td><td title="${fmt(q[0])} devolvidas entre ${fmt(q[1])} solicitações nos últimos 12 meses">${pct12(q[0],q[1])}</td></tr>`;}).join("");
+function itemPr(x){
+  const us=x.us.map(([ui,n])=>{const [u,nv,esf]=DV.unidades[ui], q=x.u12[ui]||[0,0]; return `<tr><td>${esc(u)}</td><td>${nv==="OUTROS"?"Outras":nv}</td><td>${fmt(n)}</td><td>${esf??"–"}</td><td>${esf?fmt(n/esf,1):"–"}</td><td>${fmt(n/x.n*100,1)}%</td><td title="${fmt(q[0])} devolvidas entre ${fmt(q[1])} solicitações nos últimos 12 meses">${pct12(q[0],q[1])}</td></tr>`;}).join("");
   return `<div class="fila" tabindex="0" data-pid="${x.f.id}">
     <div class="lin dv c5">
-      <div class="nome">${pos?pos+"º · ":""}${esc(x.f.p)}<small>${esc(x.f.tipo||"")}</small></div>
+      <div class="nome">${esc(x.f.p)}<small>${esc(x.f.tipo||"")}</small></div>
       <div class="num"><b>${fmt(x.n)}</b><small>devolvidas</small></div>
       <div class="num" title="Devolvidas de UBS e PSR; entre parênteses, ÷ total de devolvidas do procedimento"><b>${fmt(x.aps)} <span class="pct">(${fmt(x.aps/x.total*100,0)}%)</span></b><small>da APS (n e %)</small></div>
       <div class="num"><b>${fmt(x.f.fila)}</b><small>na fila</small></div>
-      <div class="num" title="${fmt(x.d12)} devolvidas entre ${fmt(x.t12)} solicitações nos últimos 12 meses. ${JAN.dev12}"><b>${pct12(x.d12,x.t12)}</b><small>devolvidas (12 m)</small></div>
+      <div class="num" title="${fmt(x.d12)} devolvidas entre ${fmt(x.t12)} solicitações nos últimos 12 meses. ${JAN.dev12}"><b>${pct12(x.d12,x.t12)}</b><small>ainda devolvidas hoje (12 m)</small></div>
     </div>
-    <div class="det"><div class="rolagem"><table class="tab ord"><tr><th>Unidade solicitante</th><th>Nível</th><th>Devolvidas</th><th title="${TIT_ESF}">Por eSF</th><th title="Devolvidas da unidade ÷ total de devolvidas do procedimento">% do procedimento</th><th title="${TIT_12}">% devolvidas (12 m)</th></tr>${us}</table></div>
-      <div class="reg-sub" data-pr="${esc(x.f.p)}"><h5>Resolução das devolvidas deste procedimento, por unidade solicitante</h5><div class="reg-corpo"></div></div>
+    <div class="det"><div class="rolagem"><table class="tab ord"><tr><th>Unidade solicitante</th><th>Nível</th><th>Devolvidas</th><th title="Número de equipes de Saúde da Família da UBS">eSF</th><th title="${TIT_ESF}">Por eSF</th><th title="Devolvidas da unidade ÷ total de devolvidas do procedimento">% do procedimento</th><th title="${TIT_12}">% ainda devolvidas hoje (12 m)</th></tr>${us}</table></div>
+      <div class="reg-sub" data-pr="${esc(x.f.p)}"><h5>Saída das devolvidas deste procedimento, por unidade solicitante</h5><div class="reg-corpo"></div></div>
       <div class="dv-acoes"><a class="irfila" href="#f-${x.f.id}">Abrir a fila no painel</a> <button data-dev-p="${x.f.id}">Baixar devolvidas deste procedimento (Excel)</button><small class="status"></small></div></div>
   </div>`;
 }
 function renderPr(){
-  const L=filtrarPr(), o=ordPr(), rank=o!=="nome", dsc=(prOrd.k?prOrd.dir:-1)<0?"descending":"ascending", ab=k=>o===k?` aria-sort="${dsc}"`:"";
+  const L=filtrarPr(), o=ordPr(), dsc=(prOrd.k?prOrd.dir:-1)<0?"descending":"ascending", ab=k=>o===k?` aria-sort="${dsc}"`:"";
   $("pr-cab").innerHTML=`<div class="lin dv c5"><button type="button" data-pord="nome"${ab("nome")}>Procedimento</button><button type="button" data-pord="n"${ab("n")}>Devolvidas</button><button type="button" data-pord="aps"${ab("aps")} title="Devolvidas de UBS e PSR (n) e % do total do procedimento">Da APS (n e %)</button><button type="button" data-pord="fila"${ab("fila")}>Na fila</button><button type="button" data-pord="taxa12"${ab("taxa12")} title="${TIT_12}">Devolvidas (12 m)</button></div>`;
   const abertos=[...document.querySelectorAll("#pr-lista .fila.aberta")].map(c=>c.dataset.pid);
-  $("pr-lista").innerHTML=L.slice(0,visPr).map((x,i)=>itemPr(x,rank?i+1:0)).join("")||"<p>Nenhum procedimento encontrado.</p>";
+  $("pr-lista").innerHTML=L.slice(0,visPr).map(x=>itemPr(x)).join("")||"<p>Nenhum procedimento encontrado.</p>";
   abertos.forEach(id=>{ const c=document.querySelector(`#pr-lista .fila[data-pid="${id}"]`); if(c){ c.classList.add("aberta"); preencherReg(c.querySelector(".reg-sub")); } });
   $("pr-mais").hidden=L.length<=visPr; $("pr-mais").textContent=`Mostrar mais (${fmt(L.length-visPr)} restantes)`;
   $("pr-cont").textContent=`${fmt(L.length)} procedimentos · ${fmt(L.reduce((s,x)=>s+x.n,0))} devolvidas`;
 }
 async function baixarResumoUn(){
   await xlsx(); const L=filtrarUn(), wb=XLSX.utils.book_new(), r1=v=>v!=null?Math.round(v*10)/10:"";
-  const ws=XLSX.utils.aoa_to_sheet([["Posição","Unidade solicitante","Nível","eSF","Devolvidas","Devolvidas por eSF","Consultas devolvidas","Consultas por eSF","Exames devolvidos","Exames por eSF","Solicitações (12 m)","Devolvidas (12 m)","% devolvidas (12 m)","% do total da região"],
-    ...L.map((x,i)=>[i+1,x.u,x.nivel,x.esf??"",x.n,r1(x.taxa),x.c,r1(x.taxaC),x.e,r1(x.taxaE),x.t12,x.d12,r1(x.taxa12),r1(x.pct)])]);
-  ws["!cols"]=[8,40,10,6,11,18,20,18,18,16,17,16,18,20].map(w=>({wch:w}));
+  const ws=XLSX.utils.aoa_to_sheet([["Unidade solicitante","Nível","eSF","Devolvidas","Devolvidas por eSF","Consultas devolvidas","Consultas por eSF","Exames devolvidos","Exames por eSF","Solicitações (12 m)","Devolvidas (12 m)","% ainda devolvidas hoje (12 m)","% do total da região"],
+    ...L.map(x=>[x.u,x.nivel,x.esf??"",x.n,r1(x.taxa),x.c,r1(x.taxaC),x.e,r1(x.taxaE),x.t12,x.d12,r1(x.taxa12),r1(x.pct)])]);
+  ws["!cols"]=[40,10,6,11,18,20,18,18,16,17,16,18,20].map(w=>({wch:w}));
   XLSX.utils.book_append_sheet(wb,ws,"Ranking");
-  const linhas=[]; L.forEach(x=>x.procs.forEach(([id,n])=>{const q=x.p12[id]||[0,0]; linhas.push([x.u,x.nivel,porId[id]?porId[id].p:id,porId[id]?porId[id].tipo:"",n,r1(x.n?n/x.n*100:0),x.esf?r1(n/x.esf):"",q[1],q[0],q[1]?r1(q[0]/q[1]*100):""]);}));
-  const w2=XLSX.utils.aoa_to_sheet([["Unidade solicitante","Nível","Procedimento","Tipo","Devolvidas","% da unidade","Por eSF","Solicitações (12 m)","Devolvidas (12 m)","% devolvidas (12 m)"],...linhas]); w2["!cols"]=[40,10,55,12,11,13,9,17,16,18].map(w=>({wch:w}));
+  const linhas=[]; L.forEach(x=>x.procs.forEach(([id,n])=>{const q=x.p12[id]||[0,0]; linhas.push([x.u,x.nivel,porId[id]?porId[id].p:id,porId[id]?porId[id].tipo:"",n,r1(x.n?n/x.n*100:0),x.esf??"",x.esf?r1(n/x.esf):"",q[1],q[0],q[1]?r1(q[0]/q[1]*100):""]);}));
+  const w2=XLSX.utils.aoa_to_sheet([["Unidade solicitante","Nível","Procedimento","Tipo","Devolvidas","% da unidade","eSF","Por eSF","Solicitações (12 m)","Devolvidas (12 m)","% ainda devolvidas hoje (12 m)"],...linhas]); w2["!cols"]=[40,10,55,12,11,13,6,9,17,16,18].map(w=>({wch:w}));
   XLSX.utils.book_append_sheet(wb,w2,"Unidade x procedimento");
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Filtro",`${$("un-nivel").options[$("un-nivel").selectedIndex].text} · ${$("un-tipo").value||"consultas e exames"} · ordem: ${$("un-ordem").options[$("un-ordem").selectedIndex].text} · busca: ${$("un-busca").value||"(nenhuma)"}`],["Por eSF","devolvidas ÷ número de eSF da UBS (referência RH APS Norte 06/2026); só para a APS"],["% devolvidas (12 m)",`das solicitações feitas pela unidade de ${(DV.janela12||["",""])[0]} a ${(DV.janela12||["",""])[1]} (pela data da solicitação), quantas estão devolvidas hoje; cada solicitação conta uma vez e a que foi agendada depois de uma devolução conta como não devolvida. ${JAN.dev12}`]])),"Leia-me");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Filtro",`${$("un-nivel").options[$("un-nivel").selectedIndex].text} · ${$("un-tipo").value||"consultas e exames"} · ordem: ${$("un-ordem").options[$("un-ordem").selectedIndex].text} · busca: ${$("un-busca").value||"(nenhuma)"}`],["Por eSF","devolvidas ÷ número de eSF da UBS (referência RH APS Norte 06/2026); só para a APS"],["% ainda devolvidas hoje (12 m)",`das solicitações feitas pela unidade de ${(DV.janela12||["",""])[0]} a ${(DV.janela12||["",""])[1]} (pela data da solicitação), quantas estão devolvidas hoje; cada solicitação conta uma vez e a que foi agendada depois de uma devolução conta como não devolvida. ${JAN.dev12}`]])),"Leia-me");
   XLSX.writeFile(wb,`Devolvidas por unidade - Região Norte (${D.data.split("-").reverse().join("-")}).xlsx`);
 }
 async function baixarResumoPr(){
   await xlsx(); const L=filtrarPr(), wb=XLSX.utils.book_new();
   const r1=v=>v!=null?Math.round(v*10)/10:"";
-  const ws=XLSX.utils.aoa_to_sheet([["Posição","Procedimento","Tipo","Devolvidas (filtro)","Devolvidas da APS","Devolvidas – total","Na fila","Solicitações (12 m, filtro)","Devolvidas (12 m, filtro)","% devolvidas (12 m)"],...L.map((x,i)=>[i+1,x.f.p,x.f.tipo,x.n,x.aps,x.total,x.f.fila,x.t12,x.d12,x.t12?r1(x.d12/x.t12*100):""])]);
-  ws["!cols"]=[{wch:8},{wch:55},{wch:12},{wch:17},{wch:17},{wch:17},{wch:9},{wch:22},{wch:22},{wch:18}];
+  const ws=XLSX.utils.aoa_to_sheet([["Procedimento","Tipo","Devolvidas (filtro)","Devolvidas da APS","Devolvidas – total","Na fila","Solicitações (12 m, filtro)","Devolvidas (12 m, filtro)","% ainda devolvidas hoje (12 m)"],...L.map(x=>[x.f.p,x.f.tipo,x.n,x.aps,x.total,x.f.fila,x.t12,x.d12,x.t12?r1(x.d12/x.t12*100):""])]);
+  ws["!cols"]=[{wch:55},{wch:12},{wch:17},{wch:17},{wch:17},{wch:9},{wch:22},{wch:22},{wch:18}];
   XLSX.utils.book_append_sheet(wb,ws,"Procedimentos");
-  const linhas=[]; L.forEach(x=>x.us.forEach(([ui,n])=>{const [u,nv,esf]=DV.unidades[ui], q=x.u12[ui]||[0,0]; linhas.push([x.f.p,x.f.tipo,u,nv,n,esf?Math.round(n/esf*10)/10:"",q[1],q[0],q[1]?r1(q[0]/q[1]*100):""]);}));
-  const w2=XLSX.utils.aoa_to_sheet([["Procedimento","Tipo","Unidade solicitante","Nível","Devolvidas","Por eSF","Solicitações (12 m)","Devolvidas (12 m)","% devolvidas (12 m)"],...linhas]); w2["!cols"]=[{wch:55},{wch:12},{wch:40},{wch:10},{wch:11},{wch:9},{wch:17},{wch:16},{wch:18}];
+  const linhas=[]; L.forEach(x=>x.us.forEach(([ui,n])=>{const [u,nv,esf]=DV.unidades[ui], q=x.u12[ui]||[0,0]; linhas.push([x.f.p,x.f.tipo,u,nv,n,esf??"",esf?Math.round(n/esf*10)/10:"",q[1],q[0],q[1]?r1(q[0]/q[1]*100):""]);}));
+  const w2=XLSX.utils.aoa_to_sheet([["Procedimento","Tipo","Unidade solicitante","Nível","Devolvidas","eSF","Por eSF","Solicitações (12 m)","Devolvidas (12 m)","% ainda devolvidas hoje (12 m)"],...linhas]); w2["!cols"]=[{wch:55},{wch:12},{wch:40},{wch:10},{wch:11},{wch:6},{wch:9},{wch:17},{wch:16},{wch:18}];
   XLSX.utils.book_append_sheet(wb,w2,"Procedimento x unidade");
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Filtro",`${$("pr-tipo").value||"todos os tipos"} · ${$("pr-nivel").options[$("pr-nivel").selectedIndex].text} · busca: ${$("pr-busca").value||"(nenhuma)"}`],["% devolvidas (12 m)",`das solicitações do procedimento feitas de ${(DV.janela12||["",""])[0]} a ${(DV.janela12||["",""])[1]} pelas unidades do filtro, quantas estão devolvidas hoje. ${JAN.dev12}`]])),"Leia-me");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Filtro",`${$("pr-tipo").value||"todos os tipos"} · ${$("pr-nivel").options[$("pr-nivel").selectedIndex].text} · busca: ${$("pr-busca").value||"(nenhuma)"}`],["% ainda devolvidas hoje (12 m)",`das solicitações do procedimento feitas de ${(DV.janela12||["",""])[0]} a ${(DV.janela12||["",""])[1]} pelas unidades do filtro, quantas estão devolvidas hoje. ${JAN.dev12}`]])),"Leia-me");
   XLSX.writeFile(wb,`Devolvidas por procedimento - Região Norte (${D.data.split("-").reverse().join("-")}).xlsx`);
 }
 async function comStatus(st, fn){
@@ -1139,12 +1138,12 @@ function filtrarOf(){
   return L;
 }
 function chipsEsp(e){ return COR.filter(c=>e.cores[c]).map(c=>{const k=e.cores[c]; return `<span class="chip ${c.replace(" ","")}" title="${c}: ${fmt(k.n)} em fila de espera; mais antiga de ${dd(k.antiga)}">${fmt(k.n)}${k.dias!=null?" · "+fmt(k.dias)+" d":""}</span>`;}).join("")||`<span style="color:var(--muted);font-size:.8rem">sem fila de espera</span>`; }
-function itemOf(f,pos){
+function itemOf(f){
   const e=f.espera, ss=sinais(f), desde=e?desdeEspera(f.id):null, nd=diasDesde(desde);
   const us=e?e.unidades.map(([u,n])=>`<tr><td>${esc(u)}</td><td>${fmt(n)}</td><td>${fmt(n/e.n*100,1)}%</td></tr>`).join(""):"";
   return `<div class="fila" tabindex="0" data-pid="${f.id}">
     <div class="lin dv c4">
-      <div class="nome">${pos?pos+"º · ":""}${esc(f.p)}<small>${esc(f.tipo||"")} · ${ss.map(x=>`<span class="tag">${ROT_SINAL[x]}</span>`).join(" ")}</small></div>
+      <div class="nome">${esc(f.p)}<small>${esc(f.tipo||"")} · ${ss.map(x=>`<span class="tag">${ROT_SINAL[x]}</span>`).join(" ")}</small></div>
       <div class="num" title="${desde?"No registro diário do painel desde "+dd(desde)+" ("+fmt(Math.max(0,nd))+" dias)":"Ainda não consta no registro diário"}"><b>${e?fmt(e.n):"0"}</b><small>em fila de espera</small></div>
       <div class="num"><b>${e&&e.dias!=null?fmt(e.dias)+" d":"–"}</b><small>espera mais antiga</small></div>
       <div class="num"><b>${fmt(f.fila)}</b><small>na fila do regulador</small></div>
@@ -1157,9 +1156,9 @@ function itemOf(f,pos){
     </div></div>`;
 }
 function renderOf(){
-  const L=filtrarOf(), rank=$("of-ordem").value!=="nome";
+  const L=filtrarOf();
   const abertos=[...document.querySelectorAll("#of-lista .fila.aberta")].map(c=>c.dataset.pid);
-  $("of-lista").innerHTML=L.slice(0,visOf).map((f,i)=>itemOf(f,rank?i+1:0)).join("")||"<p>Nenhum procedimento encontrado.</p>";
+  $("of-lista").innerHTML=L.slice(0,visOf).map(f=>itemOf(f)).join("")||"<p>Nenhum procedimento encontrado.</p>";
   abertos.forEach(id=>{ const c=document.querySelector(`#of-lista .fila[data-pid="${id}"]`); if(c) c.classList.add("aberta"); });
   $("of-mais").hidden=L.length<=visOf; $("of-mais").textContent=`Mostrar mais (${fmt(L.length-visOf)} restantes)`;
   { const ds=ESP&&ESP.dias||[]; $("of-nota").textContent=ds.length?`Registro diário da fila de espera desde ${dd(ds[0].data)} (${fmt(ds.length)} ${ds.length===1?"dia":"dias"}); passe o cursor sobre o número em fila de espera para ver desde quando cada procedimento consta.`:""; }
@@ -1173,17 +1172,17 @@ function kpisOf(){
 async function abrirOferta(){ await carregarEsp(); kpisOf(); renderOf(); }
 async function baixarOferta(){
   await xlsx(); const L=filtrarOf(), wb=XLSX.utils.book_new(), corN=(f,c)=>f.espera&&f.espera.cores[c]?f.espera.cores[c].n:0;
-  const ws=XLSX.utils.aoa_to_sheet([["Posição","Procedimento","Tipo","Sinais","Em fila de espera","Vermelho","Amarelo","Verde","Azul","Sem risco","Espera mais antiga","Espera mais antiga (dias)","Na fila do regulador","Último agendamento","No registro diário desde","Alertas"],
-    ...L.map((f,i)=>[i+1,f.p,f.tipo,sinais(f).map(x=>ROT_SINAL[x]).join("; "),f.espera?f.espera.n:0,corN(f,"vermelho"),corN(f,"amarelo"),corN(f,"verde"),corN(f,"azul"),corN(f,"sem risco"),f.espera?dataXl(f.espera.antiga):"",f.espera&&f.espera.dias!=null?f.espera.dias:"",f.fila,dataXl(f.ult_ag),f.espera?dataXl(desdeEspera(f.id)):"",f.alertas.join("; ")])]);
-  ws["!cols"]=[8,55,10,34,16,9,9,9,9,9,16,18,16,16,18,60].map(w=>({wch:w})); XLSX.utils.book_append_sheet(wb,ws,"Procedimentos");
+  const ws=XLSX.utils.aoa_to_sheet([["Procedimento","Tipo","Sinais","Em fila de espera","Vermelho","Amarelo","Verde","Azul","Sem risco","Espera mais antiga","Espera mais antiga (dias)","Na fila do regulador","Último agendamento","No registro diário desde","Alertas"],
+    ...L.map(f=>[f.p,f.tipo,sinais(f).map(x=>ROT_SINAL[x]).join("; "),f.espera?f.espera.n:0,corN(f,"vermelho"),corN(f,"amarelo"),corN(f,"verde"),corN(f,"azul"),corN(f,"sem risco"),f.espera?dataXl(f.espera.antiga):"",f.espera&&f.espera.dias!=null?f.espera.dias:"",f.fila,dataXl(f.ult_ag),f.espera?dataXl(desdeEspera(f.id)):"",f.alertas.join("; ")])]);
+  ws["!cols"]=[55,10,34,16,9,9,9,9,9,16,18,16,16,18,60].map(w=>({wch:w})); XLSX.utils.book_append_sheet(wb,ws,"Procedimentos");
   const un=[]; L.forEach(f=>f.espera&&f.espera.unidades.forEach(([u,n])=>un.push([f.p,f.tipo,u,n])));
   const w2=XLSX.utils.aoa_to_sheet([["Procedimento","Tipo","Unidade solicitante","Em fila de espera"],...un]); w2["!cols"]=[55,10,40,16].map(w=>({wch:w})); XLSX.utils.book_append_sheet(wb,w2,"Unidades");
   let nl=0;
   try{ const r=await fetch("detalhe/espera.json",{cache:"no-store"}); if(r.ok){ const E=await r.json(), sel=new Set(L.map(f=>f.p));
     const lin=E.r.filter(x=>sel.has(E.p[x[0]])).map(([pi,c,ds,cor,cid,u])=>[E.p[pi],u,c,dataXl(ds),cor?cor.charAt(0).toUpperCase()+cor.slice(1):"",cid]); nl=lin.length;
     const w3=XLSX.utils.aoa_to_sheet([["Procedimento","Unidade solicitante","Código SISREG","Data da solicitação","Classificação de risco","CID"],...lin]); w3["!cols"]=[55,40,14,16,18,50].map(w=>({wch:w})); XLSX.utils.book_append_sheet(wb,w3,"Linha a linha"); } }catch{ /* sem detalhe/espera.json a planilha sai sem a aba linha a linha */ }
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Aba Sem oferta","procedimentos com fila de espera (aguardando pactuação), sem saída há mais de 1 ano ou fila parada"],["Filtro",`${$("of-sinal").options[$("of-sinal").selectedIndex].text} · ${$("of-tipo").value||"todos os tipos"} · busca: ${$("of-busca").value||"(nenhuma)"}`],["Registro diário",ESP.dias.length?`desde ${dd(ESP.dias[0].data)} (${ESP.dias.length} dias)`:"ainda não iniciado"]])),"Leia-me");
-  XLSX.writeFile(wb,`Sem oferta - fila de espera - Região Norte (${D.data.split("-").reverse().join("-")}).xlsx`);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Aba Oferta interrompida ou não pactuada","procedimentos com fila de espera (aguardando pactuação), sem saída há mais de 1 ano ou fila parada"],["Filtro",`${$("of-sinal").options[$("of-sinal").selectedIndex].text} · ${$("of-tipo").value||"todos os tipos"} · busca: ${$("of-busca").value||"(nenhuma)"}`],["Registro diário",ESP.dias.length?`desde ${dd(ESP.dias[0].data)} (${ESP.dias.length} dias)`:"ainda não iniciado"]])),"Leia-me");
+  XLSX.writeFile(wb,`Oferta interrompida ou não pactuada - Região Norte (${D.data.split("-").reverse().join("-")}).xlsx`);
   return nl||L.length;
 }
 ["of-busca","of-sinal","of-tipo","of-ordem"].forEach(id=>$(id).addEventListener("input",()=>{ visOf=60; renderOf(); }));
@@ -1193,14 +1192,14 @@ $("of-lista").addEventListener("click",e=>alternar(e));
 $("of-lista").addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.classList.contains("fila")) e.target.classList.toggle("aberta"); });
 
 // ---------------------------------------------------------------- aba Priorização (todas as filas lado a lado)
-// Dano: pessoas-ano de espera (soma, por cor, de n × espera média de quem está na fila hoje ÷ 365; a média é aditiva, então a soma é exata).
+// Tempo acumulado: solicitações-ano de espera (soma, por cor, de n × espera média de quem está na fila hoje ÷ 365; a média é aditiva, então a soma é exata).
 // Esforço: vagas a mais por mês para estabilizar (na tela); zerar em 12 meses e a faixa pessimista (entrada ×1,18, saída ×0,75) só no Excel.
 let pzOrd={k:"pm",dir:-1};
 function linhaPrio(f){
   const b=baseSim(f), bp=piorB(b), cs=f.cor_stats||{}, pz=plano(b,12,0), pzp=plano(bp,12,0), m=f.alertas.map(a=>a.match(/Fila crescendo: saldo positivo em (\d+) dos/)).find(Boolean);
   const ss=sinais(f).filter(x=>x!=="espera"), va=["vermelho","amarelo"].filter(c=>f.cores[c]);
   const pm=Object.entries(f.cores).reduce((t,[c,k])=>t+(cs[c]&&cs[c].fila_media!=null?k.n*cs[c].fila_media/DIAS_ANO:0),0);
-  return {f,b,sem:ss.length>0,cres:!!m,esp:f.espera?f.espera.n:0,sit:[ss.length?"sem oferta":"",m?"crescendo":"",f.espera&&f.espera.n?`fila de espera (${f.espera.n})`:""].filter(Boolean).join(" · "),pos:m?+m[1]:null,
+  return {f,b,sem:ss.length>0,cres:!!m,esp:f.espera?f.espera.n:0,sit:[ss.length?"oferta interrompida":"",m?"crescendo":"",f.espera&&f.espera.n?`fila de espera (${f.espera.n})`:""].filter(Boolean).join(" · "),pos:m?+m[1]:null,
     estoque:b.sai>0?f.fila/b.sai:null,med:f.esp_fila?f.esp_fila.mediana:null,pm,
     va:va.reduce((t,c)=>t+f.cores[c].n,0),vaAnt:va.reduce((mx,c)=>Math.max(mx,f.cores[c].dias||0),0),
     est:Math.max(0,b.ent-b.sai),zera:pz.N,zeraP:pzp.N};
@@ -1209,9 +1208,9 @@ const PZ_COL=[ // chave, rótulo, valor para ordenar, explicação (title)
   ["nome","Procedimento",r=>r.f.p,"Clique para abrir a ficha da fila"],
   ["fila","Na fila",r=>r.f.fila,"Solicitações aguardando (pendentes + reenviadas)"],
   ["saldo","Saldo 12 m",r=>r.f.saldo12,"Entrada − saída nos últimos 12 meses completos; quando foi positivo em 9 ou mais desses meses, abaixo aparece em quantos. "+JAN.m12],
-  ["sit","Situação",r=>r.sit,"“sem oferta”: sem saída há mais de 1 ano ou fila parada; “crescendo”: saldo positivo em 9 ou mais dos últimos 12 meses; “fila de espera (n)”: solicitações aguardando pactuação, fora da fila do regulador (aba Sem oferta). Os sinais se combinam. "+JAN.cresc],
+  ["sit","Situação",r=>r.sit,"“oferta interrompida”: sem saída há mais de 1 ano ou fila parada; “crescendo”: saldo positivo em 9 ou mais dos últimos 12 meses; “fila de espera (n)”: solicitações aguardando pactuação, fora da fila do regulador (aba Oferta interrompida ou não pactuada). Os sinais se combinam. "+JAN.cresc],
   ["med","Espera mediana (dias)",r=>r.med==null?-1:r.med,"Mediana do tempo que quem está na fila hoje já esperou (a comparável às metas da SES-DF, que são medianas). "+JAN.esp],
-  ["pm","Pessoas-ano de espera",r=>r.pm,JAN.pm],
+  ["pm","Solicitações-ano de espera",r=>r.pm,JAN.pm],
   ["est","Estabilizar (vagas/mês)",r=>r.est,"Vagas a mais por mês, permanentes, para a fila parar de crescer: entrada − saída (médias dos últimos 12 meses); entre parênteses, % da saída atual. "+JAN.med12]
 ];
 function filtrarPrio(){
@@ -1225,25 +1224,25 @@ function renderPrio(){
   if(!D) return;
   const L=filtrarPrio(), tot=L.reduce((s,r)=>s+r.pm,0), dsc=pzOrd.dir<0?"descending":"ascending";
   const th=c=>`<th data-ord="${c[0]}"${pzOrd.k===c[0]?` aria-sort="${dsc}"`:""}${c[3]?` title="${esc(c[3])}"`:""}>${c[1]}</th>`;
-  const sinal=r=>[r.sem?'<span class="tag" title="Sem saída há mais de 1 ano ou fila parada (aba Sem oferta)">sem oferta</span>':"",r.cres?`<span class="tag" title="${esc(JAN.cresc)}">crescendo</span>`:"",r.esp?`<small title="Solicitações em fila de espera (aguardando pactuação), fora da fila do regulador">fila de espera (${fmt(r.esp)})</small>`:""].join(" ");
+  const sinal=r=>[r.sem?'<span class="tag" title="Sem saída há mais de 1 ano ou fila parada (aba Oferta interrompida ou não pactuada)">oferta interrompida</span>':"",r.cres?`<span class="tag" title="${esc(JAN.cresc)}">crescendo</span>`:"",r.esp?`<small title="Solicitações em fila de espera (aguardando pactuação), fora da fila do regulador">fila de espera (${fmt(r.esp)})</small>`:""].join(" ");
   const lin=r=>`<tr><td><a class="irfila" href="#f-${r.f.id}">${esc(r.f.p)}</a></td><td>${fmt(r.f.fila)}</td>
     <td title="${r.pos!=null?`saldo positivo em ${r.pos} de 12 meses`:"abaixo de 9 meses positivos de 12"}">${r.f.saldo12>0?"+":""}${fmt(r.f.saldo12)}${r.pos!=null?`<small>${r.pos}/12</small>`:""}</td>
     <td>${sinal(r)}</td>
     <td${r.med==null?' title="disponível na próxima coleta"':""}>${r.med==null?"–":fmt(r.med)}</td><td><b>${fmt(Math.round(r.pm))}</b></td>
     <td>${r.est>0.05?`+${fmt(Math.ceil(r.est))}${r.b.sai>=5?`<small>+${fmt(r.est/r.b.sai*100)}% da saída</small>`:""}`:"0"}</td></tr>`;
   $("pz-lista").innerHTML=L.length?`<table class="tab rank"><thead><tr>${PZ_COL.map(th).join("")}</tr></thead><tbody>${L.map(lin).join("")}</tbody></table>`:'<p style="padding:12px">Nenhuma fila encontrada.</p>';
-  $("pz-cont").textContent=`${fmt(L.length)} filas · ${fmt(Math.round(tot))} pessoas-ano`;
+  $("pz-cont").textContent=`${fmt(L.length)} filas · ${fmt(Math.round(tot))} solicitações-ano`;
   const todas=D.filas.filter(f=>f.fila>0).map(linhaPrio);
-  $("pz-kpis").innerHTML=kpiHtml([[fmt(Math.round(todas.reduce((s,r)=>s+r.pm,0))),JT("pm","pessoas-ano de espera acumulados na região (soma das filas)")],[fmt(todas.length),"filas com solicitações aguardando"],[fmt(todas.filter(r=>r.sem).length),"filas sem saída há mais de 1 ano ou paradas"],[fmt(todas.filter(r=>r.cres).length),"filas crescendo"],[fmt(todas.filter(r=>r.esp).length),"filas com solicitações em fila de espera"]]);
+  $("pz-kpis").innerHTML=kpiHtml([[fmt(Math.round(todas.reduce((s,r)=>s+r.pm,0))),JT("pm","solicitações-ano de espera acumulados na região (soma das filas)")],[fmt(todas.length),"filas com solicitações aguardando"],[fmt(todas.filter(r=>r.sem).length),"filas sem saída há mais de 1 ano ou paradas"],[fmt(todas.filter(r=>r.cres).length),"filas crescendo"],[fmt(todas.filter(r=>r.esp).length),"filas com solicitações em fila de espera"]]);
 }
 async function baixarPrio(){
   await xlsx(); const L=filtrarPrio(), wb=XLSX.utils.book_new(), r1=v=>v!=null?Math.round(v*10)/10:"";
-  const ws=XLSX.utils.aoa_to_sheet([["Posição","Procedimento","Tipo","Na fila","Saldo 12 m","Meses com saldo positivo (de 12)","Situação","Meses de estoque","Espera mediana (dias)","Pessoas-ano de espera","Vermelhos + amarelos (n)","Mais antiga deles (dias)","Estabilizar (vagas/mês)","Estabilizar (% da saída)","Zerar em 12 m (vagas/mês)","Zerar em 12 m, cenário pior (vagas/mês)"],
-    ...L.map((r,i)=>[i+1,r.f.p,r.f.tipo,r.f.fila,r.f.saldo12,r.pos??"",r.sit,r.estoque==null?"sem saída":r1(r.estoque),r.med??"",Math.round(r.pm),r.va,r.va?r.vaAnt:"",Math.ceil(r.est-1e-9),r.b.sai>=5?r1(r.est/r.b.sai*100):"",Math.ceil(r.zera-1e-9),Math.ceil(r.zeraP-1e-9)])]);
-  ws["!cols"]=[8,55,10,9,11,16,13,14,16,16,16,16,16,16,16,20].map(w=>({wch:w}));
+  const ws=XLSX.utils.aoa_to_sheet([["Procedimento","Tipo","Na fila","Saldo 12 m","Meses com saldo positivo (de 12)","Situação","Tempo para agendar a fila atual (meses)","Espera mediana (dias)","Solicitações-ano de espera","Vermelhos + amarelos (n)","Mais antiga deles (dias)","Estabilizar (vagas/mês)","Estabilizar (% da saída)","Zerar em 12 m (vagas/mês)","Zerar em 12 m, cenário pior (vagas/mês)"],
+    ...L.map(r=>[r.f.p,r.f.tipo,r.f.fila,r.f.saldo12,r.pos??"",r.sit,r.estoque==null?"sem saída":r1(r.estoque),r.med??"",Math.round(r.pm),r.va,r.va?r.vaAnt:"",Math.ceil(r.est-1e-9),r.b.sai>=5?r1(r.est/r.b.sai*100):"",Math.ceil(r.zera-1e-9),Math.ceil(r.zeraP-1e-9)])]);
+  ws["!cols"]=[55,10,9,11,16,13,14,16,16,16,16,16,16,16,20].map(w=>({wch:w}));
   XLSX.utils.book_append_sheet(wb,ws,"Priorização");
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Aba Priorização","todas as filas com solicitações aguardando, lado a lado; o painel não classifica nem pondera, o julgamento é da gestão; uma vaga de um procedimento não vira vaga de outro"],["Filtro",`${$("pz-tipo").value||"todos os tipos"} · ${$("pz-sem").checked?"sem as filas sem oferta (sem saída há mais de 1 ano ou paradas)":"com as filas sem oferta"} · busca: ${$("pz-busca").value||"(nenhuma)"}`],
-    ["Pessoas-ano de espera",JAN.pm],["Meses de estoque",JAN.estoque],["Espera mediana","mediana do tempo que quem está na fila hoje já esperou (vazio: dado disponível só a partir da próxima coleta)"],["Estabilizar","entrada − saída (médias dos últimos 12 meses), em vagas por mês a mais, permanentes"],["Zerar em 12 m","(entrada − saída) + fila ÷ 12, em vagas por mês a mais durante 12 meses"],["Cenário pior",JAN.pess]])),"Leia-me");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Aba Priorização","todas as filas com solicitações aguardando, lado a lado; o painel não classifica nem pondera, o julgamento é da gestão; uma vaga de um procedimento não vira vaga de outro"],["Filtro",`${$("pz-tipo").value||"todos os tipos"} · ${$("pz-sem").checked?"sem as filas com oferta interrompida (sem saída há mais de 1 ano ou paradas)":"com as filas com oferta interrompida"} · busca: ${$("pz-busca").value||"(nenhuma)"}`],
+    ["Solicitações-ano de espera",JAN.pm],["Tempo para agendar a fila atual (meses)",JAN.estoque],["Espera mediana","mediana do tempo que quem está na fila hoje já esperou (vazio: dado disponível só a partir da próxima coleta)"],["Estabilizar","entrada − saída (médias dos últimos 12 meses), em vagas por mês a mais, permanentes"],["Zerar em 12 m","(entrada − saída) + fila ÷ 12, em vagas por mês a mais durante 12 meses"],["Cenário pior",JAN.pess]])),"Leia-me");
   XLSX.writeFile(wb,`Priorização das filas - Região Norte (${D.data.split("-").reverse().join("-")}).xlsx`);
   return L.length;
 }

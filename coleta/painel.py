@@ -55,6 +55,7 @@ MIN_FILAS = 500        # abaixo disso a coleta é considerada falha (não public
 # no registro diário, marcaria ~47 mil devolvidas como "canceladas"). Valores bem abaixo do observado em out/2026
 # (579 filas com fila, 94 mil na fila, 769 filas com devolvidas, 47 mil devolvidas).
 MIN_COM_FILA, MIN_NA_FILA, MIN_COM_DEV, MIN_DEVOLVIDAS = 300, 20000, 300, 10000
+MAX_QUEDA_TOTAL, MIN_FILA_GRANDE, CODIGO_TRAVA = 0.15, 500, 3   # queda em relação à publicação anterior: ver trava_relativa
 MIN_ESTOQUE_REL = 0.98  # queda de mais de 2% no estoque de devolvidas (o normal é ~0,04%/dia) = coleta suspeita, o registro não é alterado
 TOLERANCIA_MES = 10     # depois deste dia, o mês anterior conta como completo mesmo que a fonte não tenha chegado ao último dia
 ANOS_SERIE = 5         # série da análise: de janeiro de (ano - 5) até o mês anterior
@@ -242,12 +243,6 @@ def montar(b, hoje, ref=None):
         alertas = []
         if pos >= 9 and sum(u12) > 0:   # meses positivos E saldo do ano positivo: um mês muito negativo pode anular os demais
             alertas.append("Fila crescendo: saldo positivo em %d dos últimos 12 meses" % pos)
-        meta = metas.get(p) or {}   # só há meta quando uma norma a define (aba Metas_espera); sem norma, sem alerta de meta
-        for cor in ("vermelho", "amarelo", "verde", "azul"):
-            c, lim = cores.get(cor), meta.get(cor)
-            if c and lim and c["dias"] is not None and c["dias"] > lim:
-                alertas.append("%s esperando há %s dias (meta: %d)" % (
-                    cor.capitalize(), f"{c['dias']:,}".replace(",", "."), lim))
         if d["fila"] >= 20 and sum(sai[-3:]) == 0 and d["futuros"] == 0:
             alertas.append("Fila parada: ninguém agendado nos últimos 3 meses nem marcado à frente")
         ult = d["ult_ag"]
@@ -599,6 +594,27 @@ def historico_devolvidas(dev_det, det, hoje, anterior=None):
     return reg
 
 
+def trava_relativa(dados, anterior=None):
+    """Compara a coleta com a publicação anterior; devolve a lista de quedas suspeitas (vazia = pode publicar)."""
+    if anterior is None:
+        try:
+            with urllib.request.urlopen(PUBLICADO + "dados.json", timeout=60) as resp:
+                anterior = json.load(resp)
+        except Exception as e:   # sem publicação legível não há com que comparar; os mínimos fixos continuam valendo
+            print("::warning::Trava da coleta: não li a publicação anterior (%s)." % e)
+            return []
+    problemas = []
+    for rotulo, campo in (("Fila", "fila"), ("Devolvidas", "devolvidas")):
+        antes, agora = sum(f[campo] for f in anterior["filas"]), sum(f[campo] for f in dados["filas"])
+        if antes and agora < (1 - MAX_QUEDA_TOTAL) * antes:
+            problemas.append("%s caiu de %d para %d (%.0f%%)." % (rotulo, antes, agora, (agora / antes - 1) * 100))
+    atual = {f["p"]: f["fila"] for f in dados["filas"]}
+    for f in anterior["filas"]:
+        if f["fila"] >= MIN_FILA_GRANDE and atual.get(f["p"], 0) < f["fila"] / 2:
+            problemas.append("%s caiu de %d para %d." % (f["p"], f["fila"], atual.get(f["p"], 0)))
+    return problemas
+
+
 def precisa_atualizar(hoje):
     """Compara a última recarga do Mapa Social com a do painel publicado."""
     r = m.consultar([["ultima", [], ["Date(Max(data_solicitacao))"]]], layout=True)
@@ -634,13 +650,22 @@ def main():
     b = coletar(hoje)
     print("[tempo] coleta: %.0f s" % (time.monotonic() - t), flush=True)
     t = time.monotonic()
-    dados, detalhes, devolvidas, meta = montar(b, hoje, referencias())
+    refs = referencias()
+    dados, detalhes, devolvidas, meta = montar(b, hoje, refs)
     est = estatisticas_cores(b, hoje, mes_referencia(hoje, dados["solicitacoes_ate"]))
     for f in dados["filas"]:
         cs = dict(est.get(f["id"], {}))
         f["esp_fila"] = cs.pop("_fila", None)   # espera de quem está na fila hoje, fila inteira (média, mediana, n)
         f["esp_un"], f["dif_un"], f["ag12"] = cs.pop("_un", None), cs.pop("_dif", None), cs.pop("_ag", None)
         f["cor_stats"] = cs
+        # a meta do protocolo é mediana: compara com a mediana de quem está na fila hoje, não com a solicitação mais antiga
+        meta_f = refs.get("metas", {}).get(f["p"]) or {}   # só há meta quando uma norma a define (aba Metas_espera)
+        pos_a = 1 if f["alertas"] and f["alertas"][0].startswith("Fila crescendo") else 0
+        for cor in ("vermelho", "amarelo", "verde", "azul"):
+            med, lim = (cs.get(cor) or {}).get("fila_mediana"), meta_f.get(cor)
+            if med is not None and lim and med > lim:
+                f["alertas"].insert(pos_a, "%s: mediana de %s dias na fila (meta: %d)" % (cor.capitalize(), f"{med:,}".replace(",", "."), lim))
+                pos_a += 1
     dados["atend_dias"] = ATEND_DIAS
     if len(dados["filas"]) < MIN_FILAS or not dados["solicitacoes_ate"] or dados["solicitacoes_ate"] == "-":
         print(f"ERRO: coleta incompleta ({len(dados['filas'])} filas, solicitações até {dados['solicitacoes_ate']!r}); nada foi gravado.")
@@ -650,6 +675,14 @@ def main():
     if not sinais_ok:
         print("ERRO: coleta com fila ou devolvidas muito abaixo do esperado (cubo vazio?); nada foi gravado.")
         sys.exit(1)
+    problemas = trava_relativa(dados)
+    if problemas and "--liberar-trava" not in sys.argv:
+        for x in problemas:
+            print("::error::Trava da coleta: " + x)
+        print("ERRO: queda brusca em relação à publicação anterior; nada foi gravado. Se a queda for real, rode o workflow com liberar_trava.")
+        sys.exit(CODIGO_TRAVA)
+    for x in problemas:
+        print("::warning::Trava liberada manualmente: " + x)
     det, dev_det = montar_detalhe(b, hoje)
     if not det or not dev_det.get("r"):
         print("ERRO: detalhe sem solicitações ou sem devolvidas; nada foi gravado.")

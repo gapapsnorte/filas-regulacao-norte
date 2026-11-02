@@ -275,7 +275,7 @@
     const tx = r.ubs.filter(x => x.taxa != null).sort((a, b) => b.taxa - a.taxa).slice(0, 3);
     t.fig4 = r.totDev ? `Das ${fmt(r.totDev)} solicitações devolvidas, ${fmt(r.niveis[0].n)} (${r.niveis[0].pct}%) vieram da APS.` +
       (top.length ? " Em números absolutos, concentram mais devoluções " + top.map(x => `${x.u} (${x.n})`).join(", ") +
-        "; proporcionalmente ao número de eSF, " + tx.map(x => `${x.u} (${fmt(x.taxa, 1)} por eSF)`).join(", ") + "." : "")
+        "; proporcionalmente ao número de eSF, " + tx.map(x => `${x.u} (${fmt(x.taxa, 1)} por eSF; ${fmt(x.esf)} eSF)`).join(", ") + "." : "")
       : "Não há solicitações devolvidas para este procedimento.";
     const ubs12 = r.ubs.filter(x => x.pct12 != null && x.t12 >= MIN12).sort((a, b) => b.pct12 - a.pct12).slice(0, 3);
     if (ubs12.length) t.fig4 += ` Em relação ao que cada UBS solicitou nos últimos 12 meses, o maior percentual de devolvidas está em ` + ubs12.map(x => `${x.u} (${fmt(x.pct12, 1)}%, ${fmt(x.d12)} de ${fmt(x.t12)})`).join(", ") + (r.t12Aps ? `; na APS como um todo, ${fmt(r.d12Aps / r.t12Aps * 100, 1)}%.` : ".");
@@ -292,8 +292,8 @@
     let nt = `Nota: Percentuais calculados em relação às ${fmt(r.totAps)} solicitações devolvidas provenientes da Atenção Primária.`;
     if (r.notas.ausentes.length) nt += " O Mapa Social não apresenta solicitações deste procedimento da(s) " + r.notas.ausentes.join(", ") + ".";
     if (r.notas.semDev.length) nt += " UBS sem solicitações devolvidas: " + r.notas.semDev.join(", ") + ".";
-    nt += ` UBS ordenadas da que mais devolve por eSF para a que menos devolve. Total de eSF da Região Norte: ${r.esfTotal}.`;
-    if (r.janela12) nt += ` "% devolvidas (12 m)" = das solicitações deste procedimento feitas pela UBS de ${r.janela12[0]} a ${r.janela12[1]} (pela data da solicitação), quantas estão devolvidas hoje; cada solicitação conta uma vez e a que foi reenviada e agendada conta como não devolvida, por isso o percentual é um piso. Janela de 12 meses para refletir a prática atual da unidade; percentuais de UBS com menos de ${MIN12} solicitações do procedimento no período aparecem em cinza. A coluna "Solicitações por eSF", em amarelo, é o critério de ordenação.` +
+    nt += ` UBS ordenadas da que mais devolve por eSF para a que menos devolve. Total de eSF da Região Norte: ${r.esfTotal} (referência: RH APS Norte, junho/2026).`;
+    if (r.janela12) nt += ` "% ainda devolvidas hoje (12 m)" = das solicitações deste procedimento feitas pela UBS de ${r.janela12[0]} a ${r.janela12[1]} (pela data da solicitação), quantas estão devolvidas hoje; cada solicitação conta uma vez e a que foi reenviada e agendada conta como não devolvida, por isso o percentual é um piso. Janela de 12 meses para refletir a prática atual da unidade; percentuais de UBS com menos de ${MIN12} solicitações do procedimento no período aparecem em cinza. A coluna "Solicitações por eSF", em amarelo, é o critério de ordenação.` +
       (r.notas.semDev12.length ? ` UBS com ${MIN12} ou mais solicitações no período e nenhuma devolvida: ${r.notas.semDev12.join(", ")}.` : "");
     return {
       titulo: `Análise da fila de ${/^CONSULTA/i.test(r.p) ? "Consulta em " : ""}${r.nome} - Região Norte`,
@@ -516,7 +516,7 @@
       styles: {font: "times", fontSize: 9, textColor: 0, lineColor: 120, lineWidth: 0.2, cellPadding: 0.8},
       headStyles: {fillColor: 255, textColor: 0, fontStyle: "bold", halign: "center", fontSize: 10},
       columnStyles: {0: {halign: "left", cellWidth: 40}, 1: {halign: "right"}, 2: {halign: "right"}, 3: {halign: "right"}, 4: {halign: "right"}, 5: {halign: "right"}, 6: {halign: "right"}},
-      head: [["UNIDADE", "Número de solicitações", "Percentual da APS", "Quantidade de eSF", "Solicitações por eSF", "Solicitações (12 m)", "% devolvidas (12 m)"]],
+      head: [["UNIDADE", "Número de solicitações", "Percentual da APS", "Quantidade de eSF", "Solicitações por eSF", "Solicitações (12 m)", "% ainda devolvidas hoje (12 m)"]],
       body: r.ubs.map(x => [x.u, fmt(x.n), fmt(x.pct, 2) + "%", x.esf != null ? fmt(x.esf) : "", x.taxa != null ? fmt(x.taxa, 2) : "", x.t12 != null ? fmt(x.t12) : "", x.pct12 != null ? fmt(x.pct12, 1) + "%" : ""]),
       foot: [["TOTAL", fmt(r.totAps), "100,00%", fmt(r.esfTotal), fmt(r.totAps / r.esfTotal, 2), r.t12Aps ? fmt(r.t12Aps) : "", r.t12Aps ? fmt(r.d12Aps / r.t12Aps * 100, 1) + "%" : ""]],
       footStyles: {fillColor: 255, textColor: 0, fontStyle: "normal", halign: "right"}, showFoot: "lastPage",
@@ -566,7 +566,7 @@
     ], columnWidths: [1700, 1600, 1600, 1900, 1900]});
     const R_ = D.AlignmentType.RIGHT, L_ = D.AlignmentType.LEFT, o9 = {fonte: "Times New Roman", tam: 9};
     const tUbs = new D.Table({alignment: D.AlignmentType.CENTER, columnWidths: [2350, 1150, 1150, 1050, 1150, 1100, 1100], rows: [
-      new D.TableRow({tableHeader: true, children: ["UNIDADE", "Número de solicitações", "Percentual da APS", "Quantidade de eSF", "Solicitações por eSF", "Solicitações (12 m)", "% devolvidas (12 m)"].map(t => cel(t, {fonte: "Times New Roman", tam: 9, negrito: true}))}),
+      new D.TableRow({tableHeader: true, children: ["UNIDADE", "Número de solicitações", "Percentual da APS", "Quantidade de eSF", "Solicitações por eSF", "Solicitações (12 m)", "% ainda devolvidas hoje (12 m)"].map(t => cel(t, {fonte: "Times New Roman", tam: 9, negrito: true}))}),
       ...r.ubs.map(x => new D.TableRow({children: [cel(x.u, {...o9, al: L_}), cel(fmt(x.n), {...o9, al: R_}), cel(fmt(x.pct, 2) + "%", {...o9, al: R_}),
         cel(x.esf != null ? fmt(x.esf) : "", {...o9, al: R_}), cel(x.taxa != null ? fmt(x.taxa, 2) : "", {...o9, al: R_, fill: "FFFFCC"}), cel(x.t12 != null ? fmt(x.t12) : "", {...o9, al: R_}), cel(x.pct12 != null ? fmt(x.pct12, 1) + "%" : "", {...o9, al: R_, cor: (x.t12 || 0) < MIN12 ? "8C8C8C" : undefined})]})),
       new D.TableRow({children: [cel("TOTAL", {...o9, al: L_}), cel(fmt(r.totAps), {...o9, al: R_}), cel("100,00%", {...o9, al: R_}), cel(fmt(r.esfTotal), {...o9, al: R_}), cel(fmt(r.totAps / r.esfTotal, 2), {...o9, al: R_, fill: "FFFFCC"}),
@@ -623,7 +623,7 @@
     aba("CIDs (todos)", [["CID", "Solicitações pendentes/reenviadas", "Grupo na Figura 3.1"], ...r.cidsDetalhe], [80, 30, 40]);
     aba("Devolvidas por nível", [["Nível", "Solicitações", "%"], ...r.niveis.map(x => [x.nivel, x.n, x.pct])], [24, 12, 8]);
     aba("Devolvidas por unidade", [["Unidade solicitante", "Nível / fatia", "Solicitações devolvidas"], ...r.devUnidade.map(x => [x.u, x.nivel, x.n])], [32, 22, 22]);
-    aba("Devolvidas APS por UBS", [["UNIDADE", "Número de solicitações", "Percentual da APS", "Quantidade de eSF", "Solicitações por eSF", "Solicitações (12 m)", "Devolvidas (12 m)", "% devolvidas (12 m)"],
+    aba("Devolvidas APS por UBS", [["UNIDADE", "Número de solicitações", "Percentual da APS", "Quantidade de eSF", "Solicitações por eSF", "Solicitações (12 m)", "Devolvidas (12 m)", "% ainda devolvidas hoje (12 m)"],
       ...r.ubs.map(x => [x.u, x.n, Math.round(x.pct * 100) / 100, x.esf ?? "", x.taxa != null ? Math.round(x.taxa * 100) / 100 : "", x.t12 ?? "", x.d12 ?? "", x.pct12 != null ? Math.round(x.pct12 * 10) / 10 : ""]),
       ["TOTAL", r.totAps, 100, r.esfTotal, Math.round(r.totAps / r.esfTotal * 100) / 100, r.t12Aps || "", r.d12Aps || "", r.t12Aps ? Math.round(r.d12Aps / r.t12Aps * 1000) / 10 : ""]], [26, 22, 18, 18, 20, 18, 16, 18]);
     aba("Notas", [[N.titulo], [""], ...[N.n1, N.n2, N.n3, N.ntc, N.n4, N.nt1].flat().map(t => [t])], [160]);
