@@ -140,7 +140,7 @@
     r.risco = CORES.map(([k, rot]) => {
       const c = d.cores[k];
       const cs = (d.cor_stats || {})[k] || {};
-      return c ? {cor: rot, antiga: dd(c.antiga), n: c.n, dias: c.dias, media: cs.fila_media ?? null, mediana: cs.fila_mediana ?? null} : {cor: rot, antiga: "", n: 0, dias: null, media: null, mediana: null};
+      return c ? {cor: rot, antiga: dd(c.antiga), n: c.n, dias: c.dias, media: cs.fila_media ?? null, mediana: cs.fila_mediana ?? null, atend: cs.atend_mediana ?? null, natend: cs.atend_n || 0} : {cor: rot, antiga: "", n: 0, dias: null, media: null, mediana: null, atend: cs.atend_mediana ?? null, natend: cs.atend_n || 0};
     });
     if (d.cores["sem risco"]) r.avisos.push(`${d.cores["sem risco"].n} solicitações da fila sem classificação de risco (fora da Figura 2).`);
 
@@ -227,7 +227,7 @@
     r.notas.semDev = Object.keys(REF.esf).filter(u => vistas.has(u) && !aps.some(([x]) => x === u));
     r.notas.azul = notaRef.azul || "";
     r.meta = REF.metas && REF.metas[d.p] || null;
-    r.risco.forEach(x => { const m = r.meta && r.meta[x.cor.toLowerCase()]; x.meta = m || null; x.acima = !!(m && x.n && x.mediana != null && x.mediana > m); });
+    r.risco.forEach(x => { const m = r.meta && r.meta[x.cor.toLowerCase()]; x.meta = m || null; x.acima = !!(m && x.atend != null && x.atend > m); });   // o protocolo calcula da inserção à execução
     const azul = r.risco[3].n;
     if (azul && r.notas.azul) r.avisos.push(`Há ${azul} solicitações AZUL na fila, embora a nota do procedimento diga que o protocolo não prevê azul.`);
     if (!r.notas.azul) r.avisos.push("Sem nota sobre a classificação de risco deste procedimento: confira no protocolo vigente se há classificação AZUL.");
@@ -266,8 +266,8 @@
     t.fig2 = `A fila tem ${fmt(tot)} solicitações pendentes ou reenviadas.` + (tot ? " Por prioridade, " + r.risco.filter(x => x.n).map(x =>
       `${x.cor.toLowerCase()}: ${fmt(x.n)} (${fmt(x.n / tot * 100, 1)}%), a mais antiga de ${x.antiga}` + (x.media != null ? `, com espera média de ${fmt(x.media)} dias e mediana de ${fmt(x.mediana)} dias` : "")).join("; ") + "." : "");
     if (r.meta && tot) {
-      const acima = r.risco.filter(x => x.n && x.acima), ok = r.risco.filter(x => x.n && x.meta && x.mediana != null && !x.acima);
-      t.fig2 += acima.length ? " Em relação às metas do protocolo (medianas), a mediana de espera ultrapassa a meta em " + acima.map(x => `${x.cor.toLowerCase()} (${fmt(x.mediana)} dias; meta de ${x.meta})`).join(", ") + "." : "";
+      const acima = r.risco.filter(x => x.acima), ok = r.risco.filter(x => x.meta && x.atend != null && !x.acima);
+      t.fig2 += acima.length ? " Em relação às metas do protocolo, calculadas da inserção à execução, a mediana até o atendimento ultrapassa a meta em " + acima.map(x => `${x.cor.toLowerCase()} (${fmt(x.atend)} dias, ${fmt(x.natend)} ${x.natend === 1 ? "caso" : "casos"}${x.natend < MIN12 ? ", pouco confiável" : ""}; meta de ${x.meta})`).join(", ") + "." : "";
       t.fig2 += ok.length ? ` Dentro da meta: ${ok.map(x => x.cor.toLowerCase()).join(", ")}.` : "";
     }
     t.fig3 = "Os principais grupos de CID são " + [...r.cids].sort((a, b) => b.n - a.n).filter(x => x.n).map(x => `${x.grupo} (${fmt(x.n)} solicitações; ${fmt(x.pct)}%)`).join(", ") + ".";
@@ -286,7 +286,7 @@
     const e = dataBr(r.extracao), s = r.serie, n = s.meses.length;
     const [m0, a0] = s.meses[0].split("/"), [m1, a1] = s.meses[n - 1].split("/");
     const n2 = [FONTE, `Nota: Dados extraídos em ${e}. Considera as solicitações pendentes e reenviadas; "mais antiga" é a data da solicitação mais antiga de cada prioridade; a média e a mediana são do tempo, em dias, que as solicitações dessa prioridade já esperaram até a data da extração. O Mapa Social registra solicitações até ${r.solicAte} (${r.atraso} em relação ao SISREG), por isso os totais podem diferir do SISREG.`];
-    if (r.meta) n2.push("Metas de tempo de espera do protocolo vigente (mediana), comparadas com a mediana observada: " + ["vermelho", "amarelo", "verde", "azul"].filter(c => r.meta[c]).map(c => `${c} até ${r.meta[c]} dias`).join(", ") + `. ${(r.meta.fonte || "").trim().replace(/\.$/, "")}.`);
+    if (r.meta) n2.push("Metas de tempo de espera do protocolo vigente (mediana), comparadas com a mediana até o atendimento dos agendados nos últimos 90 dias: " + ["vermelho", "amarelo", "verde", "azul"].filter(c => r.meta[c]).map(c => `${c} até ${r.meta[c]} dias`).join(", ") + `. ${(r.meta.fonte || "").trim().replace(/\.$/, "")}.`);
     if (!r.meta) n2.push("Não há meta de tempo de espera por prioridade definida em normativa da SES-DF para este procedimento (levantamento de 14/10/2026 nos protocolos de acesso e notas técnicas vigentes).");
     if (r.notas.azul) n2.push("*" + r.notas.azul);
     let nt = `Nota: Percentuais calculados em relação às ${fmt(r.totAps)} solicitações devolvidas provenientes da Atenção Primária.`;
@@ -614,8 +614,8 @@
     if (r.ag12) aba("Agendamentos 12 meses", [["Situação do agendamento", "Agendamentos", "%"],
       ...[["Confirmado", "conf"], ["Falta", "falta"], ["Sem confirmação do executante", "pend"], ["Cancelado", "canc"], ["Outra situação", "outros"]].map(([t, k]) => [t, r.ag12[k], Math.round(r.ag12[k] / r.ag12.n * 1000) / 10]),
       ["TOTAL", r.ag12.n, 100]], [34, 14, 8]);
-    aba("Tempo de espera por risco", [["Classificação", "Mais antiga", "Solicitações", "Espera média (dias)", "Espera mediana (dias)", "Espera da mais antiga (dias)", "Meta do protocolo (dias, mediana)", "Mediana acima da meta?"],
-      ...r.risco.map(x => [x.cor, dataXl(x.antiga), x.n, x.n ? x.media ?? "" : "", x.n ? x.mediana ?? "" : "", x.dias ?? "", x.meta ?? "", x.meta && x.n && x.mediana != null ? (x.acima ? "Sim" : "Não") : ""]),
+    aba("Tempo de espera por risco", [["Classificação", "Mais antiga", "Solicitações", "Espera média (dias)", "Espera mediana (dias)", "Espera da mais antiga (dias)", "Mediana até o atendimento (dias)", "Atendimentos (90 dias)", "Meta do protocolo (dias, mediana)", "Mediana acima da meta?"],
+      ...r.risco.map(x => [x.cor, dataXl(x.antiga), x.n, x.n ? x.media ?? "" : "", x.n ? x.mediana ?? "" : "", x.dias ?? "", x.atend ?? "", x.natend || "", x.meta ?? "", x.meta && x.atend != null ? (x.acima ? "Sim" : "Não") : ""]),
       ["TOTAL", "", r.risco.reduce((a, x) => a + x.n, 0), "", "", "", "", ""]], [14, 12, 12, 22, 20, 22, 22, 14]);
     aba("Figura 3.1 CIDs grupos", [["Grupo", "Solicitações", "%"], ...r.cids.map(x => [x.grupo, x.n, x.pct])], [45, 12, 8]);
     aba("Figura 3.2 CIDs detalhe", [["Nível", "CID", "Solicitações", "%", "% acumulado", "Grupo na Figura 3.1"],

@@ -672,13 +672,15 @@ def main():
         f["esp_fila"] = cs.pop("_fila", None)   # espera de quem está na fila hoje, fila inteira (média, mediana, n)
         f["esp_un"], f["dif_un"], f["ag12"] = cs.pop("_un", None), cs.pop("_dif", None), cs.pop("_ag", None)
         f["cor_stats"] = cs
-        # a meta do protocolo é mediana: compara com a mediana de quem está na fila hoje, não com a solicitação mais antiga
+        # o protocolo calcula a meta da inserção à execução: compara com a mediana até o atendimento, não com quem ainda espera
         meta_f = refs.get("metas", {}).get(f["p"]) or {}   # só há meta quando uma norma a define (aba Metas_espera)
         pos_a = 1 if f["alertas"] and f["alertas"][0].startswith("Fila crescendo") else 0
         for cor in ("vermelho", "amarelo", "verde", "azul"):
-            med, lim = (cs.get(cor) or {}).get("fila_mediana"), meta_f.get(cor)
+            c_st = cs.get(cor) or {}
+            med, n_at, lim = c_st.get("atend_mediana"), c_st.get("atend_n", 0), meta_f.get(cor)
             if med is not None and lim and med > lim:
-                f["alertas"].insert(pos_a, "%s: mediana de %s dias na fila (meta: %d)" % (cor.capitalize(), f"{med:,}".replace(",", "."), lim))
+                fraco = "; só %d %s" % (n_at, "caso" if n_at == 1 else "casos") if n_at < MIN_UNIDADE else ""
+                f["alertas"].insert(pos_a, "%s: mediana de %s dias até o atendimento (meta: %d%s)" % (cor.capitalize(), f"{med:,}".replace(",", "."), lim, fraco))
                 pos_a += 1
     dados["atend_dias"] = ATEND_DIAS
     if len(dados["filas"]) < MIN_FILAS or not dados["solicitacoes_ate"] or dados["solicitacoes_ate"] == "-":
