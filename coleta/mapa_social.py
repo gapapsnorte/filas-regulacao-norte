@@ -4,13 +4,19 @@ Só puxa campos agregáveis (códigos, datas, status, risco, CID, unidade). Nome
 nunca são consultados.
 """
 import asyncio
+import functools
+import json
 import os
 import time
+from pathlib import Path
+
 from playwright.async_api import async_playwright
 
 URL = "https://paineis-ext.mpdft.mp.br/extensions/mapasauderegulamentacao/mapasauderegulamentacao.html"
 APP = "7edb02fa-f1f5-4ea6-b348-049a4ac2d095"
 REGIAO = "Região Norte"
+COD_U, NOME_U = "codigo_unidade_solicitante", "nome_unidade_solicitante"
+ARQ_UNIDADES = Path(__file__).resolve().parent / "unidades_norte.json"   # código CNES -> nome exibido
 # No PC usa o Chrome instalado; no GitHub Actions (CANAL vazio) usa o Chromium do Playwright
 CANAL = os.environ.get("MAPA_CHROME_CANAL", "chrome")
 PARALELO = int(os.environ.get("MAPA_PARALELO", "6"))   # páginas do Qlik pedidas ao mesmo tempo
@@ -89,9 +95,45 @@ def _aspas(txt):
     return txt.replace("'", "''")
 
 
+@functools.lru_cache(maxsize=1)
+def unidades_norte():
+    """Código CNES -> nome das unidades solicitantes da região. A região e o nome do Mapa Social vêm de uma tabela que
+    não tem todas as unidades (UBS 7 - Sobradinho II e UPA Planaltina vêm em branco), por isso a lista é nossa. Unidade
+    nova marcada como Região Norte no Mapa Social entra sozinha, com o nome de lá, e gera aviso para ser incluída na lista."""
+    nomes = json.loads(ARQ_UNIDADES.read_text(encoding="utf-8"))["unidades"]
+    m = "Count({<[regiao_saude_solicitante]={'%s'}>} distinct codigo_solicitacao)" % REGIAO
+    for cod, nome, _ in consultar([["u", [COD_U, NOME_U], [m]]])["u"]["rows"]:
+        if cod not in nomes and cod not in ("-", ""):
+            nomes[cod] = nome if nome not in ("-", "") else cod
+            print("::warning::Unidade fora de unidades_norte.json incluída pela região do Mapa Social: %s (%s)" % (cod, nome), flush=True)
+    return nomes
+
+
+def filtro_unidades(nomes):
+    """Trecho de set analysis que filtra pelo código CNES da unidade solicitante."""
+    return "[%s]={%s}" % (COD_U, ",".join("'%s'" % c for c in sorted(nomes)))
+
+
+def nomear(bloco, nomes):
+    """Troca o código CNES pelo nome na coluna da unidade, depois do filtro, e soma a última coluna (contagem) das
+    linhas que ficam iguais: uma unidade pode ter dois códigos (Policlínica Planaltina)."""
+    i = bloco["cols"].index(COD_U)
+    bloco["cols"][i] = NOME_U
+    juntas = {}
+    for r in bloco["rows"]:
+        r[i] = nomes.get(r[i], r[i])
+        chave = tuple(r[:-1])
+        if chave in juntas:
+            juntas[chave][-1] = str(int(juntas[chave][-1]) + int(r[-1]))
+        else:
+            juntas[chave] = r
+    bloco["rows"] = list(juntas.values())
+    return bloco
+
+
 def listar_procedimentos():
     """Procedimentos com solicitações da Região Norte, do maior para o menor volume."""
-    m = "Count({<[regiao_saude_solicitante]={'%s'}>} distinct codigo_solicitacao)" % REGIAO
+    m = "Count({<%s>} distinct codigo_solicitacao)" % filtro_unidades(unidades_norte())
     r = consultar([["p", ["descrição_procedimento_solicitacao"], [m]]])["p"]["rows"]
     lista = [(p, int(n)) for p, n in r if p and p != "-"]
     return sorted(lista, key=lambda x: -x[1])
@@ -100,17 +142,22 @@ def listar_procedimentos():
 def baixar(procedimento):
     """Bases de solicitações (pendentes, reenviadas, devolvidas) e de agendamentos do procedimento."""
     p = _aspas(procedimento)
-    S = "[descrição_procedimento_solicitacao]={'%s'},[regiao_saude_solicitante]={'%s'}" % (p, REGIAO)
-    A = "[descrição_procedimento_agendamento]={'%s'},[regiao_saude_solicitante]={'%s'}" % (p, REGIAO)
+    nomes = unidades_norte()
+    R = filtro_unidades(nomes)
+    S = "[descrição_procedimento_solicitacao]={'%s'},%s" % (p, R)
+    A = "[descrição_procedimento_agendamento]={'%s'},%s" % (p, R)
     specs = [
         ["solicitacoes",
          ["codigo_solicitacao", "data_solicitacao", "status_solicitacao_solicitacao", "classificacao_risco",
-          "CID_solicitacao", "nome_unidade_solicitante", "data_devolucao"],
+          "CID_solicitacao", COD_U, "data_devolucao"],
          ["Count({<%s>} codigo_solicitacao)" % S]],
         ["agendamentos",
          ["codigo_solicitacao", "Calendar.Data_Solicitacao", "data_agendamento", "status_solicitacao_agendamento",
-          "classificacao_risco", "nome_unidade_solicitante"],
+          "classificacao_risco", COD_U],
          ["Count({<%s>} codigo_solicitacao)" % A]],
         ["ultima_solicitacao", [], ["Date(Max(data_solicitacao))"]],
     ]
-    return consultar(specs, layout=True)
+    b = consultar(specs, layout=True)
+    nomear(b["solicitacoes"], nomes)
+    nomear(b["agendamentos"], nomes)
+    return b

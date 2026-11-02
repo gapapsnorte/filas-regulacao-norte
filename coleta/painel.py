@@ -35,7 +35,6 @@ import mapa_social as m
 AQUI = Path(__file__).resolve().parent
 PAINEL = Path(os.environ.get("PAINEL_DIR", AQUI.parent))
 PUBLICADO = os.environ.get("PAINEL_URL", "https://gapapsnorte.github.io/filas-regulacao-norte/")
-R = "[regiao_saude_solicitante]={'%s'}" % m.REGIAO
 # Elegíveis (fila) = pendentes + reenviadas ao regulador. "PENDENTE / FILA DE ESPERA" fica fora do painel.
 PEND, REENV, DEVOL = ("SOLICITAÇÃO / PENDENTE / REGULADOR", "SOLICITAÇÃO / REENVIADA / REGULADOR",
                       "SOLICITAÇÃO / DEVOLVIDA / REGULADOR")
@@ -56,6 +55,8 @@ MIN_FILAS = 500        # abaixo disso a coleta é considerada falha (não public
 # (579 filas com fila, 94 mil na fila, 769 filas com devolvidas, 47 mil devolvidas).
 MIN_COM_FILA, MIN_NA_FILA, MIN_COM_DEV, MIN_DEVOLVIDAS = 300, 20000, 300, 10000
 MAX_QUEDA_TOTAL, MIN_FILA_GRANDE, CODIGO_TRAVA = 0.15, 500, 3   # queda em relação à publicação anterior: ver trava_relativa
+# Unidades que passaram a entrar quando o filtro virou código CNES: as devolvidas que elas já tinham não são "novas".
+UNIDADES_INCORPORADAS = ("UBS 7 - Sobradinho II", "UPA Planaltina")
 MIN_ESTOQUE_REL = 0.98  # queda de mais de 2% no estoque de devolvidas (o normal é ~0,04%/dia) = coleta suspeita, o registro não é alterado
 TOLERANCIA_MES = 10     # depois deste dia, o mês anterior conta como completo mesmo que a fonte não tenha chegado ao último dia
 ANOS_SERIE = 5         # série da análise: de janeiro de (ano - 5) até o mês anterior
@@ -94,9 +95,11 @@ def janela12(hoje):
 def coletar(hoje):
     ano12 = (hoje - timedelta(days=45)).year - 1   # primeiro ano necessário para a janela de 12 meses, mesmo com janeiro incompleto
     ini = hoje.year - ANOS_SERIE
-    P, PA, U = "descrição_procedimento_solicitacao", "descrição_procedimento_agendamento", "nome_unidade_solicitante"
+    P, PA, U = "descrição_procedimento_solicitacao", "descrição_procedimento_agendamento", m.COD_U
+    nomes = m.unidades_norte()     # a região sai do código CNES da unidade solicitante; o nome é ligado depois do filtro
+    R = m.filtro_unidades(nomes)
     ano_det = _mes_inicial_painel(hoje).year
-    return m.consultar([
+    b = m.consultar([
         ["fila", [P, "status_solicitacao_solicitacao", "classificacao_risco"],
          ["Count({<%s>} distinct codigo_solicitacao)" % R, "Date(Min({<%s>} data_solicitacao))" % R]],
         ["in_sol", [P, "Calendar.Ano_Solicitacao", "Calendar.Mes_Solicitacao"],
@@ -128,6 +131,10 @@ def coletar(hoje):
                     "status_solicitacao_agendamento", "classificacao_risco", U],
          ['Count({<%s,[Ano_Agendamento]={">=%d"}>} codigo_solicitacao)' % (R, ano_det)]],
     ], layout=True)
+    for bloco in b.values():
+        if isinstance(bloco, dict) and U in bloco.get("cols", []):
+            m.nomear(bloco, nomes)
+    return b
 
 
 def _br(s):
@@ -577,7 +584,14 @@ def historico_devolvidas(dev_det, det, hoje, anterior=None):
             status[sl[0]] = sl[2]
         for ag in d["a"]:
             status.setdefault(ag[0], "AGENDADA")
-    entradas = [[_indice(reg["p"], p), _indice(reg["u"], u), cod, dd] for cod, (p, u, dd) in atual.items() if cod not in antes]
+    estreantes = set(UNIDADES_INCORPORADAS) - {r[5] for r in anterior["r"]}
+    incorporadas = {cod for cod, (_, u, _) in atual.items() if u in estreantes and cod not in antes}
+    if incorporadas:   # entram no estoque, não como devolvidas novas (senão o dia registraria todo o estoque dessas unidades)
+        reg["estoque_inicial"] += len(incorporadas)
+        reg.setdefault("incorporadas", []).append({"data": hoje.isoformat(), "n": len(incorporadas), "unidades": sorted(estreantes)})
+        print("Registro de devolvidas: %d devolvidas de %s incorporadas ao estoque." % (len(incorporadas), ", ".join(sorted(estreantes))))
+    entradas = [[_indice(reg["p"], p), _indice(reg["u"], u), cod, dd] for cod, (p, u, dd) in atual.items()
+                if cod not in antes and cod not in incorporadas]
     saidas = [[_indice(reg["p"], p), _indice(reg["u"], u), cod, dd, _destino(status.get(cod))] for cod, (p, u, dd) in antes.items() if cod not in atual]
     hoje_s = hoje.isoformat()
     dia = next((d for d in reg["dias"] if d["data"] == hoje_s), None)
