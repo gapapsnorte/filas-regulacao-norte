@@ -39,6 +39,7 @@ header p{margin:4px 0 0;color:var(--muted);font-size:.72rem}
 .kpi span{color:var(--muted);font-size:.82rem}
 .abas{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:0 0 10px;flex-wrap:wrap}
 .abas button{border:1px solid transparent;border-bottom:none;background:none;color:var(--muted);padding:6px 12px;border-radius:8px 8px 0 0;font-size:.9rem;cursor:pointer;margin-bottom:-1px}
+.abas button:disabled{opacity:.45;cursor:not-allowed}
 .abas button[aria-selected="true"]{background:var(--card);border-color:var(--line);color:var(--txt);font-weight:600}
 .ctrl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
 .ctrl input[type=search]{flex:1 1 180px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt);font-size:.9rem}
@@ -222,7 +223,7 @@ table.rank th:focus-visible,table.tab.ord th:focus-visible,.lin:focus-visible{ou
   <button role="tab" id="tab-filas" aria-controls="aba-filas" tabindex="0" data-aba="filas" aria-selected="true">Filas</button>
   <button role="tab" id="tab-dev" aria-controls="aba-dev" tabindex="-1" data-aba="dev" aria-selected="false">Devolvidas</button>
   <button role="tab" id="tab-oferta" aria-controls="aba-oferta" tabindex="-1" data-aba="oferta" aria-selected="false" title="Fila de espera (aguardando pactuação), filas sem saída e filas paradas">Oferta interrompida ou não pactuada</button>
-  <button role="tab" id="tab-prio" aria-controls="aba-prio" tabindex="-1" data-aba="prio" aria-selected="false" title="Todas as filas lado a lado: tempo de espera acumulado e esforço para corrigir">Priorização</button>
+  <button role="tab" id="tab-prio" aria-controls="aba-prio" tabindex="-1" data-aba="prio" aria-selected="false" disabled aria-disabled="true" title="Temporariamente indisponível">Priorização</button>
 </nav>
 
 <section id="aba-filas" role="tabpanel" aria-labelledby="tab-filas">
@@ -1166,7 +1167,9 @@ function mostrarVisao(v){
   if(DV) v==="un"?renderUn():renderPr();
 }
 const kpiHtml=a=>a.map(([b,t])=>`<div class="kpi"><b>${b}</b><span>${t}</span></div>`).join("");
+const ABA_PRIO_ATIVA=false;   // aba Priorização suspensa temporariamente (pedido de 05/11/2026): conteúdo e código mantidos; para reabrir, true aqui e tirar disabled do botão #tab-prio
 async function mostrarAba(a,v){
+  if(a==="prio"&&!ABA_PRIO_ATIVA) a="filas";
   document.querySelectorAll(".abas button").forEach(b=>{ b.setAttribute("aria-selected",b.dataset.aba===a); b.tabIndex=b.dataset.aba===a?0:-1; });
   ["filas","dev","oferta","prio"].forEach(x=>$("aba-"+x).hidden=x!==a);
   if(a==="filas"){ if(/^#aba-/.test(location.hash)) history.replaceState(null,"",location.pathname+location.search); return; }
@@ -1421,7 +1424,7 @@ $("lista").addEventListener("click",async e=>{
 // teclado e leitor de tela: abas com setas, Enter/Espaço em cartões, linhas de unidade e cabeçalhos ordenáveis
 document.querySelector(".pular").addEventListener("click",e=>{ e.preventDefault(); document.querySelector(".abas [aria-selected=true]").focus(); });
 document.querySelector(".abas").addEventListener("keydown",e=>{
-  const bs=[...document.querySelectorAll(".abas button")], i=bs.indexOf(document.activeElement);
+  const bs=[...document.querySelectorAll(".abas button:not(:disabled)")], i=bs.indexOf(document.activeElement);
   const j={ArrowRight:(i+1)%bs.length,ArrowLeft:(i-1+bs.length)%bs.length,Home:0,End:bs.length-1}[e.key];
   if(i<0||j===undefined) return;
   e.preventDefault(); bs[j].focus(); bs[j].click();
