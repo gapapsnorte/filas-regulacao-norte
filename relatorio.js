@@ -231,6 +231,8 @@
     const azul = r.risco[3].n;
     if (azul && r.notas.azul) r.avisos.push(`Há ${azul} solicitações AZUL na fila, embora a nota do procedimento diga que o protocolo não prevê azul.`);
     if (!r.notas.azul) r.avisos.push("Sem nota sobre a classificação de risco deste procedimento: confira no protocolo vigente se há classificação AZUL.");
+    // Figura 1.1: resultado dos agendamentos por mês (agm = [agendamentos, faltas, sem confirmação, confirmados], pela data do agendamento)
+    if (d.agm && d.agm_meses && d.agm[0].reduce((x, y) => x + y, 0) >= MIN12 && d.agm[3]) r.abs = {meses: d.agm_meses, ag: d.agm[0], falta: d.agm[1], pend: d.agm[2], conf: d.agm[3], ent: d.in.slice(-d.agm[0].length)};
     r.textos = textos(r);
     return r;
   }
@@ -262,6 +264,17 @@
       ab[chave].flag.forEach((x, i) => { if (x) ext.push(`${k} de ${s.meses[ab.ini + i]} (${fmt(a[ab.ini + i])})`); });
     }
     if (ext.length) t.fig1 += " Meses aberrantes (mais de 4 vezes a oscilação típica em relação à tendência; mantidos no gráfico e descontados da linha de tendência), a explicar (mutirão, suspensão de agenda etc.): " + ext.join("; ") + ".";
+    if (r.abs) {
+      const A = r.abs, S = a => a.reduce((x, y) => x + y, 0), tt = S(A.ag), pc = x => fmt(x / tt * 100, 1);
+      const m12 = a => S(a.slice(-12)), t12 = m12(A.ag);
+      const pf = A.ag.map((q, i) => q >= MIN12 ? A.falta[i] / q * 100 : -1), im = pf.indexOf(Math.max(...pf));
+      const P = projecaoAbs(A), f1 = v => fmt(Math.abs(v), 1);
+      const efeito = P.d1 > 0 ? `faltariam entre ${f1(P.d1)} e ${f1(P.d2)} atendimentos por mês para dar conta do que entra` : P.d2 < 0 ? `os atendimentos superariam a entrada em ${f1(P.d2)} a ${f1(P.d1)} por mês` : `os atendimentos ficariam entre ${f1(P.d1)} abaixo e ${f1(P.d2)} acima da entrada, por mês`;
+      t.fig1b = `Nos ${A.meses.length} meses de ${A.meses[0]} a ${A.meses[A.meses.length - 1]}, dos ${fmt(tt)} agendamentos, ${pc(S(A.falta))}% foram faltas (absenteísmo) e ${pc(S(A.pend))}% seguem sem confirmação do executante; ${pc(S(A.conf))}% foram efetivos (confirmados).` +
+        (t12 >= MIN12 ? ` Nos últimos 12 meses (${fmt(t12)} agendamentos): ${fmt(m12(A.falta) / t12 * 100, 1)}% de faltas, ${fmt(m12(A.pend) / t12 * 100, 1)}% sem confirmação e ${fmt(m12(A.conf) / t12 * 100, 1)}% efetivos.` : "") +
+        (im >= 0 && pf[im] >= 0 ? ` O mês com mais faltas foi ${A.meses[im]} (${fmt(pf[im], 1)}% de ${fmt(A.ag[im])} agendamentos).` : "") +
+        ` Projeção para os próximos 12 meses, mantendo a média dos últimos 12: saída efetiva entre ${fmt(P.pMin, 1)} (só confirmados) e ${fmt(P.pMax, 1)} (confirmados e sem confirmação) por mês, contra entrada média de ${fmt(P.eMed, 1)}; nessa conta ${efeito}. A conta compara a entrada com atendimentos, enquanto o saldo regulatório da Figura 1 a compara com agendamentos (as faltas ocupam vagas e tiram a solicitação da fila, mas não são atendimentos).`;
+    }
     const tot = r.risco.reduce((a, x) => a + x.n, 0);
     t.fig2 = `A fila tem ${fmt(tot)} solicitações pendentes ou reenviadas.` + (tot ? " Por prioridade, " + r.risco.filter(x => x.n).map(x =>
       `${x.cor.toLowerCase()}: ${fmt(x.n)} (${fmt(x.n / tot * 100, 1)}%), a mais antiga de ${x.antiga}` + (x.media != null ? `, com espera média de ${fmt(x.media)} dias e mediana de ${fmt(x.mediana)} dias` : "")).join("; ") + "." : "");
@@ -301,6 +314,8 @@
       n1: [FONTE, `Nota: Dados extraídos em ${e}, referentes ao período de ${MESES_EXT[MESES.indexOf(m0)]} de 20${a0} a ${MESES_EXT[MESES.indexOf(m1)]} de 20${a1} (a série começa em janeiro de cinco anos antes do ano corrente, como no modelo de análise). ` +
         `Média e tendência respondem a perguntas diferentes: a média diz quanto entra ou sai, em geral, por mês; a tendência diz para onde a curva está indo. Por exemplo, duas filas podem ter a mesma média de 100 solicitações por mês, uma estável e outra subindo 10 por mês. As médias mostradas no alto da figura são dos últimos 24 meses. A linha horizontal pontilhada de cada curva é a média dos últimos 12 meses, base das projeções do painel: no teste com o passado das filas da região, prever pela média errou menos (mediana de 18% na entrada e 26% na saída) do que prolongar a tendência (21% e 36%). A média olha para trás: se uma subida continuar de fato, ela fica abaixo do que vai acontecer (a fila do exemplo que sobe 10 por mês teria média de 100 em um ano e de 220 no seguinte). Por isso a tendência segue na figura como aviso: quando está bem inclinada para cima, a projeção é um piso, não o número certo. A média não tem R² por ser uma linha sem inclinação. As linhas de tendência (mínimos quadrados) cobrem os últimos ${n - r.aberr.ini} meses, mostram só a direção da curva e são calculadas sem os meses aberrantes (identificados pelo método de Theil-Sen: mais de 4 vezes a oscilação típica em relação à tendência; no saldo, acima ou abaixo, e sempre que a saída do mês for aberrante); o R² ao lado de cada linha considera só os meses não aberrantes, ` +
         "que permanecem no gráfico em tracejado e com círculo vazio. Quando o valor ultrapassa a escala, o ponto é desenhado no limite do eixo, com o valor real escrito ao lado (nesses meses a altura não é fiel). Meses anteriores à janela não foram avaliados."],
+      f1b: `Figura 1.1 – Resultado dos agendamentos, entrada e projeção da saída efetiva em ${r.nome}`,
+      n1b: [FONTE, `Nota: Dados extraídos em ${e}. Barras: agendamentos de cada mês (pela data do agendamento; um por código e data), por resultado; linha: solicitações (entrada) do mês. Efetivos = confirmados pelo executante (a pessoa foi atendida). Sem confirmação = o executante não informou se a pessoa foi atendida (a chave do agendamento não foi fechada); nos meses mais recentes o registro ainda pode chegar. Cancelados e outras situações completam o total.`, `Projeção: média dos últimos 12 meses mantida constante, a que errou menos no teste com o passado das filas; não prevê mudança de oferta nem de absenteísmo. A faixa da saída efetiva vai de só os confirmados até confirmados mais sem confirmação. O resumo da parte de baixo refere-se aos últimos 12 meses completos.`],
       f2: `Figura 2 – Tempo de espera por prioridade em ${r.nome}`, n2,
       f3: `Figura 3.1 – Distribuição de solicitações pendentes em ${r.nome} por Código Internacional de Doenças (CID)`,
       n3: [FONTE, `Nota: Dados extraídos em ${e}. Rótulos apresentam número absoluto e percentual em relação ao total de ${fmt(r.cids.reduce((t, x) => t + x.n, 0))} solicitações pendentes e reenviadas.`],
@@ -325,6 +340,78 @@
     return [c, g];
   }
   function passo(f) { const p = 10 ** Math.floor(Math.log10(f || 1)); const m = f / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p; }
+
+  // Figura 1.1: barras empilhadas por mês (agendamentos por resultado), entrada em linha, projeção de 12 meses da saída efetiva
+  // e, embaixo, o resumo dos últimos 12 meses (barra a 100% e faixa da saída efetiva). Devolve {url, w, h}.
+  const COR_AG = [["Efetivos (confirmados)", "#15803d"], ["Sem confirmação do executante", "#2563eb"], ["Faltas (absenteísmo)", "#d97706"], ["Cancelados e outros", "#9ca3af"]];
+  function projecaoAbs(A) {
+    const m12 = a => a.slice(-12).reduce((x, y) => x + y, 0) / Math.max(1, Math.min(12, a.length));
+    const pMin = m12(A.conf), pMax = m12(A.conf) + m12(A.pend), eMed = m12(A.ent);
+    return {pMin, pMax, eMed, d1: eMed - pMax, d2: eMed - pMin};
+  }
+  function graficoAbs(r) {
+    const A = r.abs, a12 = r.ag12 && r.ag12.n >= MIN12 ? r.ag12 : null, n = A.ag.length, H12 = 12, slots = n + H12;
+    const W = 1400, H1 = 640, H = a12 ? 1010 : H1, L = 80, Rm = 20, T = 100, B = 120;
+    const [c, g] = canvas(W, H), P = projecaoAbs(A);
+    const ou = A.ag.map((q, i) => q - A.falta[i] - A.pend[i] - A.conf[i]);
+    const top = Math.max(1, ...A.ag, ...A.ent, P.pMax, P.eMed), st = passo(top / 5), ymax = Math.ceil(top / st) * st;
+    const Xc = i => L + (i + .5) / slots * (W - L - Rm), bw = (W - L - Rm) / slots * .68, Y = v => T + (ymax - v) / ymax * (H1 - T - B);
+    const hat = (() => { const [pc, pg] = canvas(14, 14); pg.fillStyle = "#fff"; pg.fillRect(0, 0, 14, 14); pg.strokeStyle = "#15803d"; pg.lineWidth = 3; [-14, 0, 14].forEach(o => { pg.beginPath(); pg.moveTo(o, 14); pg.lineTo(o + 14, 0); pg.stroke(); }); return g.createPattern(pc, "repeat"); })();
+    g.font = "20px Calibri, Arial, sans-serif"; g.textAlign = "left";
+    let lx = L;
+    const item = (t, desenha, ly) => { desenha(lx, ly); g.fillStyle = "#404040"; g.fillText(t, lx + 36, ly); lx += g.measureText(t).width + 80; };
+    COR_AG.forEach(([t, cor]) => item(t, (x, y) => { g.fillStyle = cor; g.fillRect(x, y - 8, 26, 16); }, 26));
+    lx = L;
+    item("Entrada (solicitações)", (x, y) => { g.strokeStyle = "#000"; g.lineWidth = 3; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 26, y); g.stroke(); }, 58);
+    item("Projeção da saída efetiva", (x, y) => { g.fillStyle = hat; g.fillRect(x, y - 8, 26, 16); g.strokeStyle = "#15803d"; g.lineWidth = 1.5; g.strokeRect(x, y - 8, 26, 16); }, 58);
+    g.strokeStyle = "#D9D9D9"; g.lineWidth = 1.2; g.fillStyle = "#595959"; g.textAlign = "right";
+    for (let v = 0; v <= ymax + 1e-9; v += st) { g.beginPath(); g.moveTo(L, Y(v)); g.lineTo(W - Rm, Y(v)); g.stroke(); g.fillText(fmt(v), L - 10, Y(v)); }
+    const [ml, al] = A.meses[n - 1].split("/");
+    let mi = MESES.indexOf(ml), ai = +al;
+    const rot = A.meses.slice();
+    for (let j = 0; j < H12; j++) { mi++; if (mi > 11) { mi = 0; ai++; } rot.push(`${MESES[mi]}/${String(ai).padStart(2, "0")}`); }
+    for (let i = 0; i < slots; i += 3) { g.save(); g.translate(Xc(i) + 6, H1 - B + 14); g.rotate(-Math.PI / 4); g.fillStyle = i >= n ? "#15803d" : "#595959"; g.fillText(rot[i], 0, 0); g.restore(); }
+    for (let i = 0; i < n; i++) {
+      let base = 0;
+      [A.conf[i], A.pend[i], A.falta[i], ou[i]].forEach((v, k) => { if (v > 0) { g.fillStyle = COR_AG[k][1]; g.fillRect(Xc(i) - bw / 2, Y(base + v), bw, Y(base) - Y(base + v)); base += v; } });
+    }
+    const xs = Xc(n - .5);
+    g.strokeStyle = "#7F7F7F"; g.lineWidth = 1.5; g.setLineDash([6, 5]); g.beginPath(); g.moveTo(xs, T - 12); g.lineTo(xs, H1 - B); g.stroke(); g.setLineDash([]);
+    g.textAlign = "left"; g.fillStyle = "#15803d"; g.font = "bold 20px Calibri, Arial, sans-serif"; g.fillText("projeção: média de 12 meses, mantida", xs + 8, T - 14);
+    for (let j = 0; j < H12; j++) {
+      const x = Xc(n + j) - bw / 2;
+      g.fillStyle = hat; g.fillRect(x, Y(P.pMin), bw, Y(0) - Y(P.pMin)); g.strokeStyle = "#15803d"; g.lineWidth = 1.5; g.strokeRect(x, Y(P.pMin), bw, Y(0) - Y(P.pMin));
+      g.setLineDash([5, 4]); g.strokeRect(x, Y(P.pMax), bw, Y(P.pMin) - Y(P.pMax)); g.setLineDash([]);
+    }
+    g.strokeStyle = "#000"; g.lineWidth = 3; g.beginPath(); A.ent.forEach((v, i) => { if (i) g.lineTo(Xc(i), Y(v)); else g.moveTo(Xc(i), Y(v)); }); g.stroke();
+    A.ent.forEach((v, i) => { g.beginPath(); g.arc(Xc(i), Y(v), 4.5, 0, 7); g.fillStyle = "#fff"; g.fill(); g.lineWidth = 2; g.stroke(); });
+    g.lineWidth = 3; g.setLineDash([3, 7]); g.beginPath(); g.moveTo(Xc(n - 1), Y(P.eMed)); g.lineTo(Xc(slots - 1), Y(P.eMed)); g.stroke(); g.setLineDash([]);
+    g.textAlign = "right"; g.fillStyle = "#000"; g.font = "bold 20px Calibri, Arial, sans-serif"; g.fillText(`entrada ${fmt(P.eMed, 1)}/mês`, W - Rm, Y(P.eMed) - 14);
+    if (a12) {
+      const y0 = H1 + 20, wb = 620, tot = a12.n, am = tot / 12, mn = a12.conf / 12, mx = (a12.conf + a12.pend) / 12;
+      g.font = "bold 22px Calibri, Arial, sans-serif"; g.textAlign = "left"; g.fillStyle = "#262626";
+      g.fillText(`Resultado dos ${fmt(tot)} agendamentos (12 meses)`, L, y0 + 10);
+      const partes = [a12.conf, a12.pend, a12.falta, a12.canc + a12.outros];
+      let x = L;
+      partes.forEach((v, k) => {
+        const w = v / tot * wb;
+        if (v > 0) { g.fillStyle = COR_AG[k][1]; g.fillRect(x, y0 + 30, w, 50); if (w >= 50) { g.fillStyle = "#fff"; g.font = "bold 22px Calibri, Arial, sans-serif"; g.textAlign = "center"; g.fillText(fmt(v / tot * 100) + "%", x + w / 2, y0 + 56); } }
+        x += w;
+      });
+      g.textAlign = "left"; g.font = "21px Calibri, Arial, sans-serif";
+      partes.forEach((v, k) => { const yy = y0 + 112 + k * 34; g.fillStyle = COR_AG[k][1]; g.fillRect(L, yy - 9, 18, 18); g.fillStyle = "#262626"; g.fillText(`${COR_AG[k][0]}: ${fmt(v / tot * 100)}% (${fmt(v)})`, L + 30, yy); });
+      const x2 = 760, X2 = v => x2 + v / am * wb;
+      g.font = "bold 22px Calibri, Arial, sans-serif"; g.fillStyle = "#262626"; g.fillText("Saída efetiva (atendimentos/mês)", x2, y0 + 10);
+      g.fillStyle = "#E5E7EB"; g.fillRect(x2, y0 + 56, wb, 40); g.fillStyle = "#15803d"; g.fillRect(x2, y0 + 56, X2(mn) - x2, 40);
+      g.fillStyle = hat; g.fillRect(X2(mn), y0 + 56, X2(mx) - X2(mn), 40); g.strokeStyle = "#15803d"; g.lineWidth = 1.5; g.strokeRect(X2(mn), y0 + 56, X2(mx) - X2(mn), 40);
+      g.fillStyle = "#15803d"; g.textAlign = "center"; g.font = "bold 21px Calibri, Arial, sans-serif";
+      g.fillText(`${fmt(mn, 1)} a ${fmt(mx, 1)}`, Math.min(Math.max((X2(mn) + X2(mx)) / 2, x2 + 60), x2 + wb - 60), y0 + 40);
+      g.font = "20px Calibri, Arial, sans-serif"; g.fillStyle = "#595959"; g.textAlign = "left"; g.fillText("0", x2, y0 + 120);
+      g.textAlign = "right"; g.fillText(`${fmt(am, 1)} agendamentos/mês`, x2 + wb, y0 + 120);
+      g.textAlign = "left"; g.fillStyle = "#262626"; g.fillText("Mínimo: só os confirmados. Máximo: confirmados + sem confirmação.", x2, y0 + 160);
+    }
+    return {url: c.toDataURL("image/png"), w: W, h: H};
+  }
 
   function graficoSerie(r) {
     const W = 2200, H = 960, L = 80, Rm = 250, T = 80, B = 170;
@@ -370,7 +457,7 @@
       g.fillStyle = cor; g.fillText(sinal(t.a) + "/mês" + (t.r2 != null ? " · R² " + fmt(t.r2, 2) : ""), X(n - 1) + 10, y);
     });
     // média dos últimos 12 meses (a que a projeção usa): linha horizontal pontilhada sobre os 12 meses que ela resume
-    ser.forEach(([nome, a, cor]) => {
+    ser.forEach(([, a, cor]) => {
       const m12 = a.slice(-12).reduce((x, y) => x + y, 0) / Math.max(1, Math.min(12, a.length)), y = Yc(m12);
       g.strokeStyle = cor; g.lineWidth = 2.2; g.setLineDash([3, 7]); g.beginPath(); g.moveTo(X(Math.max(0, n - 12)), y); g.lineTo(X(n - 1), y); g.stroke(); g.setLineDash([]);
     });
@@ -476,6 +563,13 @@
     texto(N.f1, 12, {depois: 2});
     imagem(graficoSerie(r), 250, 109.1);
     rodape(N.n1); rascunho(r.textos.fig1);
+    if (r.abs) {   // Figura 1.1 (subitem: o modelo não é renumerado)
+      if (W > 250) novaPag();
+      const gi = graficoAbs(r), alt = 160 * gi.h / gi.w;
+      garantir(alt + 12); texto(N.f1b, 12, {depois: 2});
+      imagem(gi.url, 160, alt);
+      rodape(N.n1b); rascunho(r.textos.fig1b);
+    }
 
     if (W > 250) novaPag(); else y += 3;   // se o texto da Figura 1 já passou para a página retrato, a Figura 2 segue nela
     garantir(70); texto(N.f2, 12, {depois: 3});
@@ -587,13 +681,14 @@
     const rod = w => new D.Footer({children: [new D.Paragraph({tabStops: [{type: D.TabStopType.RIGHT, position: w}], border: linha("top"),
       children: [new D.TextRun({text: `${N.titulo}  ·  dados extraídos em ${ext}  ·  versão piloto`, font: "Times New Roman", size: 17}),
         new D.TextRun({font: "Times New Roman", size: 17, children: [tab(), "Página ", D.PageNumber.CURRENT, " de ", D.PageNumber.TOTAL_PAGES]})]})]});
+    const gi = r.abs ? graficoAbs(r) : null;
     const doc = new D.Document({sections: [
       {properties: {page: {size: {orientation: D.PageOrientation.LANDSCAPE, width: 11906, height: 16838}, margin: {top: 1134, bottom: 1134, left: 1134, right: 1134, header: 500, footer: 500}}},
         headers: {default: cab(14450)}, footers: {default: rod(14450)},
         children: [par(N.titulo, {negrito: true, centro: true, depois: 18}), par(N.f1, {depois: 4}), img(graficoSerie(r), 940, 410), ...rodape(N.n1), rascunho(r.textos.fig1)]},
       {properties: {page: {size: {orientation: D.PageOrientation.PORTRAIT, width: 11906, height: 16838}, margin: {top: 1247, bottom: 1247, left: 1417, right: 1417, header: 500, footer: 500}}},
         headers: {default: cab(8950)}, footers: {default: rod(8950)},
-        children: [par(N.f2, {depois: 6}), tRisco, ...rodape(N.n2), rascunho(r.textos.fig2),
+        children: [...(r.abs ? [par(N.f1b, {depois: 4}), img(gi.url, 600, 600 * gi.h / gi.w), ...rodape(N.n1b), rascunho(r.textos.fig1b)] : []), par(N.f2, {depois: 6}), tRisco, ...rodape(N.n2), rascunho(r.textos.fig2),
           par(N.f3, {depois: 4}), img(graficoCids(r), 540, 388), ...rodape(N.n3), new D.Paragraph({pageBreakBefore: true, spacing: {after: 120}, children: [run(N.tc)]}), tCid, ...rodape(N.ntc), rascunho(r.textos.fig3),
           par(N.f4, {depois: 4}), img(graficoNiveis(r), 540, 388), ...rodape(N.n4),
           par(N.t1, {antes: 6, depois: 6}), tUbs, ...rodape(N.nt1), rascunho(r.textos.fig4)]},
@@ -611,6 +706,8 @@
       ["Gerado pelo painel", location.href.split("#")[0]]], [30, 90]);
     aba("Saldo Regulatório", [["Mês/Ano", "INPUT", "OUTPUT", "SALDO REGULATÓRIO", "Mês aberrante em"], ...r.serie.meses.map((m, i) => [m, r.serie.in[i], r.serie.out[i], r.serie.saldo[i],
       [["INPUT", "in"], ["OUTPUT", "out"], ["SALDO", "saldo"]].filter(([, k]) => i >= r.aberr.ini && r.aberr[k].flag[i - r.aberr.ini]).map(([t]) => t).join("; ")])], [10, 10, 10, 20, 24]);
+    if (r.abs) aba("Agendamentos por mês", [["Mês/Ano", "Agendamentos", "Efetivos (confirmados)", "Sem confirmação do executante", "Faltas", "Cancelados e outros", "% faltas", "Entrada (solicitações)"],
+      ...r.abs.meses.map((m, i) => [m, r.abs.ag[i], r.abs.conf[i], r.abs.pend[i], r.abs.falta[i], r.abs.ag[i] - r.abs.conf[i] - r.abs.pend[i] - r.abs.falta[i], r.abs.ag[i] ? Math.round(r.abs.falta[i] / r.abs.ag[i] * 1000) / 10 : "", r.abs.ent[i]])], [10, 14, 20, 28, 10, 20, 10, 20]);
     if (r.ag12) aba("Agendamentos 12 meses", [["Situação do agendamento", "Agendamentos", "%"],
       ...[["Confirmado", "conf"], ["Falta", "falta"], ["Sem confirmação do executante", "pend"], ["Cancelado", "canc"], ["Outra situação", "outros"]].map(([t, k]) => [t, r.ag12[k], Math.round(r.ag12[k] / r.ag12.n * 1000) / 10]),
       ["TOTAL", r.ag12.n, 100]], [34, 14, 8]);
@@ -639,7 +736,7 @@
   // analises/<id>.json não traz a média/mediana de espera por prioridade (cor_stats): vem do dados.json
   async function carregarAnalise(id, cache) {
     const d = await (await fetch(`analises/${id}.json`, cache ? {cache} : undefined)).json();
-    try { const dj = await (await fetch("dados.json", cache ? {cache} : undefined)).json(); const fj = dj.filas.find(x => x.id === id) || {}; d.cor_stats = fj.cor_stats || null; d.ag12 = fj.ag12 || null; } catch { d.cor_stats = null; d.ag12 = null; }
+    try { const dj = await (await fetch("dados.json", cache ? {cache} : undefined)).json(); const fj = dj.filas.find(x => x.id === id) || {}; d.cor_stats = fj.cor_stats || null; d.ag12 = fj.ag12 || null; d.agm = fj.agm || null; d.agm_meses = dj.meses || null; } catch { d.cor_stats = null; d.ag12 = null; d.agm = null; d.agm_meses = null; }
     // % de devolvidas nos últimos 12 meses por unidade (Tabela 1): devolvidas.json, d12[id] = [[índice da unidade, devolvidas, solicitações], ...]
     try { const dv = await (await fetch("devolvidas.json", cache ? {cache} : undefined)).json(); const u = {};
       (dv.d12 && dv.d12[id] || []).forEach(([ui, dd_, tt]) => { u[dv.unidades[ui][0]] = [dd_, tt]; }); d.dev12 = {janela: dv.janela12 || null, u}; } catch { d.dev12 = null; }

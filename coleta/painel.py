@@ -101,7 +101,9 @@ def coletar(hoje):
     P, PA, U = "descrição_procedimento_solicitacao", "descrição_procedimento_agendamento", m.COD_U
     nomes = m.unidades_norte()     # a região sai do código CNES da unidade solicitante; o nome é ligado depois do filtro
     R = m.filtro_unidades(nomes)
-    ano_det = _mes_inicial_painel(hoje).year
+    # a janela de 24 meses do painel pode recuar um mês quando o mês anterior ainda está incompleto (ver mes_referencia);
+    # de 1 a 10 de janeiro isso leva o primeiro mês ao ano anterior, e o cubo det_ag precisa cobri-lo
+    ano_det = (_mes_inicial_painel(hoje) - timedelta(days=1)).year if hoje.day <= TOLERANCIA_MES else _mes_inicial_painel(hoje).year
     b = m.consultar([
         ["fila", [P, "status_solicitacao_solicitacao", "classificacao_risco"],
          ["Count({<%s>} distinct codigo_solicitacao)" % R, "Date(Min({<%s>} data_solicitacao))" % R]],
@@ -397,7 +399,6 @@ def estatisticas_cores(b, hoje, ref_mes):
             f, a = v["fila"], v["atend"]
             r[cor] = {"fila_media": round(statistics.mean(f)) if f else None,
                       "fila_mediana": round(statistics.median(f)) if f else None,
-                      "atend_media": round(statistics.mean(a)) if a else None,
                       "atend_mediana": round(statistics.median(a)) if a else None,
                       "atend_n": len(a), "ent": round(v["ent"] / 12, 1), "sai": round(v["sai"] / 12, 1)}
         un, dif = {}, None
@@ -414,6 +415,32 @@ def estatisticas_cores(b, hoje, ref_mes):
                       "mediana": round(statistics.median(t)) if t else None, "n": len(t)}
         saida[ident(p)] = r
     return saida
+
+
+def serie_agendamentos(b, meses):
+    """Por fila, mês a mês (os mesmos meses do gráfico, pela data do agendamento): [agendamentos, faltas, sem confirmação
+    do executante, confirmados = agendamentos efetivos]. Base do gráfico de absenteísmo da ficha. Um agendamento por código e data, como na estatística de 12 meses."""
+    idx = {r: i for i, r in enumerate(meses)}
+    n = len(meses)
+    serie, vistos = {}, set()
+    for p, cod, _dsol, dag, st_ag, *_ in b["det_ag"]["rows"]:
+        if not _valido(p) or not _valido(dag) or (p, cod, dag) in vistos:
+            continue
+        vistos.add((p, cod, dag))
+        da = _br(dag)
+        i = idx.get("%s/%s" % (MESES[da.month - 1], str(da.year)[2:]))
+        if i is None:
+            continue
+        s = serie.setdefault(ident(p), [[0] * n, [0] * n, [0] * n, [0] * n])
+        s[0][i] += 1
+        r = resultado_agendamento(st_ag)
+        if r == "falta":
+            s[1][i] += 1
+        elif r == "pend":
+            s[2][i] += 1
+        elif r == "conf":
+            s[3][i] += 1
+    return serie
 
 
 def montar_detalhe(b, hoje):
@@ -771,7 +798,9 @@ def main():
     refs = referencias()
     dados, detalhes, devolvidas, meta = montar(b, hoje, refs)
     est = estatisticas_cores(b, hoje, mes_referencia(hoje, dados["solicitacoes_ate"]))
+    agm = serie_agendamentos(b, dados["meses"])
     for f in dados["filas"]:
+        f["agm"] = agm.get(f["id"])   # [agendamentos, faltas, sem confirmação, confirmados] por mês; None se a fila não tem agendamentos
         cs = dict(est.get(f["id"], {}))
         f["esp_fila"] = cs.pop("_fila", None)   # espera de quem está na fila hoje, fila inteira (média, mediana, n)
         f["esp_un"], f["dif_un"], f["ag12"] = cs.pop("_un", None), cs.pop("_dif", None), cs.pop("_ag", None)
