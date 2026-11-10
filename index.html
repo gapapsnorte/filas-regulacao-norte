@@ -244,6 +244,11 @@ table.rank th:focus-visible,table.tab.ord th:focus-visible,.lin:focus-visible{ou
     <option value="parada">Fila parada</option>
     <option value="semsaida">Sem saída há mais de 1 ano</option>
     <option value="naoag">Prioridade com previsão de agendamento acima de 5 anos</option>
+    <option value="falta30">Faltas acima de 30% dos agendamentos (12 m)</option>
+    <option value="pend10">Chaves em aberto acima de 10% dos agendamentos (12 m, sem os 2 meses mais recentes)</option>
+    <option value="pend20">Chaves em aberto acima de 20% dos agendamentos (12 m, sem os 2 meses mais recentes)</option>
+    <option value="efsai">Saldo zero ou negativo, mas saída efetiva abaixo da entrada (12 m)</option>
+    <option value="faltasobe">Faltas subindo (6 m × 6 m anteriores, diferença além do acaso)</option>
   </select>
   <select id="ordem" aria-label="Ordenar as filas">
     <option value="fila">Maior fila</option>
@@ -540,7 +545,7 @@ function grafico(f){
     <div class="tip" hidden></div></div>${notaParcial(P)}${nota}`;
 }
 // Absenteísmo e saída efetiva: barras empilhadas por mês (agendamentos por resultado), entrada em linha e projeção de 12 meses da saída efetiva
-const COR_ABS=[["Efetivos (confirmados)","#15803d"],["Sem confirmação do executante","#2563eb"],["Faltas (absenteísmo)","#d97706"],["Cancelados e outros","#9ca3af"]];
+const COR_ABS=[["Efetivos (confirmados)","#15803d"],["Chaves em aberto (sem confirmação)","#2563eb"],["Faltas (absenteísmo)","#d97706"],["Cancelados e outros","#9ca3af"]];
 // Resumo de 12 meses ao lado do gráfico mensal: barra única a 100% por resultado e faixa da saída efetiva
 function resumo12Html(f,pid){
   const a=f.ag12; if(!a||!a.n) return "";
@@ -592,8 +597,8 @@ function absHtml(f){
   return `<div class="abs"><p class="nota" style="margin:8px 0 2px"><b class="dica" title="Agendamentos de cada mês (pela data do agendamento) por resultado: efetivos (confirmados pelo executante), sem confirmação (o executante não informou), faltas e cancelados/outros. A linha é a entrada de solicitações do mês. À direita, a projeção da saída efetiva dos próximos 12 meses: a média dos últimos 12 meses, mantida constante, como nas demais projeções do painel.">Saída efetiva, absenteísmo e agendamentos não fechados</b></p>
    <div class="abs-grid"><div><div class="leg"><span class="fraco">Barras: agendamentos por resultado (cores na lista ao lado)</span><span><svg width="26" height="12" aria-hidden="true"><line x1="0" y1="6" x2="26" y2="6" stroke="var(--txt)" stroke-width="2"/></svg>Entrada (solicitações)</span><span><svg width="18" height="12" aria-hidden="true"><rect x="1" y="1" width="16" height="10" fill="url(#${pid})" stroke="#15803d"/></svg>Projeção da saída efetiva</span></div>
    <div class="graf"><svg viewBox="0 0 ${W} ${G.h}" width="100%" role="img" aria-label="Agendamentos por mês divididos em efetivos, sem confirmação, faltas e cancelados, com a entrada e a projeção da saída efetiva dos próximos 12 meses: entre ${fmt(pMin,1)} e ${fmt(pMax,1)} por mês, contra entrada média de ${fmt(eMed,1)}">${o}</svg></div></div>${resumo12Html(f,pid)}</div>
-   <p class="nota" style="margin:2px 0 0"><b>${n} meses:</b> ${fmt(S(fa)/tot*100,1)}% faltas · ${fmt(S(pe)/tot*100,1)}% sem confirmação · ${fmt(S(cf)/tot*100,1)}% efetivos (de ${fmt(tot)}). <b class="dica" title="Projeção = média dos últimos 12 meses, mantida; não prevê mudança de oferta nem de absenteísmo. Esta conta compara a entrada com atendimentos; o saldo da ficha compara a entrada com agendamentos (as faltas ocupam vagas e tiram a solicitação da fila, mas não são atendimentos).">Projeção</b>: saída efetiva ${fmt(pMin,1)} a ${fmt(pMax,1)}/mês contra entrada de ${fmt(eMed,1)}/mês: ${efeito}.</p>
-   <p class="periodo-nota">“Sem confirmação” = o executante não informou se a pessoa foi atendida; os meses mais recentes ainda podem receber o registro. O gráfico é mensal.</p></div>`;
+   <p class="nota" style="margin:2px 0 0"><b>${n} meses:</b> ${fmt(S(fa)/tot*100,1)}% faltas · ${fmt(S(pe)/tot*100,1)}% chaves em aberto · ${fmt(S(cf)/tot*100,1)}% efetivos (de ${fmt(tot)}). <b class="dica" title="Projeção = média dos últimos 12 meses, mantida; não prevê mudança de oferta nem de absenteísmo. Esta conta compara a entrada com atendimentos; o saldo da ficha compara a entrada com agendamentos (as faltas ocupam vagas e tiram a solicitação da fila, mas não são atendimentos).">Projeção</b>: saída efetiva ${fmt(pMin,1)} a ${fmt(pMax,1)}/mês contra entrada de ${fmt(eMed,1)}/mês: ${efeito}.</p>
+   <p class="periodo-nota">“Chaves em aberto” = agendamentos sem confirmação do executante (não informou se a pessoa foi atendida); os meses mais recentes ainda podem receber o registro. O gráfico é mensal.</p></div>`;
 }
 function hover(e){
   const g=e.target.closest(".graf"); if(!g||!g.dataset.id) return;   // o gráfico de absenteísmo (.graf sem data-id) usa <title> nativo
@@ -837,6 +842,24 @@ function diagHtml(f){
 }
 // resultado dos agendamentos dos últimos 12 meses completos; a saída efetiva é faixa porque parte deles nunca foi confirmada pelo executante
 const MIN_UN = 20;   // mesmo mínimo de MIN_UNIDADE em coleta/painel.py
+// filtros de absenteísmo: só valem com pelo menos MIN12 agendamentos no período
+const somaJ = (v,i,j) => v.slice(i,j).reduce((s,x)=>s+x,0);
+// chaves em aberto = agendamentos com a chave de confirmação do SISREG ainda não baixada pelo executante (status PENDENTE CONFIRMAÇÃO / EXECUTANTE).
+// Os 2 meses mais recentes ficam fora: neles a chave ainda costuma ser baixada (o último mês chega a 40% em aberto, contra 10 a 15% nos demais)
+const pendPct = f => { const a=f.agm; if(!a||!a[2]||a[0].length<12) return -1; const n=a[0].length, ag=somaJ(a[0],n-12,n-2); return ag>=MIN12 ? somaJ(a[2],n-12,n-2)/ag*100 : -1; };
+// faltas sobre os agendamentos com desfecho conhecido (confirmados + faltas), sem o mês mais recente, 6 meses contra os 6 anteriores
+const absJanelas = f => { const a=f.agm; if(!a||!a[3]||a[0].length<13) return null; const n=a[0].length-1;
+  const r=(i,j)=>{ const fa=somaJ(a[1],i,j); return {f:fa,n:fa+somaJ(a[3],i,j)}; }; return {rec:r(n-6,n),ant:r(n-12,n-6)}; };
+const FILTROS_ABS = {
+  falta30: f => faltaPct(f) > 30,
+  pend10: f => pendPct(f) > 10,
+  pend20: f => pendPct(f) > 20,
+  // fila que parece controlada (saldo de 12 meses zero ou negativo) só porque a falta conta como saída: os confirmados ficam abaixo da entrada média
+  efsai: f => { if(!f.ag12||f.ag12.n<MIN12||!(f.fila>0)||f.saldo12>0) return false; const e=(f.in||[]).slice(-12); return e.length>0&&f.ag12.conf/12 < e.reduce((s,x)=>s+x,0)/e.length; },
+  // taxa de faltas pelo menos 5 pontos percentuais acima da dos 6 meses anteriores e diferença além do acaso (teste de duas proporções, z ≥ 1,96)
+  faltasobe: f => { const w=absJanelas(f); if(!w||w.rec.n<MIN12||w.ant.n<MIN12) return false; const d=w.rec.f/w.rec.n-w.ant.f/w.ant.n; if(d*100<5) return false;
+    const p=(w.rec.f+w.ant.f)/(w.rec.n+w.ant.n), ep=Math.sqrt(p*(1-p)*(1/w.rec.n+1/w.ant.n)); return ep>0 && d/ep>=1.96; }
+};
 const faltaPct = f => f.ag12 && f.ag12.n >= MIN12 ? f.ag12.falta / f.ag12.n * 100 : -1;
 // espera mediana por unidade solicitante, dentro da mesma prioridade
 function espUnHtml(f){
@@ -908,7 +931,7 @@ function filtrar(){
   const q=norm($("busca").value.trim()), t=$("tipo").value, al=$("alerta").value, o=$("ordem").value, ce=$("central").value, ex=$("exec").value;
   const L=D.filas.filter(f=>(!q||norm(f.p).includes(q))&&(!t||f.tipo===t)&&
     (!ce||(f.cen||[]).some(x=>x[0]===ce))&&(!ex||(f.exe||[]).some(x=>naExec(x,ex)))&&
-    (!al || (al==="naoag" ? coresNaoAgendadas(f).length>0 : al==="com-fila" ? f.fila>0 : al==="qualquer" ? f.alertas.length : al==="nenhum" ? !f.alertas.length : al==="sem-meta" ? !f.meta_normativa : al==="com-meta" ? f.meta_normativa : f.alertas.some(a=>TIPO_ALERTA[al].test(a)))));
+    (!al || (al==="naoag" ? coresNaoAgendadas(f).length>0 : FILTROS_ABS[al] ? FILTROS_ABS[al](f) : al==="com-fila" ? f.fila>0 : al==="qualquer" ? f.alertas.length : al==="nenhum" ? !f.alertas.length : al==="sem-meta" ? !f.meta_normativa : al==="com-meta" ? f.meta_normativa : f.alertas.some(a=>TIPO_ALERTA[al].test(a)))));
   const k={fila:f=>-f.fila,espera:f=>-(f.espera_max||0),saldo:f=>-f.saldo12,devolvidas:f=>-f.devolvidas,semsaida:f=>-diasSemSaida(f),difun:f=>-(f.dif_un?f.dif_un.d:-1),falta:f=>-faltaPct(f),inexplicado:f=>-(f.sx?f.sx[3]:0)};
   L.sort(o==="nome"?(a,b)=>a.p.localeCompare(b.p,"pt"):(a,b)=>k[o](a)-k[o](b)||b.fila-a.fila);
   return L;
@@ -948,7 +971,7 @@ function lerHash(){
 }
 async function baixarLista(){
   await xlsx();
-  const L=filtrar(), cab=["Procedimento","Tipo","Na fila","Vermelho","Vermelho – dias","Amarelo","Amarelo – dias","Verde","Verde – dias","Azul","Azul – dias","Sem risco","Devolvidas","Saldo 12 meses","Tempo para agendar a fila atual (dias)","Agendados à frente","Último agendamento","Agendamentos 12 meses","Faltas 12 meses (%)","Sem confirmação 12 meses (%)","Diferença de espera entre unidades (dias)","Prioridades com previsão de agendamento acima de 5 anos","Central reguladora (na fila)","Unidades executantes (agendamentos em 12 meses)","Saldo inexplicado","Saíram da fila (registro do painel)","Alertas"];
+  const L=filtrar(), cab=["Procedimento","Tipo","Na fila","Vermelho","Vermelho – dias","Amarelo","Amarelo – dias","Verde","Verde – dias","Azul","Azul – dias","Sem risco","Devolvidas","Saldo 12 meses","Tempo para agendar a fila atual (dias)","Agendados à frente","Último agendamento","Agendamentos 12 meses","Faltas 12 meses (%)","Chaves em aberto 12 meses (%)","Diferença de espera entre unidades (dias)","Prioridades com previsão de agendamento acima de 5 anos","Central reguladora (na fila)","Unidades executantes (agendamentos em 12 meses)","Saldo inexplicado","Saíram da fila (registro do painel)","Alertas"];
   const g=(f,c,k)=>f.cores[c]?f.cores[c][k]:"";
   const linhas=L.map(f=>[f.p,f.tipo,f.fila,g(f,"vermelho","n"),g(f,"vermelho","dias"),g(f,"amarelo","n"),g(f,"amarelo","dias"),g(f,"verde","n"),g(f,"verde","dias"),g(f,"azul","n"),g(f,"azul","dias"),g(f,"sem risco","n"),f.devolvidas,f.saldo12,baseSim(f).espera!=null&&f.fila>0?Math.round(baseSim(f).espera):"",f.futuros,dataXl(f.ult_ag),f.ag12?f.ag12.n:"",f.ag12&&f.ag12.n?Math.round(f.ag12.falta/f.ag12.n*1000)/10:"",f.ag12&&f.ag12.n?Math.round(f.ag12.pend/f.ag12.n*1000)/10:"",f.dif_un?f.dif_un.d:"",coresNaoAgendadas(f).join(", "),(f.cen||[]).map(x=>`${x[0]}: ${x[1]}`).join("; "),(f.exe||[]).map(x=>`${x[0]}: ${x[2]}`).join("; "),f.sx?f.sx[3]:"",f.sx?f.sx[0]+f.sx[1]+f.sx[2]+f.sx[3]:"",f.alertas.join(" | ")]);
   const wb=XLSX.utils.book_new(), ws=XLSX.utils.aoa_to_sheet([cab,...linhas]);
