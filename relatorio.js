@@ -264,6 +264,18 @@
       ab[chave].flag.forEach((x, i) => { if (x) ext.push(`${k} de ${s.meses[ab.ini + i]} (${fmt(a[ab.ini + i])})`); });
     }
     if (ext.length) t.fig1 += " Meses aberrantes (mais de 4 vezes a oscilação típica em relação à tendência; mantidos no gráfico e descontados da linha de tendência), a explicar (mutirão, suspensão de agenda etc.): " + ext.join("; ") + ".";
+    {   // esforço de intervenção: média de 12 meses constante (mesma conta do plano do painel); cenário pior = entrada +18%, saída −25%
+      const fila = r.risco.reduce((a, x) => a + x.n, 0);
+      if (fila > 0 && n >= 12) {
+        const ent = media(u12(s.in)), sai = media(u12(s.out)), up = v => fmt(Math.ceil(v - 1e-9) + 0);
+        const est = Math.max(0, ent - sai), zer = Math.max(0, ent - sai + fila / 12);
+        const entP = ent * 1.18, saiP = sai * 0.75, estP = Math.max(0, entP - saiP), zerP = Math.max(0, entP - saiP + fila / 12);
+        t.fig1 += ` Esforço de intervenção (média dos últimos 12 meses mantida constante; é uma conta, não uma previsão): ` +
+          (est > 0.05 ? `para a fila parar de crescer seriam necessários cerca de ${up(est)} agendamentos a mais por mês` + (sai > 0 ? ` (${fmt(est / sai * 100, 0)}% da saída atual)` : "") : `a saída atual já basta para a fila não crescer`) +
+          `; para zerar as ${fmt(fila)} solicitações em 12 meses, cerca de ${up(zer)} a mais por mês durante o ano, e depois manter a oferta igual à entrada (${fmt(ent, 1)}/mês). ` +
+          `Num cenário pior que o normal (entrada 18% maior e saída 25% menor, os erros típicos do teste com o passado das filas): ${up(estP)} a mais por mês para estabilizar e ${up(zerP)} para zerar em 12 meses.`;
+      }
+    }
     if (r.abs) {
       const A = r.abs, S = a => a.reduce((x, y) => x + y, 0), tt = S(A.ag), pc = x => fmt(x / tt * 100, 1);
       const m12 = a => S(a.slice(-12)), t12 = m12(A.ag);
