@@ -31,7 +31,7 @@ header p{margin:4px 0 0;color:var(--muted);font-size:.72rem}
 .kpis{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:8px;margin:12px 0}   /* todos os cartões em 1 linha, mesma largura e altura */
 .kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
 .pedem{font-size:.95rem;margin:10px 0 6px}
-.acoes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 12px}
+.acoes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 12px}
 .acao{display:block;width:100%;text-align:left;font:inherit;cursor:pointer;background:var(--alerta-bg);color:var(--alerta-txt);border:1px solid transparent;border-radius:10px;padding:8px 12px}
 .acao:hover{border-color:var(--alerta-txt)}
 .acao b{display:block;line-height:1.15;font-size:1.3rem;font-variant-numeric:tabular-nums}.acao span{display:block}.acao small{text-decoration:underline}
@@ -45,6 +45,13 @@ header p{margin:4px 0 0;color:var(--muted);font-size:.72rem}
 .ctrl input[type=search]{flex:1 1 180px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt);font-size:.9rem}
 .ctrl select,.ctrl button{padding:5px 7px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt);font-size:.9rem;cursor:pointer}
 .ctrl .cont{color:var(--muted);font-size:.85rem;margin-left:auto}
+.flts{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 10px}
+.flts-g{flex-basis:100%;font-size:.78rem;color:var(--muted);margin-top:2px}
+.flt{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--txt);font-size:.85rem;cursor:pointer}
+.flt:has(input[data-s]:checked){border-color:var(--accent);background:var(--alerta-bg);font-weight:600}
+.flt:focus-within{outline:2px solid var(--accent);outline-offset:1px}
+.flt input[type=number]{width:3.2em;padding:1px 3px;border:1px solid var(--line);border-radius:5px;background:var(--bg);color:var(--txt);font-size:.85rem}
+.flt-limpar{padding:4px 10px;border:0;background:none;color:var(--accent);text-decoration:underline;cursor:pointer;font-size:.85rem}
 .lista{display:flex;flex-direction:column;gap:8px}
 .fila{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 12px;cursor:pointer}
 .fila:hover,.fila:focus-visible{border-color:var(--accent);outline:none}
@@ -232,24 +239,6 @@ table.rank th:focus-visible,table.tab.ord th:focus-visible,.lin:focus-visible{ou
   <select id="tipo" aria-label="Tipo de procedimento"><option value="">Todos os tipos</option></select>
   <select id="central" aria-label="Central reguladora" title="Mostra as filas com solicitações aguardando nesta central reguladora"><option value="">Todas as centrais reguladoras</option></select>
   <select id="exec" aria-label="Unidade executante" title="Mostra as filas com agendamentos nesta unidade nos últimos 12 meses completos"><option value="">Todas as unidades executantes</option></select>
-  <select id="alerta" aria-label="Filtrar por alerta">
-    <option value="">Com ou sem alerta</option>
-    <option value="com-fila">Só com solicitações aguardando</option>
-    <option value="qualquer">Só com alertas</option>
-    <option value="nenhum">Só sem alertas</option>
-    <option value="sem-meta">Sem meta nos protocolos consultados</option>
-    <option value="com-meta">Com meta normativa</option>
-    <option value="crescendo">Fila crescendo</option>
-    <option value="esperando">Espera acima da meta</option>
-    <option value="parada">Fila parada</option>
-    <option value="semsaida">Sem saída há mais de 1 ano</option>
-    <option value="naoag">Prioridade com previsão de agendamento acima de 5 anos</option>
-    <option value="falta30">Faltas acima de 30% dos agendamentos (12 m)</option>
-    <option value="pend10">Chaves em aberto acima de 10% dos agendamentos (12 m, sem os 2 meses mais recentes)</option>
-    <option value="pend20">Chaves em aberto acima de 20% dos agendamentos (12 m, sem os 2 meses mais recentes)</option>
-    <option value="efsai">Saldo zero ou negativo, mas saída efetiva abaixo da entrada (12 m)</option>
-    <option value="faltasobe">Faltas subindo (6 m × 6 m anteriores, diferença além do acaso)</option>
-  </select>
   <select id="ordem" aria-label="Ordenar as filas">
     <option value="fila">Maior fila</option>
     <option value="espera">Maior espera</option>
@@ -264,6 +253,21 @@ table.rank th:focus-visible,table.tab.ord th:focus-visible,.lin:focus-visible{ou
   <select id="periodo" aria-label="Agrupamento dos gráficos" class="periodo" title="Agrupamento dos gráficos de entrada, saída e saldo"><option value="m">Gráficos por mês</option><option value="q">Gráficos por quadrimestre</option></select>
   <button id="baixar" title="Baixa a lista filtrada em Excel">Baixar lista (Excel)</button>
   <span class="cont" id="cont" aria-live="polite"></span>
+</div>
+<div class="flts" id="chips" role="group" aria-label="Filtros combináveis: as filas mostradas atendem a todos os marcados">
+  <span class="flts-g">Situação da fila</span>
+  <label class="flt" title="Esconde procedimentos sem nenhuma solicitação aguardando no regulador"><input type="checkbox" data-s="aguard"> Só com solicitações aguardando</label>
+  <label class="flt" title="Saldo positivo em 9 ou mais dos últimos 12 meses e saldo de 12 meses acima de zero"><input type="checkbox" data-s="cresc"> Fila crescendo</label>
+  <label class="flt" title="Sem nenhum agendamento há mais de 1 ano, ou fila parada (20 ou mais na fila, nenhum agendado em 3 meses e nada à frente)"><input type="checkbox" data-s="interr"> Oferta interrompida</label>
+  <label class="flt" title="A mediana até o atendimento (agendados nos últimos 90 dias) passa da meta normativa do protocolo"><input type="checkbox" data-s="meta"> Espera acima da meta</label>
+  <label class="flt" title="Com as vagas indo primeiro às prioridades mais urgentes, alguma prioridade não seria toda agendada em 5 anos"><input type="checkbox" data-s="naoag"> Previsão de agendamento acima de 5 anos</label>
+  <label class="flt" title="Tem solicitações em fila de espera (aguardando pactuação), fora da fila do regulador"><input type="checkbox" data-s="espera"> Em fila de espera</label>
+  <span class="flts-g">Agendamentos (últimos 12 meses)</span>
+  <label class="flt" title="Faltas sobre o total de agendamentos. Só avalia filas com agendamentos suficientes no período."><input type="checkbox" data-s="falta"> Faltas acima de <input type="number" id="lim-falta" min="0" max="100" step="1" value="30" aria-label="Limite de faltas, em percentual">%</label>
+  <label class="flt" title="Agendamentos com a chave de confirmação do SISREG ainda não baixada pelo executante, sem contar os 2 meses mais recentes (neles a chave ainda costuma ser baixada)"><input type="checkbox" data-s="pend"> Chaves em aberto acima de <input type="number" id="lim-pend" min="0" max="100" step="1" value="10" aria-label="Limite de chaves em aberto, em percentual">%</label>
+  <label class="flt" title="Faltas dos últimos 6 meses pelo menos 5 pontos percentuais acima das dos 6 anteriores, com diferença além do acaso"><input type="checkbox" data-s="faltasobe"> Faltas subindo</label>
+  <label class="flt" title="Saldo de 12 meses zero ou negativo, mas os agendamentos confirmados ficam abaixo da entrada média: a fila parece controlada só porque a falta conta como saída"><input type="checkbox" data-s="efsai"> Saída efetiva abaixo da entrada</label>
+  <button type="button" class="flt-limpar" id="chips-limpar" hidden>Limpar filtros marcados</button>
 </div>
 <div class="lista" id="lista"></div>
 <button class="mais" id="mais" hidden>Mostrar mais</button>
@@ -851,9 +855,6 @@ const pendPct = f => { const a=f.agm; if(!a||!a[2]||a[0].length<12) return -1; c
 const absJanelas = f => { const a=f.agm; if(!a||!a[3]||a[0].length<13) return null; const n=a[0].length-1;
   const r=(i,j)=>{ const fa=somaJ(a[1],i,j); return {f:fa,n:fa+somaJ(a[3],i,j)}; }; return {rec:r(n-6,n),ant:r(n-12,n-6)}; };
 const FILTROS_ABS = {
-  falta30: f => faltaPct(f) > 30,
-  pend10: f => pendPct(f) > 10,
-  pend20: f => pendPct(f) > 20,
   // fila que parece controlada (saldo de 12 meses zero ou negativo) só porque a falta conta como saída: os confirmados ficam abaixo da entrada média
   efsai: f => { if(!f.ag12||f.ag12.n<MIN12||!(f.fila>0)||f.saldo12>0) return false; const e=(f.in||[]).slice(-12); return e.length>0&&f.ag12.conf/12 < e.reduce((s,x)=>s+x,0)/e.length; },
   // taxa de faltas pelo menos 5 pontos percentuais acima da dos 6 meses anteriores e diferença além do acaso (teste de duas proporções, z ≥ 1,96)
@@ -861,6 +862,23 @@ const FILTROS_ABS = {
     const p=(w.rec.f+w.ant.f)/(w.rec.n+w.ant.n), ep=Math.sqrt(p*(1-p)*(1/w.rec.n+1/w.ant.n)); return ep>0 && d/ep>=1.96; }
 };
 const faltaPct = f => f.ag12 && f.ag12.n >= MIN12 ? f.ag12.falta / f.ag12.n * 100 : -1;
+// botões combináveis da aba Filas: a fila precisa atender a todos os marcados (E). Os limites de faltas e de chaves em aberto são editáveis.
+const limite=(id,pad)=>{ const v=parseFloat($(id).value.replace(",",".")); return isFinite(v)&&v>=0?v:pad; };
+const CHIPS = {
+  aguard: f => f.fila>0,
+  cresc: f => f.alertas.some(a=>TIPO_ALERTA.crescendo.test(a)),
+  interr: f => f.alertas.some(a=>TIPO_ALERTA.semsaida.test(a)||TIPO_ALERTA.parada.test(a)),
+  meta: f => f.alertas.some(a=>TIPO_ALERTA.esperando.test(a)),
+  naoag: f => coresNaoAgendadas(f).length>0,
+  espera: f => !!(f.espera&&f.espera.n>0),
+  falta: f => faltaPct(f) > limite("lim-falta",30),
+  pend: f => pendPct(f) > limite("lim-pend",10),
+  faltasobe: FILTROS_ABS.faltasobe,
+  efsai: FILTROS_ABS.efsai
+};
+const chipsAtivos = () => [...document.querySelectorAll("#chips input[data-s]:checked")].map(i=>i.dataset.s);
+const chipTexto = k => { const l=document.querySelector(`#chips input[data-s="${k}"]`).closest("label"), n=l.querySelector("input[type=number]"), t=l.textContent.replace(/\s+/g," ").trim(); return n?t.replace("%",(n.value||"?")+"%"):t; };
+function limparChips(){ document.querySelectorAll("#chips input[data-s]").forEach(i=>i.checked=false); }
 // espera mediana por unidade solicitante, dentro da mesma prioridade
 function espUnHtml(f){
   const u=f.esp_un, d=f.dif_un; if(!u||!d) return "";
@@ -928,10 +946,10 @@ function item(f){
    </div></div>`;
 }
 function filtrar(){
-  const q=norm($("busca").value.trim()), t=$("tipo").value, al=$("alerta").value, o=$("ordem").value, ce=$("central").value, ex=$("exec").value;
+  const q=norm($("busca").value.trim()), t=$("tipo").value, o=$("ordem").value, ce=$("central").value, ex=$("exec").value;
   const L=D.filas.filter(f=>(!q||norm(f.p).includes(q))&&(!t||f.tipo===t)&&
     (!ce||(f.cen||[]).some(x=>x[0]===ce))&&(!ex||(f.exe||[]).some(x=>naExec(x,ex)))&&
-    (!al || (al==="naoag" ? coresNaoAgendadas(f).length>0 : FILTROS_ABS[al] ? FILTROS_ABS[al](f) : al==="com-fila" ? f.fila>0 : al==="qualquer" ? f.alertas.length : al==="nenhum" ? !f.alertas.length : al==="sem-meta" ? !f.meta_normativa : al==="com-meta" ? f.meta_normativa : f.alertas.some(a=>TIPO_ALERTA[al].test(a)))));
+    chipsAtivos().every(k=>CHIPS[k](f)));
   const k={fila:f=>-f.fila,espera:f=>-(f.espera_max||0),saldo:f=>-f.saldo12,devolvidas:f=>-f.devolvidas,semsaida:f=>-diasSemSaida(f),difun:f=>-(f.dif_un?f.dif_un.d:-1),falta:f=>-faltaPct(f),inexplicado:f=>-(f.sx?f.sx[3]:0)};
   L.sort(o==="nome"?(a,b)=>a.p.localeCompare(b.p,"pt"):(a,b)=>k[o](a)-k[o](b)||b.fila-a.fila);
   return L;
@@ -956,7 +974,7 @@ function abrir(c){
 function irParaFila(id){
   const f=porId[id]; if(!f) return;
   mostrarAba("filas");
-  if(!ultimaLista.slice(0,vis).includes(f)){ $("busca").value=f.p; $("tipo").value=""; $("central").value=""; $("exec").value=""; $("alerta").value=""; vis=60; render(); }
+  if(!ultimaLista.slice(0,vis).includes(f)){ $("busca").value=f.p; $("tipo").value=""; $("central").value=""; $("exec").value=""; limparChips(); vis=60; render(); }
   const c=$("f-"+id); if(c){ abrir(c); c.classList.add("destaque"); c.scrollIntoView({block:"start",behavior:"smooth"}); }
 }
 function lerHash(){
@@ -977,7 +995,7 @@ async function baixarLista(){
   const wb=XLSX.utils.book_new(), ws=XLSX.utils.aoa_to_sheet([cab,...linhas]);
   ws["!cols"]=[{wch:50},{wch:10},{wch:9},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:12},{wch:9},{wch:11},{wch:13},{wch:16},{wch:14},{wch:16},{wch:13},{wch:13},{wch:16},{wch:18},{wch:18},{wch:36},{wch:60},{wch:12},{wch:14},{wch:80}];
   XLSX.utils.book_append_sheet(wb,ws,"Filas");
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Filtro",`${$("busca").value||"(todos)"} · ${$("tipo").value||"todos os tipos"} · ${$("central").value||"todas as centrais"} · ${$("exec").value?$("exec").options[$("exec").selectedIndex].text:"todas as executantes"} · ${$("alerta").options[$("alerta").selectedIndex].text}`]])),"Leia-me");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(leiaMe([["Filtro",`${$("busca").value||"(todos)"} · ${$("tipo").value||"todos os tipos"} · ${$("central").value||"todas as centrais"} · ${$("exec").value?$("exec").options[$("exec").selectedIndex].text:"todas as executantes"}${chipsAtivos().length?" · "+chipsAtivos().map(chipTexto).join(" E "):""}`]])),"Leia-me");
   XLSX.writeFile(wb,`Filas Região Norte (${D.data.split("-").reverse().join("-")}).xlsx`);
 }
 
@@ -1396,8 +1414,8 @@ const PRONTO=fetch("dados.json",{cache:"no-store"}).then(r=>{if(!r.ok) throw new
     [fmt(d.filas.reduce((s,f)=>s+f.devolvidas,0)),'<span title="Todas as devolvidas de hoje, sem recorte de período">devolvidas aguardando correção (fora da fila)</span>'],
     [fmt(d.filas.reduce((s,f)=>s+(f.espera?f.espera.n:0),0)),"em fila de espera (aguardando pactuação)"]
   ]);
-  const nAl=k=>d.filas.filter(f=>f.alertas.some(a=>TIPO_ALERTA[k].test(a))).length;
-  $("acoes").innerHTML=[["crescendo","filas crescendo",JAN.cresc],["semsaida","sem saída há mais de 1 ano",JAN.semsaida],["parada","filas paradas",JAN.parada],["esperando","filas acima da meta","Mediana até o atendimento acima da meta do protocolo"]]
+  const nAl=k=>d.filas.filter(f=>k==="interr"?CHIPS.interr(f):f.alertas.some(a=>TIPO_ALERTA[k].test(a))).length;
+  $("acoes").innerHTML=[["crescendo","filas crescendo",JAN.cresc],["interr","com oferta interrompida (sem saída há mais de 1 ano ou parada)",JAN.semsaida+" "+JAN.parada],["esperando","filas acima da meta","Mediana até o atendimento acima da meta do protocolo"]]
     .map(([k,t,tit])=>`<button type="button" class="acao" data-alerta="${k}" title="${esc(tit)}"><b>${fmt(nAl(k))}</b><span>${t}</span><small>abrir a lista</small></button>`).join("");
   const tipos=[...new Set(d.filas.map(f=>f.tipo).filter(Boolean))].sort();
   ["tipo","pr-tipo","of-tipo","un-tipo","pz-tipo"].forEach(id=>tipos.forEach(t=>$(id).insertAdjacentHTML("beforeend",`<option>${esc(t)}</option>`)));
@@ -1406,12 +1424,18 @@ const PRONTO=fetch("dados.json",{cache:"no-store"}).then(r=>{if(!r.ok) throw new
   $("info").textContent="não foi possível carregar os dados";
   $("aviso").hidden=false; $("aviso").textContent="Erro ao carregar dados.json ("+err.message+"). Tente recarregar a página; se persistir, a atualização automática falhou.";
 });
-["busca","tipo","central","exec","alerta","ordem"].forEach(id=>$(id).addEventListener("input",()=>{vis=60;render();}));
+["busca","tipo","central","exec","ordem"].forEach(id=>$(id).addEventListener("input",()=>{vis=60;render();}));
+$("chips").addEventListener("input",e=>{
+  const n=e.target.closest("input[type=number]"); if(n&&n.value!=="") n.closest("label").querySelector("input[data-s]").checked=true;   // editar o limite liga o botão
+  $("chips-limpar").hidden=!chipsAtivos().length; vis=60; render();
+});
+$("chips-limpar").addEventListener("click",()=>{ limparChips(); $("chips-limpar").hidden=true; vis=60; render(); });
 $("acoes").addEventListener("click",async e=>{
   const b=e.target.closest("button.acao"); if(!b) return;
   await mostrarAba("filas");
   ["busca","tipo","central","exec"].forEach(id=>$(id).value="");
-  $("alerta").value=b.dataset.alerta; vis=60; render();
+  limparChips(); document.querySelector(`#chips input[data-s="${{esperando:"meta",crescendo:"cresc"}[b.dataset.alerta]||b.dataset.alerta}"]`).checked=true;
+  $("chips-limpar").hidden=false; vis=60; render();
   $("aba-filas").scrollIntoView({behavior:"smooth",block:"start"});
 });
 ["un-busca","un-nivel","un-tipo","un-ordem"].forEach(id=>$(id).addEventListener("input",()=>{ if(id==="un-ordem") unOrd={k:null,dir:-1}; DV&&renderUn(); }));
