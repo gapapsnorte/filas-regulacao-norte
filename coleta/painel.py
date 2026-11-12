@@ -337,6 +337,7 @@ def montar(b, hoje, ref=None):
 
 ATEND_DIAS = 90   # janela dos atendimentos usados no "tempo até o atendimento"
 MIN_UNIDADE = 20  # solicitações na fila, por unidade e cor, para comparar a espera entre unidades
+MIN_CONC_FILA, PCT_CONC = 50, 0.4  # fila concentrada: 50 ou mais na fila e uma unidade solicitante com 40% ou mais delas
 
 
 def resultado_agendamento(st):
@@ -410,6 +411,17 @@ def estatisticas_cores(b, hoje, ref_mes):
                 if dif is None or d > dif["d"]:
                     dif = {"cor": cor, "d": d, "max": med[0][2], "umax": med[0][0], "min": med[-1][2], "umin": med[-1][0]}
         r["_un"], r["_dif"], r["_ag"] = un or None, dif, dict(ag12[p]) if p in ag12 else None
+        # fila concentrada: uma só unidade solicitante responde por boa parte de quem espera (todas as cores)
+        tot_u = defaultdict(int)
+        for us in por_un.get(p, {}).values():
+            for u, x in us.items():
+                tot_u[u] += len(x)
+        n_fila = len(todos.get(p, []))
+        r["_conc"] = None
+        if tot_u and n_fila >= MIN_CONC_FILA:
+            u, n = max(tot_u.items(), key=lambda z: (z[1], z[0]))
+            if n / n_fila >= PCT_CONC:
+                r["_conc"] = {"u": u, "n": n, "pct": round(n / n_fila * 100)}
         t = todos.get(p, [])
         r["_fila"] = {"media": round(statistics.mean(t)) if t else None,
                       "mediana": round(statistics.median(t)) if t else None, "n": len(t)}
@@ -804,6 +816,7 @@ def main():
         cs = dict(est.get(f["id"], {}))
         f["esp_fila"] = cs.pop("_fila", None)   # espera de quem está na fila hoje, fila inteira (média, mediana, n)
         f["esp_un"], f["dif_un"], f["ag12"] = cs.pop("_un", None), cs.pop("_dif", None), cs.pop("_ag", None)
+        f["conc"] = cs.pop("_conc", None)   # {u, n, pct} quando uma unidade solicitante concentra a fila
         f["cor_stats"] = cs
         # o protocolo calcula a meta da inserção à execução: compara com a mediana até o atendimento, não com quem ainda espera
         meta_f = refs.get("metas", {}).get(f["p"]) or {}   # só há meta quando uma norma a define (aba Metas_espera)

@@ -654,6 +654,9 @@ function coresNaoAgendadas(f){ if(!f.fila) return []; const c=cascata(f,baseSim(
 function seloNaoAgendado(f){ const l=coresNaoAgendadas(f); if(!l.length) return "";
   const nomes=l.map(c=>c.charAt(0).toUpperCase()+c.slice(1)), txt=nomes.length>1?nomes.slice(0,-1).join(", ")+" e "+nomes[nomes.length-1]:nomes[0];
   return `<span class="alerta" title="No ritmo dos últimos 12 meses, com as vagas indo primeiro às prioridades mais urgentes, as solicitações que estão hoje na fila nessa prioridade não seriam todas agendadas em 5 anos. A espera do cartão vale para a fila inteira, não para esta prioridade. Veja a tabela por cor no simulador.">⚠ ${txt}: previsão de agendamento acima de 5 anos</span>`; }
+// fila concentrada: uma unidade solicitante responde por 40% ou mais de quem espera (filas com 50 ou mais); informa, não é alerta
+function seloConc(f){ const c=f.conc; if(!c) return "";
+  return `<span class="tag conc" title="${fmt(c.n)} das ${fmt(f.fila)} solicitações na fila vieram de ${esc(c.u)}. Só é marcada a fila com 50 ou mais solicitações em que uma única unidade solicitante responde por 40% ou mais delas.">Concentrada: ${esc(c.u)} ${c.pct}%</span>`; }
 function projSim(b,delta,meses=24,mutirao=0){
   const pts=[b.fila]; let L=b.fila;
   for(let i=0;i<meses;i++){ if(i===0) L=Math.max(0,L-mutirao); L=Math.max(0,L+b.ent-(b.sai+delta)); pts.push(L); }
@@ -928,7 +931,7 @@ function item(f){
      <div class="num s"><b style="color:${f.saldo12>0?"var(--saldo)":"var(--out)"}">${f.saldo12>0?"+":""}${fmt(f.saldo12)}</b><small class="dica" title="Saldo = entrada − saída nos últimos 12 meses completos; positivo = a fila cresceu nesse período. ${JAN.m12}">saldo 12 meses</small></div>
      <div class="sp">${spark(f)}</div>
    </div>
-   ${f.alertas.length||coresNaoAgendadas(f).length?`<div class="alertas">${f.alertas.map(a=>{const m=a.match(/^Fila crescendo: saldo positivo em (\d+) dos/); return m?`<span class="alerta cresc" title="${tituloAlerta(a)}">⚠ Crescendo <b>+${fmt(f.saldo12/12,1)}/mês</b> · saldo positivo em ${m[1]} de 12 meses</span>`:`<span class="alerta" title="${tituloAlerta(a)}">⚠ ${esc(a)}</span>`;}).join("")}${seloNaoAgendado(f)}</div>`:""}
+   ${f.alertas.length||coresNaoAgendadas(f).length||f.conc?`<div class="alertas">${f.alertas.map(a=>{const m=a.match(/^Fila crescendo: saldo positivo em (\d+) dos/); return m?`<span class="alerta cresc" title="${tituloAlerta(a)}">⚠ Crescendo <b>+${fmt(f.saldo12/12,1)}/mês</b> · saldo positivo em ${m[1]} de 12 meses</span>`:`<span class="alerta" title="${tituloAlerta(a)}">⚠ ${esc(a)}</span>`;}).join("")}${seloNaoAgendado(f)}${seloConc(f)}</div>`:""}
    ${diagHtml(f)}
    <div class="det">
      ${legenda(f)}

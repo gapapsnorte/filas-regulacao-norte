@@ -241,7 +241,7 @@
   function agTxt(a) {
     if (!a || !a.n) return "";
     const pc = x => fmt(x / a.n * 100);
-    return `Dos ${fmt(a.n)} agendamentos dos últimos 12 meses, ${pc(a.conf)}% foram confirmados, ${pc(a.falta)}% foram faltas, ${pc(a.pend)}% seguem sem confirmação do executante e ${pc(a.canc)}% foram cancelados; a saída efetiva ficou entre ${fmt(a.conf / 12, 1)} e ${fmt((a.conf + a.pend) / 12, 1)} atendimentos/mês. `;
+    return `Dos ${fmt(a.n)} agendamentos dos últimos 12 meses, ${pc(a.conf)}% foram confirmados, ${pc(a.falta)}% foram faltas, ${pc(a.pend)}% seguem com a chave em aberto (sem confirmação do executante) e ${pc(a.canc)}% foram cancelados; a saída efetiva ficou entre ${fmt(a.conf / 12, 1)} e ${fmt((a.conf + a.pend) / 12, 1)} atendimentos/mês. `;
   }
   function textos(r) {
     const s = r.serie, n = s.in.length, t = {};
@@ -282,10 +282,10 @@
       const pf = A.ag.map((q, i) => q >= MIN12 ? A.falta[i] / q * 100 : -1), im = pf.indexOf(Math.max(...pf));
       const P = projecaoAbs(A), f1 = v => fmt(Math.abs(v), 1);
       const efeito = P.d1 > 0 ? `faltariam entre ${f1(P.d1)} e ${f1(P.d2)} atendimentos por mês para dar conta do que entra` : P.d2 < 0 ? `os atendimentos superariam a entrada em ${f1(P.d2)} a ${f1(P.d1)} por mês` : `os atendimentos ficariam entre ${f1(P.d1)} abaixo e ${f1(P.d2)} acima da entrada, por mês`;
-      t.fig1b = `Nos ${A.meses.length} meses de ${A.meses[0]} a ${A.meses[A.meses.length - 1]}, dos ${fmt(tt)} agendamentos, ${pc(S(A.falta))}% foram faltas (absenteísmo) e ${pc(S(A.pend))}% seguem sem confirmação do executante; ${pc(S(A.conf))}% foram efetivos (confirmados).` +
-        (t12 >= MIN12 ? ` Nos últimos 12 meses (${fmt(t12)} agendamentos): ${fmt(m12(A.falta) / t12 * 100, 1)}% de faltas, ${fmt(m12(A.pend) / t12 * 100, 1)}% sem confirmação e ${fmt(m12(A.conf) / t12 * 100, 1)}% efetivos.` : "") +
+      t.fig1b = `Nos ${A.meses.length} meses de ${A.meses[0]} a ${A.meses[A.meses.length - 1]}, dos ${fmt(tt)} agendamentos, ${pc(S(A.falta))}% foram faltas (absenteísmo) e ${pc(S(A.pend))}% seguem com a chave em aberto (sem confirmação do executante); ${pc(S(A.conf))}% foram efetivos (confirmados).` +
+        (t12 >= MIN12 ? ` Nos últimos 12 meses (${fmt(t12)} agendamentos): ${fmt(m12(A.falta) / t12 * 100, 1)}% de faltas, ${fmt(m12(A.pend) / t12 * 100, 1)}% de chaves em aberto e ${fmt(m12(A.conf) / t12 * 100, 1)}% efetivos.` : "") +
         (im >= 0 && pf[im] >= 0 ? ` O mês com mais faltas foi ${A.meses[im]} (${fmt(pf[im], 1)}% de ${fmt(A.ag[im])} agendamentos).` : "") +
-        ` Projeção para os próximos 12 meses, mantendo a média dos últimos 12: saída efetiva entre ${fmt(P.pMin, 1)} (só confirmados) e ${fmt(P.pMax, 1)} (confirmados e sem confirmação) por mês, contra entrada média de ${fmt(P.eMed, 1)}; nessa conta ${efeito}. A conta compara a entrada com atendimentos, enquanto o saldo regulatório da Figura 1 a compara com agendamentos (as faltas ocupam vagas e tiram a solicitação da fila, mas não são atendimentos).`;
+        ` Projeção para os próximos 12 meses, mantendo a média dos últimos 12: saída efetiva entre ${fmt(P.pMin, 1)} (só confirmados) e ${fmt(P.pMax, 1)} (confirmados e chaves em aberto) por mês, contra entrada média de ${fmt(P.eMed, 1)}; nessa conta ${efeito}. A conta compara a entrada com atendimentos, enquanto o saldo regulatório da Figura 1 a compara com agendamentos (as faltas ocupam vagas e tiram a solicitação da fila, mas não são atendimentos).`;
     }
     const tot = r.risco.reduce((a, x) => a + x.n, 0);
     t.fig2 = `A fila tem ${fmt(tot)} solicitações pendentes ou reenviadas.` + (tot ? " Por prioridade, " + r.risco.filter(x => x.n).map(x =>
@@ -327,7 +327,7 @@
         `Média e tendência respondem a perguntas diferentes: a média diz quanto entra ou sai, em geral, por mês; a tendência diz para onde a curva está indo. Por exemplo, duas filas podem ter a mesma média de 100 solicitações por mês, uma estável e outra subindo 10 por mês. As médias mostradas no alto da figura são dos últimos 24 meses. A linha horizontal pontilhada de cada curva é a média dos últimos 12 meses, base das projeções do painel: no teste com o passado das filas da região, prever pela média errou menos (mediana de 18% na entrada e 26% na saída) do que prolongar a tendência (21% e 36%). A média olha para trás: se uma subida continuar de fato, ela fica abaixo do que vai acontecer (a fila do exemplo que sobe 10 por mês teria média de 100 em um ano e de 220 no seguinte). Por isso a tendência segue na figura como aviso: quando está bem inclinada para cima, a projeção é um piso, não o número certo. A média não tem R² por ser uma linha sem inclinação. As linhas de tendência (mínimos quadrados) cobrem os últimos ${n - r.aberr.ini} meses, mostram só a direção da curva e são calculadas sem os meses aberrantes (identificados pelo método de Theil-Sen: mais de 4 vezes a oscilação típica em relação à tendência; no saldo, acima ou abaixo, e sempre que a saída do mês for aberrante); o R² ao lado de cada linha considera só os meses não aberrantes, ` +
         "que permanecem no gráfico em tracejado e com círculo vazio. Quando o valor ultrapassa a escala, o ponto é desenhado no limite do eixo, com o valor real escrito ao lado (nesses meses a altura não é fiel). Meses anteriores à janela não foram avaliados."],
       f1b: `Figura 1.1 – Resultado dos agendamentos, entrada e projeção da saída efetiva em ${r.nome}`,
-      n1b: [FONTE, `Nota: Dados extraídos em ${e}. Barras: agendamentos de cada mês (pela data do agendamento; um por código e data), por resultado; linha: solicitações (entrada) do mês. Efetivos = confirmados pelo executante (a pessoa foi atendida). Sem confirmação = o executante não informou se a pessoa foi atendida (a chave do agendamento não foi fechada); nos meses mais recentes o registro ainda pode chegar. Cancelados e outras situações completam o total.`, `Projeção: média dos últimos 12 meses mantida constante, a que errou menos no teste com o passado das filas; não prevê mudança de oferta nem de absenteísmo. A faixa da saída efetiva vai de só os confirmados até confirmados mais sem confirmação. O resumo da parte de baixo refere-se aos últimos 12 meses completos.`],
+      n1b: [FONTE, `Nota: Dados extraídos em ${e}. Barras: agendamentos de cada mês (pela data do agendamento; um por código e data), por resultado; linha: solicitações (entrada) do mês. Efetivos = confirmados pelo executante (a pessoa foi atendida). Sem confirmação = o executante não informou se a pessoa foi atendida (a chave do agendamento não foi fechada); nos meses mais recentes o registro ainda pode chegar. Cancelados e outras situações completam o total.`, `Projeção: média dos últimos 12 meses mantida constante, a que errou menos no teste com o passado das filas; não prevê mudança de oferta nem de absenteísmo. A faixa da saída efetiva vai de só os confirmados até confirmados mais chaves em aberto. O resumo da parte de baixo refere-se aos últimos 12 meses completos.`],
       f2: `Figura 2 – Tempo de espera por prioridade em ${r.nome}`, n2,
       f3: `Figura 3.1 – Distribuição de solicitações pendentes em ${r.nome} por Código Internacional de Doenças (CID)`,
       n3: [FONTE, `Nota: Dados extraídos em ${e}. Rótulos apresentam número absoluto e percentual em relação ao total de ${fmt(r.cids.reduce((t, x) => t + x.n, 0))} solicitações pendentes e reenviadas.`],
@@ -355,7 +355,7 @@
 
   // Figura 1.1: barras empilhadas por mês (agendamentos por resultado), entrada em linha, projeção de 12 meses da saída efetiva
   // e, embaixo, o resumo dos últimos 12 meses (barra a 100% e faixa da saída efetiva). Devolve {url, w, h}.
-  const COR_AG = [["Efetivos (confirmados)", "#15803d"], ["Sem confirmação do executante", "#2563eb"], ["Faltas (absenteísmo)", "#d97706"], ["Cancelados e outros", "#9ca3af"]];
+  const COR_AG = [["Efetivos (confirmados)", "#15803d"], ["Chaves em aberto (sem confirmação)", "#2563eb"], ["Faltas (absenteísmo)", "#d97706"], ["Cancelados e outros", "#9ca3af"]];
   function projecaoAbs(A) {
     const m12 = a => a.slice(-12).reduce((x, y) => x + y, 0) / Math.max(1, Math.min(12, a.length));
     const pMin = m12(A.conf), pMax = m12(A.conf) + m12(A.pend), eMed = m12(A.ent);
@@ -420,7 +420,7 @@
       g.fillText(`${fmt(mn, 1)} a ${fmt(mx, 1)}`, Math.min(Math.max((X2(mn) + X2(mx)) / 2, x2 + 60), x2 + wb - 60), y0 + 40);
       g.font = "20px Calibri, Arial, sans-serif"; g.fillStyle = "#595959"; g.textAlign = "left"; g.fillText("0", x2, y0 + 120);
       g.textAlign = "right"; g.fillText(`${fmt(am, 1)} agendamentos/mês`, x2 + wb, y0 + 120);
-      g.textAlign = "left"; g.fillStyle = "#262626"; g.fillText("Mínimo: só os confirmados. Máximo: confirmados + sem confirmação.", x2, y0 + 160);
+      g.textAlign = "left"; g.fillStyle = "#262626"; g.fillText("Mínimo: só os confirmados. Máximo: confirmados + chaves em aberto.", x2, y0 + 160);
     }
     return {url: c.toDataURL("image/png"), w: W, h: H};
   }
@@ -718,10 +718,10 @@
       ["Gerado pelo painel", location.href.split("#")[0]]], [30, 90]);
     aba("Saldo Regulatório", [["Mês/Ano", "INPUT", "OUTPUT", "SALDO REGULATÓRIO", "Mês aberrante em"], ...r.serie.meses.map((m, i) => [m, r.serie.in[i], r.serie.out[i], r.serie.saldo[i],
       [["INPUT", "in"], ["OUTPUT", "out"], ["SALDO", "saldo"]].filter(([, k]) => i >= r.aberr.ini && r.aberr[k].flag[i - r.aberr.ini]).map(([t]) => t).join("; ")])], [10, 10, 10, 20, 24]);
-    if (r.abs) aba("Agendamentos por mês", [["Mês/Ano", "Agendamentos", "Efetivos (confirmados)", "Sem confirmação do executante", "Faltas", "Cancelados e outros", "% faltas", "Entrada (solicitações)"],
+    if (r.abs) aba("Agendamentos por mês", [["Mês/Ano", "Agendamentos", "Efetivos (confirmados)", "Chaves em aberto (sem confirmação)", "Faltas", "Cancelados e outros", "% faltas", "Entrada (solicitações)"],
       ...r.abs.meses.map((m, i) => [m, r.abs.ag[i], r.abs.conf[i], r.abs.pend[i], r.abs.falta[i], r.abs.ag[i] - r.abs.conf[i] - r.abs.pend[i] - r.abs.falta[i], r.abs.ag[i] ? Math.round(r.abs.falta[i] / r.abs.ag[i] * 1000) / 10 : "", r.abs.ent[i]])], [10, 14, 20, 28, 10, 20, 10, 20]);
     if (r.ag12) aba("Agendamentos 12 meses", [["Situação do agendamento", "Agendamentos", "%"],
-      ...[["Confirmado", "conf"], ["Falta", "falta"], ["Sem confirmação do executante", "pend"], ["Cancelado", "canc"], ["Outra situação", "outros"]].map(([t, k]) => [t, r.ag12[k], Math.round(r.ag12[k] / r.ag12.n * 1000) / 10]),
+      ...[["Confirmado", "conf"], ["Falta", "falta"], ["Chave em aberto (sem confirmação)", "pend"], ["Cancelado", "canc"], ["Outra situação", "outros"]].map(([t, k]) => [t, r.ag12[k], Math.round(r.ag12[k] / r.ag12.n * 1000) / 10]),
       ["TOTAL", r.ag12.n, 100]], [34, 14, 8]);
     aba("Tempo de espera por risco", [["Classificação", "Mais antiga", "Solicitações", "Espera média (dias)", "Espera mediana (dias)", "Espera da mais antiga (dias)", "Mediana até o atendimento (dias)", "Atendimentos (90 dias)", "Meta do protocolo (dias, mediana)", "Mediana acima da meta?"],
       ...r.risco.map(x => [x.cor, dataXl(x.antiga), x.n, x.n ? x.media ?? "" : "", x.n ? x.mediana ?? "" : "", x.dias ?? "", x.atend ?? "", x.natend || "", x.meta ?? "", x.meta && x.atend != null ? (x.acima ? "Sim" : "Não") : ""]),
