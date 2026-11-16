@@ -430,7 +430,7 @@ def estatisticas_cores(b, hoje, ref_mes):
 
 
 def serie_agendamentos(b, meses):
-    """Por fila, mês a mês (os mesmos meses do gráfico, pela data do agendamento): [agendamentos, faltas, sem confirmação
+    """Por fila, mês a mês (os mesmos meses do gráfico, pela data do atendimento): [agendamentos, faltas, sem confirmação
     do executante, confirmados = agendamentos efetivos]. Base do gráfico de absenteísmo da ficha. Um agendamento por código e data, como na estatística de 12 meses."""
     idx = {r: i for i, r in enumerate(meses)}
     n = len(meses)
