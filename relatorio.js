@@ -117,7 +117,7 @@
     const i = inn.slice(ini), o = out.slice(ini), s = i.map((v, k) => v - o[k]);
     const eI = elegivelAberr(i), eO = elegivelAberr(o);
     const ro = aberrantes(o, {elegivel: eO});
-    // regra de 24/10/2026: mês aberrante na saída é sempre aberrante no saldo
+    // mês aberrante na saída é sempre aberrante no saldo (mesma regra do programa local)
     return {ini, k: ABERR.k, in: aberrantes(i, {elegivel: eI}), out: ro,
       saldo: aberrantes(s, {ambos: true, elegivel: eI || eO, forcar: ro.flag})};
   }
