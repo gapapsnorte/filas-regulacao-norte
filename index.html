@@ -1050,8 +1050,9 @@ function aggReg({pi=null,ui=null,nv="",tp="",por="u"}={}){
   E.forEach(e=>{ if(!ok(e.pi,e.ui)) return;
     const k=por==="u"?e.ui:por==="p"?e.pi:e.pi+"|"+e.ui, g=U[k]||(U[k]={pi:e.pi,ui:e.ui,novas:0,res:0,c30:0,r30:0,dias:[],dest:{}}), x=X[e.cod];
     g.novas++;
-    if(x&&nd(e.dia,x.dia)>=0){ g.res++; const n=nd(e.dia,x.dia); g.dias.push(n); todos.push(n); g.dest[x.dest]=(g.dest[x.dest]||0)+1; }
-    if(nd(e.dia,D.data)>=30){ g.c30++; if(x&&nd(e.dia,x.dia)<=30) g.r30++; } });
+    const dsx=x?nd(e.dia,x.dia):-1;   // saída anterior à entrada (dsx < 0) não conta como resolvida nem como saída em 30 dias
+    if(dsx>=0){ g.res++; g.dias.push(dsx); todos.push(dsx); g.dest[x.dest]=(g.dest[x.dest]||0)+1; }
+    if(nd(e.dia,D.data)>=30){ g.c30++; if(dsx>=0&&dsx<=30) g.r30++; } });
   let saiEstoque=0; const destEst={};
   Object.entries(X).forEach(([cod,x])=>{ if(!novas.has(cod)&&ok(x.pi,x.ui)){ saiEstoque++; destEst[x.dest]=(destEst[x.dest]||0)+1; } });
   const L=Object.values(U).sort((a,b)=>b.novas-a.novas);
