@@ -752,7 +752,7 @@ function simHtml(f){
     <p><b>A base da conta.</b> Três números: <i>entrada</i> (quantas solicitações chegam por mês), <i>saída</i> (quantos agendamentos saem por mês) e <i>fila</i> (quantas pessoas aguardam hoje). Entrada e saída são as médias dos últimos 12 meses, e o simulador as mantém constantes daqui para a frente (linha pontilhada horizontal no gráfico da fila). Se a entrada é maior que a saída, a fila cresce; se é menor, a fila diminui.</p>
     <p><b>As duas barras.</b> A de cima é a <i>oferta adicional</i>: quantos agendamentos por mês somar à saída de hoje. A de baixo é o <i>tempo para agendar a fila atual</i>. As duas andam juntas: quanto mais vagas, menor esse tempo. Mexa em qualquer uma e a outra acompanha.</p>
     <p><b>Plano de intervenção.</b> Em vez de mexer nas barras, você pode informar um prazo (em quantos meses quer resolver), um mutirão (vagas extras de uma vez, no 1º mês) e uma espera-alvo (em dias). O plano diz quantas vagas a mais por mês cada objetivo exige: só estabilizar a fila, zerá-la no prazo ou levá-la a uma espera dentro da meta. A barra de oferta se ajusta ao resultado do plano, e os cartões, a tabela por cor e o gráfico mostram o efeito.</p>
-    <p><b>Os cinco cartões.</b> <i>Tempo para agendar a fila hoje</i> e <i>com a oferta</i> (fila ÷ saída mensal); <i>saldo mensal com a oferta</i> (vagas − entrada: negativo é bom, a fila diminui); <i>fila em 12 meses</i> e <i>meses para zerar</i>.</p>
+    <p><b>Os cinco cartões.</b> <i>Tempo para agendar a fila hoje</i> e <i>com a oferta</i> (fila ÷ saída mensal); <i>saldo mensal com a oferta</i> (entrada − vagas: negativo é bom, a fila diminui); <i>fila em 12 meses</i> e <i>meses para zerar</i>.</p>
     <p><b>Tabela por cor.</b> Mostra o que acontece com cada prioridade quando as vagas são distribuídas como a regulação faz: vermelho primeiro, depois amarelo, verde e azul. Uma cor menos prioritária pode esperar muito mesmo com a fila total diminuindo, porque as vagas vão antes para as mais urgentes.</p>
     <p><b>Gráfico.</b> A linha cinza tracejada é a fila sem nenhuma oferta adicional; a linha colorida é a fila com a oferta simulada, mês a mês, por 24 meses. Onde a linha chega a zero, a fila acabou.</p>
     <p><b>O que o simulador não faz.</b> Não prevê aumento ou queda da demanda, sazonalidade, falta de médicos ou de salas, nem considera que parte das vagas é perdida por falta de pacientes (faltas e cancelamentos contam como saída). Serve para dimensionar a ordem de grandeza e comparar alternativas, não para prometer resultado.</p>
@@ -796,7 +796,7 @@ function atualizarSim(box,origem){
   box.querySelector(".sim-res").innerHTML=
     cel(ttl("tempo para agendar a fila hoje","Fila ÷ saída média mensal dos últimos 12 meses (lei de Little), em dias"),b.espera!=null?dias10(b.espera)+(b.espera>3650?"":" dias"):"–")+
     cel(ttl("tempo para agendar a fila com a oferta","Fila ÷ (saída média + oferta adicional), em dias"),esp!=null?dias10(esp)+(esp>3650?"":" dias"):"–",esp!=null&&b.espera!=null&&esp<b.espera?"bom":"")+
-    cel(ttl("saldo mensal com a oferta","(Saída média + oferta adicional) − entrada média; negativo = a fila diminui a cada mês"),(Math.round(Math.abs(liq))===0?"":liq>=0?"−":"+")+fmt(Math.abs(liq))+" /mês",liq>0?"bom":liq<0?"ruim":"")+
+    cel(ttl("saldo mensal com a oferta","Entrada média − (saída média + oferta adicional); negativo = a fila diminui a cada mês"),(Math.round(Math.abs(liq))===0?"":liq>=0?"−":"+")+fmt(Math.abs(liq))+" /mês",liq>0?"bom":liq<0?"ruim":"")+
     cel(ttl("fila em 12 meses"+(M?" (com o mutirão)":""),"Fila projetada mês a mês: fila + entrada − (saída + oferta), nunca abaixo de zero; o mutirão é abatido no 1º mês. "+JAN.f12),fmt(p1[12])+(p0[12]!==p1[12]?` (sem oferta: ${fmt(p0[12])})`:""))+
     cel(ttl("meses para zerar a fila"+(M?" (com o mutirão)":""),"Fila de hoje (menos o mutirão) ÷ (saída + oferta − entrada), arredondado para cima"),zero!=null?fmt(zero)+(zero0&&zero0!==zero?` (sem oferta: ${fmt(zero0)})`:zero0?"":" (sem oferta: não zera)"):(b.fila?"não zera":"–"),zero!=null?"bom":b.fila?"ruim":"");
   // efeito em cada cor: as vagas (saída média + oferta + mutirão) atendem em cascata de prioridade
@@ -938,7 +938,7 @@ function item(f){
      ${legenda(f)}
      ${grafico(f)}
      ${absHtml(f)}
-     <p style="font-size:.8rem;color:var(--muted);margin:2px 0 0">Devolvidas aguardando correção (fora da fila; todas as de hoje, sem recorte de período): ${fmt(f.devolvidas)} · ${resumoReg(f)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Sem meta de tempo de espera definida em normativa da SES-DF para este procedimento"}</p>
+     <p style="font-size:.8rem;color:var(--muted);margin:2px 0 0">Devolvidas aguardando correção (suspensas; todas as de hoje, sem recorte de período): ${fmt(f.devolvidas)} · ${resumoReg(f)} · Agendamentos marcados do mês atual em diante: ${fmt(f.futuros)} · Último agendamento: ${dd(f.ult_ag)}${meta.fonte?` · Meta: ${esc(meta.fonte)}`:" · Sem meta de tempo de espera definida em normativa da SES-DF para este procedimento"}</p>
      ${reguladoraHtml(f)}${saldoInexplicadoHtml(f)}${espUnHtml(f)}
      ${f.fila>0?simHtml(f):""}
      <div class="gerar" data-id="${f.id}" data-p="${esc(f.p)}">
@@ -1418,7 +1418,7 @@ const PRONTO=fetch("dados.json",{cache:"no-store"}).then(r=>{if(!r.ok) throw new
   const ativos=d.filas.filter(f=>f.fila>0);
   $("kpis").innerHTML=kpiHtml([
     [fmt(ativos.reduce((s,f)=>s+f.fila,0)),`solicitações na fila, em ${fmt(ativos.length)} filas`],
-    [fmt(d.filas.reduce((s,f)=>s+f.devolvidas,0)),'<span title="Todas as devolvidas de hoje, sem recorte de período">devolvidas aguardando correção (fora da fila)</span>'],
+    [fmt(d.filas.reduce((s,f)=>s+f.devolvidas,0)),'<span title="Todas as devolvidas de hoje, sem recorte de período">devolvidas aguardando correção (suspensas)</span>'],
     [fmt(d.filas.reduce((s,f)=>s+(f.espera?f.espera.n:0),0)),"em fila de espera (aguardando pactuação)"]
   ]);
   const nAl=k=>d.filas.filter(f=>k==="interr"?CHIPS.interr(f):f.alertas.some(a=>TIPO_ALERTA[k].test(a))).length;
