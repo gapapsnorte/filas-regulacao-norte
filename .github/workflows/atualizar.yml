@@ -46,7 +46,7 @@ jobs:
             echo "Tentativa $i falhou"; sleep 90
           done
           exit 1
-      - name: Guardar os históricos (atraso, fila de espera e devolvidas) em main (um commit por dia com medição nova)
+      - name: Guardar os históricos (atraso, fila de espera, devolvidas e saldo inexplicado) em main (um commit por publicação em que algum deles mudou)
         if: steps.coleta.outputs.publicar == 'sim'
         run: |
           git config user.name "github-actions[bot]"
@@ -55,7 +55,7 @@ jobs:
           if ! git diff --cached --quiet; then
             git commit -q -m "Históricos do painel – $(TZ=America/Sao_Paulo date '+%d/%m/%Y')"
             if ! { git pull -q --rebase origin main && git push -q origin HEAD:main; }; then
-              echo "::warning::não foi possível gravar atraso.json/espera.json/devolvidas_reg.json em main; a publicação segue sem esse commit"
+              echo "::warning::não foi possível gravar atraso.json/espera.json/devolvidas_reg.json/fila_reg.json em main; a publicação segue sem esse commit"
               git rebase --abort 2>/dev/null || true
               git reset -q HEAD~1   # desfaz o commit local e mantém os arquivos, para o git ficar limpo no passo seguinte
             fi

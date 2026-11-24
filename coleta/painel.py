@@ -1,8 +1,10 @@
 """Atualiza o painel das filas (todas as filas da Região Norte).
 
 Roda no GitHub Actions (.github/workflows/atualizar.yml), que grava os dados e publica.
-Uso local: python coleta/painel.py             (coleta e grava, sem publicar)
-           python coleta/painel.py --se-mudou  (só coleta se o Mapa Social recarregou ou se o dia virou)
+Uso local: python coleta/painel.py                  (coleta e grava, sem publicar; --forcar é o mesmo, usado pelo workflow)
+           python coleta/painel.py --se-mudou       (só coleta se o Mapa Social recarregou ou se o dia virou)
+           python coleta/painel.py --liberar-trava  (grava mesmo com queda brusca em relação à publicação anterior, ou sem
+                                                     conseguir ler a publicação anterior; só se a queda for real)
 
 Gera:
   dados.json                resumo de todas as filas (painel)
