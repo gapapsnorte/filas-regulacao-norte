@@ -13,12 +13,9 @@
   --vermelho:#e0322b;--amarelo:#f2c200;--verde:#6cb33f;--azul:#1aa7e0;--semrisco:#9aa3af;
   --alerta-bg:#fff4e5;--alerta-txt:#8a4b00;--aviso-bg:#fdecec;--aviso-txt:#8f1d1d;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+@media (prefers-color-scheme:dark){:root{
   --bg:#12161c;--card:#1b2129;--txt:#e6e9ee;--muted:#9aa4b2;--line:#2c3440;--accent:#6ea8ff;
   --in:#e6e9ee;--out:#3ccf8e;--saldo:#ff6b5e;--alerta-bg:#3a2a12;--alerta-txt:#ffc27a;--aviso-bg:#3d1b1b;--aviso-txt:#ffb3b3;}}
-:root[data-theme="dark"]{
-  --bg:#12161c;--card:#1b2129;--txt:#e6e9ee;--muted:#9aa4b2;--line:#2c3440;--accent:#6ea8ff;
-  --in:#e6e9ee;--out:#3ccf8e;--saldo:#ff6b5e;--alerta-bg:#3a2a12;--alerta-txt:#ffc27a;--aviso-bg:#3d1b1b;--aviso-txt:#ffb3b3;}
 *{box-sizing:border-box}
 html{font-size:14px}
 body{margin:0;background:var(--bg);color:var(--txt);font:13px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
@@ -125,8 +122,7 @@ table.tab td:nth-child(2),table.tab th:nth-child(2){text-align:left}
 .gerar label{font-size:.85rem;color:var(--muted);display:flex;gap:6px;align-items:center;flex:1 1 240px}
 .gerar input{flex:1;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--txt)}
 .botoes{display:flex;gap:6px;flex-wrap:wrap}
-.botoes button{padding:8px 16px;border-radius:7px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-weight:600;cursor:pointer}
-.botoes button.sec{background:transparent;color:var(--accent)}
+.botoes button{padding:8px 16px;border-radius:7px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-weight:600;cursor:pointer}
 .botoes button:disabled{opacity:.5;cursor:wait}
 .gerar .status,.dv-acoes .status{flex-basis:100%;color:var(--muted);font-size:.85rem}
 .dv-acoes{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
@@ -177,30 +173,26 @@ footer details>p:first-of-type{margin-top:12px}
   .pr-cab{display:none}
 }
 /* ajustes de leitura: legendas, botões, filtros fixos, celular */
-/* 2. selo de crescimento compacto */
+/* selo de crescimento compacto */
 .alerta.cresc b{font-weight:700}
-/* 3. listas: legendas repetidas só no celular; cabeçalho fixo */
+/* listas: legendas repetidas só no celular; cabeçalho fixo */
 @media (min-width:761px){.lin.dv .num small{display:none}.lin.dv .num b{font-size:1rem}}
 .pr-cab{position:sticky;top:0;z-index:3;background:var(--bg);padding-top:4px}
 @media (min-width:761px){.lin.dv.c5{grid-template-columns:minmax(0,3fr) 120px 90px 90px 110px}.lin.dv.c4{grid-template-columns:minmax(0,3fr) 110px 110px 110px 120px}}
 .num .pct{font-weight:400;color:var(--muted);font-size:.8rem}
 .of-nota{margin:0 0 6px;font-size:.78rem;color:var(--muted)}
-/* 4. hierarquia dos botões */
-.botoes button{background:transparent;color:var(--accent);font-weight:600}
+/* hierarquia dos botões: principal (pri) preenchido, secundário só com contorno, link (lnk) sublinhado */
 .botoes button.pri{background:var(--accent);color:#fff}
 .botoes button.lnk{border-color:transparent;text-decoration:underline;text-underline-offset:3px;font-weight:500;padding-left:6px;padding-right:6px}
 #central,#exec{max-width:230px}
-/* 5. barra de filtros fixa ao rolar (Filas e Priorização) */
+/* barra de filtros fixa ao rolar (Filas e Priorização) */
 .ctrl.fixa{position:sticky;top:0;z-index:4;background:var(--bg);padding:6px 0 4px;margin:0 0 8px;box-shadow:0 6px 8px -8px rgba(0,0,0,.25)}
-/* 7. ponto de cor na tabela de prioridades */
-.pt{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:-1px;border:1px solid rgba(0,0,0,.12)}
-.pt.vermelho{background:var(--vermelho)}.pt.amarelo{background:var(--amarelo)}.pt.verde{background:var(--verde)}.pt.azul{background:var(--azul)}.pt.semrisco{background:var(--semrisco)}
-/* 9. destino alinhado à esquerda no registro */
+/* destino alinhado à esquerda no registro */
 table.rank.regtab td:last-child{text-align:left;padding-left:26px}table.rank.regtab thead tr:first-child th:last-child{text-align:left;padding-left:26px}
 @media (max-width:760px){
-  /* 6. créditos em linha própria */
+  /* créditos em linha própria */
   .cred{display:block;margin:4px 0 0}
-  /* 8. filtros em grade uniforme */
+  /* filtros em grade uniforme */
   .ctrl{display:grid;grid-template-columns:1fr 1fr;gap:6px}
   .ctrl input[type=search],.ctrl button,.ctrl .cont,.ctrl label{grid-column:1/-1}
   .ctrl select{width:100%;min-width:0}
@@ -379,7 +371,7 @@ table.rank th:focus-visible,table.tab.ord th:focus-visible,.lin:focus-visible{ou
   <p><b>Alertas:</b> <i>fila crescendo</i> = <span data-jan="cresc">saldo positivo em 9 ou mais dos últimos 12 meses e na soma do período</span>; <i>espera acima da meta</i> = mediana do tempo até o atendimento de uma cor, nos agendados dos últimos 90 dias, maior que a meta do protocolo do procedimento (só existe quando encontramos meta de espera por prioridade em normativa da SES-DF; nos 33 protocolos e 323 notas técnicas consultados em outubro/2026, apenas Consulta em Cirurgia Geral e em Pequena Cirurgia, conforme a Portaria SES-DF 79/2026 – demais filas ficam marcadas como <i>sem meta nos protocolos consultados</i> e não geram esse alerta); <i>fila parada</i> = 20+ solicitações aguardando, ninguém agendado <span data-jan="parada">nos últimos 3 meses</span> nem marcado à frente; <i>sem saída há mais de 1 ano</i> = há solicitações aguardando e o último agendamento registrado tem <span data-jan="semsaida">mais de 365 dias</span> (ou não há nenhum). A aba <i>Oferta interrompida ou não pactuada</i> reúne esses dois últimos alertas com a <i>fila de espera</i> (solicitações aguardando pactuação, fora da fila do regulador).</p>
   <p><b>Tempo para agendar a fila atual e simulador:</b> esse tempo (~N d no cartão) é a fila dividida pela <span data-jan="med12">saída mensal média dos últimos 12 meses</span>, isto é, quanto tempo levaria para agendar todos que já estão na fila, no ritmo atual, sem contar quem entrar depois. Não é previsão de quanto cada pessoa vai esperar. No detalhe de cada fila, o botão <i>Simulador</i> abre uma área que mostra o efeito de uma oferta adicional de agendamentos por mês nesse tempo e na <span data-jan="proj24">projeção da fila em 24 meses</span>; a estimativa principal é para a fila toda; a tabela por cor distribui as vagas em cascata de prioridade (vermelhos primeiro, depois amarelos, e assim por diante). O <i>plano de intervenção</i> responde a pergunta inversa: para estabilizar a fila, zerá-la em um prazo (com ou sem mutirão inicial) ou levá-la a uma espera-alvo, quantos agendamentos a mais por mês são necessários e quantos bastam, depois, para a fila não voltar a crescer; mostra também um cenário pior que o normal.</p>
   <p><b>Gerar análise completa:</b> abra uma fila e escolha PDF, Word ou Excel (tabelas). O documento segue a metodologia padronizada (Figuras 1 a 4 e Tabela 1, com as UBS ordenadas de quem mais devolve por eSF); os parágrafos de interpretação saem em amarelo, como rascunho para revisão. <i>Dados detalhados</i> baixa as linhas da fila: solicitações pendentes, reenviadas, devolvidas e em fila de espera, e agendamentos dos últimos 24 meses.</p>
-  <p id="rodape-atualizacao">Versão piloto. O painel confere o Mapa Social a cada 2 horas e se atualiza sozinho assim que ele recarrega com solicitações novas (normalmente uma ou duas vezes por dia).</p>
+  <p>Versão piloto. O painel confere o Mapa Social a cada 2 horas e se atualiza sozinho assim que ele recarrega com solicitações novas (normalmente uma ou duas vezes por dia).</p>
 </details>
 </footer>
 </div>
@@ -429,8 +421,8 @@ const diasSemSaida = f => f.fila > 0 ? (f.ult_ag ? Math.max(0, Math.floor((new D
 // ---------------------------------------------------------------- período dos gráficos (mês ou quadrimestre)
 const MESES_ROT=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
 let PER="m", _per={};
-function periodos(rot){
-  rot=rot||D.meses; const chave=PER+"|"+rot.join(",");
+function periodos(){
+  const rot=D.meses, chave=PER+"|"+rot.join(",");
   if(_per.chave===chave) return _per.P;
   let P;
   if(PER==="m") P=rot.map((r,i)=>({rot:r,titulo:r,idx:[i],parcial:false}));
@@ -483,13 +475,13 @@ function abQuad(f,ab,P,i,c){ const t=ab[c]; return P[i].idx.filter(m=>t.flag[m-a
 function legenda(f){
   // média mensal de cada curva nos meses mostrados (na visão por quadrimestre também é por mês)
   const ix=[...new Set(periodos().flatMap(p=>p.idx))], mm=a=>ix.reduce((t,i)=>t+(a[i]||0),0)/Math.max(1,ix.length);
-  const bs12=f?baseSim(f):null, mEnt=f?mm(f.in):null, mSai=f?mm(f.out):null, mSal=f?mEnt-mSai:null;
+  const bs12=baseSim(f), mEnt=mm(f.in), mSai=mm(f.out), mSal=mEnt-mSai;
   const sw=cor=>`<i style="background:${cor}"></i>`;
   const tra=`<svg width="28" height="12" viewBox="0 0 28 12" aria-hidden="true"><line x1="0" y1="6" x2="28" y2="6" stroke="currentColor" stroke-width="2" stroke-dasharray="5 3"/><circle cx="14" cy="6" r="4" fill="var(--card)" stroke="currentColor" stroke-width="1.6"/></svg>`;
   const fina=`<svg width="28" height="12" viewBox="0 0 28 12" aria-hidden="true"><line x1="0" y1="9" x2="28" y2="3" stroke="currentColor" stroke-width="1.2" opacity=".8"/></svg>`;
   const anel=`<svg width="20" height="14" viewBox="0 0 20 14" aria-hidden="true"><circle cx="10" cy="7" r="3" fill="currentColor"/><circle cx="10" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 2"/></svg>`;
   const M=PER==="m";
-  return `<div class="leg">${f?`<span title="Solicitações por mês, pela data da solicitação; média simples dos 24 meses mostrados. ${JAN.m24}">${sw("var(--in)")}Entrada (média 24 m: <b>${fmt(mEnt,1)}</b> · 12 m: <b>${fmt(bs12.ent,1)}</b>/mês)</span><span title="Agendamentos por mês, pela data do atendimento (inclui cancelados e faltas); média simples dos 24 meses. ${JAN.m24}">${sw("var(--out)")}Saída (média 24 m: <b>${fmt(mSai,1)}</b> · 12 m: <b>${fmt(bs12.sai,1)}</b>/mês)</span><span title="Saldo = entrada − saída; média mensal dos 24 meses (positivo = a fila cresce). ${JAN.m24}">${sw("var(--saldo)")}Saldo (média 24 m: <b>${mSal>0?"+":""}${fmt(mSal,1)}</b> · 12 m: <b>${bs12.ent-bs12.sai>0?"+":""}${fmt(bs12.ent-bs12.sai,1)}</b>/mês)</span>`:`<span>${sw("var(--in)")}Entrada</span><span>${sw("var(--out)")}Saída</span><span>${sw("var(--saldo)")}Saldo</span>`}
+  return `<div class="leg"><span title="Solicitações por mês, pela data da solicitação; média simples dos 24 meses mostrados. ${JAN.m24}">${sw("var(--in)")}Entrada (média 24 m: <b>${fmt(mEnt,1)}</b> · 12 m: <b>${fmt(bs12.ent,1)}</b>/mês)</span><span title="Agendamentos por mês, pela data do atendimento (inclui cancelados e faltas); média simples dos 24 meses. ${JAN.m24}">${sw("var(--out)")}Saída (média 24 m: <b>${fmt(mSai,1)}</b> · 12 m: <b>${fmt(bs12.sai,1)}</b>/mês)</span><span title="Saldo = entrada − saída; média mensal dos 24 meses (positivo = a fila cresce). ${JAN.m24}">${sw("var(--saldo)")}Saldo (média 24 m: <b>${mSal>0?"+":""}${fmt(mSal,1)}</b> · 12 m: <b>${bs12.ent-bs12.sai>0?"+":""}${fmt(bs12.ent-bs12.sai,1)}</b>/mês)</span>
     ${M?`<span title="Reta de mínimos quadrados dos 24 meses, sem os meses aberrantes; o rótulo traz a inclinação (variação média por mês) e o R² (de 0 a 1, quanto da variação a reta explica)">${fina}linha fina inclinada = direção (tendência, com R²)</span><span title="Média dos últimos 12 meses de cada curva: é o valor que o simulador usa para projetar a fila (mantido constante). Não tem R², porque é uma linha sem inclinação."><svg width="28" height="12" viewBox="0 0 28 12" aria-hidden="true"><line x1="0" y1="6" x2="28" y2="6" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2 4"/></svg>pontilhada horizontal = média de 12 meses (usada na projeção)</span><span>${tra}tracejado + círculo vazio = mês aberrante (fora da tendência)</span>`
        :`<span>${tra}tracejado + ponto vazado = quadrimestre incompleto</span><span>${anel}círculo tracejado = quadrimestre com mês aberrante</span>`}
     <button type="button" class="ajuda" aria-expanded="false" title="Como ler este gráfico: média, tendência e mês aberrante" aria-label="Ajuda: Como ler este gráfico: média, tendência e mês aberrante">?</button></div>
@@ -1191,7 +1183,7 @@ function porProcedimento(nivel){
 function filtrarPr(){
   const q=norm($("pr-busca").value.trim()), t=$("pr-tipo").value, o=ordPr(), d=prOrd.k?prOrd.dir:-1;
   const L=porProcedimento($("pr-nivel").value).filter(x=>(!q||norm(x.f.p).includes(q))&&(!t||x.f.tipo===t));
-  const V={n:x=>x.n,aps:x=>x.aps,pctaps:x=>x.total?x.aps/x.total:0,fila:x=>x.f.fila,taxa12:ord12};
+  const V={n:x=>x.n,aps:x=>x.aps,fila:x=>x.f.fila,taxa12:ord12};
   L.sort(o==="nome"?(a,b)=>(prOrd.k?prOrd.dir:1)*a.f.p.localeCompare(b.f.p,"pt"):(a,b)=>d*(V[o](a)-V[o](b))||b.n-a.n);
   return L;
 }
@@ -1264,7 +1256,7 @@ async function mostrarAba(a,v){
   document.querySelectorAll(".abas button").forEach(b=>{ b.setAttribute("aria-selected",b.dataset.aba===a); b.tabIndex=b.dataset.aba===a?0:-1; });
   ["filas","dev","oferta","prio"].forEach(x=>$("aba-"+x).hidden=x!==a);
   if(a==="filas"){ if(/^#aba-/.test(location.hash)) history.replaceState(null,"",location.pathname+location.search); return; }
-  if(a==="oferta"){ history.replaceState(null,"","#aba-oferta"); await PRONTO.catch(()=>{}); if(D) await abrirOferta(); return; }
+  if(a==="oferta"){ history.replaceState(null,"","#aba-oferta"); await PRONTO; if(D) await abrirOferta(); return; }
   if(a==="prio"){ history.replaceState(null,"","#aba-prio"); await PRONTO.catch(()=>{}); renderPrio(); return; }
   if(!DV){ ["un-lista","pr-lista"].forEach(id=>$(id).innerHTML='<p style="padding:12px">Carregando devolvidas…</p>');
     try{ await carregarDV(); }catch(err){ $("un-lista").innerHTML=`<p style="padding:12px">Não foi possível carregar as devolvidas (${esc(err.message)}).</p>`; return; } }
