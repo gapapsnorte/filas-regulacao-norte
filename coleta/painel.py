@@ -300,7 +300,7 @@ def montar(b, hoje, ref=None):
                        "devolvidas": d["devolvidas"], "in": ent, "out": sai, "saldo12": sum(u12),
                        "futuros": d["futuros"], "ult_ag": ult.isoformat() if ult else None,
                        "espera_max": max(esperas) if esperas else None, "alertas": alertas, "espera": espera})
-        detalhes[i] = {"p": p, "tipo": d["tipo"], "meses": rot, "in": d["in"], "out": d["out"], "cores": cores,
+        detalhes[i] = {"p": p, "meses": rot, "in": d["in"], "out": d["out"], "cores": cores,
                        "cid": d["cid"], "devolvidas_unidade": d["dev_un"], "unidades": sorted(d["unidades"])}
     resumo.sort(key=lambda x: -x["fila"])
     meta = {"gerado_em": datetime.now().strftime("%d/%m/%Y %H:%M"), "data": hoje.isoformat(),
@@ -515,15 +515,37 @@ ATRASO_INICIAL = [
 DIAS = ["seg", "ter", "qua", "qui", "sex", "sáb", "dom"]
 
 
+def _ler_registro(arq, chave, tipo):
+    """Lê um histórico versionado em main. Arquivo que não existe = o registro começa agora (devolve None). Arquivo que
+    existe mas não abre, não é JSON ou está fora do formato é erro: seguir como se fosse novo apagaria o histórico."""
+    try:
+        texto = arq.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return None
+    except OSError as e:
+        print("::error::%s: não consegui abrir (%s); nada foi alterado." % (arq.name, e))
+        sys.exit(1)
+    try:
+        obj = json.loads(texto)
+        if not isinstance(obj.get(chave), tipo):
+            raise ValueError("falta a chave %r" % chave)
+    except (ValueError, AttributeError) as e:
+        print("::error::%s está ilegível ou fora do formato (%s); conserte o arquivo em main antes de rodar de novo "
+              "(seguir apagaria o histórico)." % (arq.name, e))
+        sys.exit(1)
+    return obj
+
+
 def historico_atraso(meta, hoje):
     """Acrescenta a medição desta recarga a atraso.json (arquivo versionado em main; o workflow faz o commit).
     Uma medição por dia: recargas repetidas na mesma noite, sem solicitações novas, não entram."""
     arq = PAINEL / "atraso.json"
-    try:
-        hist = json.loads(arq.read_text(encoding="utf-8"))["medicoes"]
-    except (OSError, ValueError, KeyError) as e:
-        print("atraso.json ausente ou ilegível (%s); começando das medições iniciais." % e)
+    obj = _ler_registro(arq, "medicoes", list)
+    if obj is None:
+        print("atraso.json ainda não existe; começando das medições iniciais.")
         hist = list(ATRASO_INICIAL)
+    else:
+        hist = obj["medicoes"]
     dia = meta["gerado_em"][:10]
     if not any(h["medido_em"][:10] == dia and h["solicitacoes_ate"] == meta["solicitacoes_ate"] for h in hist):
         hist.append({"medido_em": meta["gerado_em"], "recarga_painel": meta["recarga_painel"],
@@ -539,11 +561,10 @@ def historico_espera(dados, hoje):
     """Registro diário da fila de espera (espera.json, versionado em main; o workflow faz o commit): total e
     quantidade por fila. Uma entrada por dia (a última coleta do dia prevalece)."""
     arq = PAINEL / "espera.json"
-    try:
-        dias = json.loads(arq.read_text(encoding="utf-8"))["dias"]
-    except (OSError, ValueError, KeyError) as e:
-        print("espera.json ausente ou ilegível (%s); começando o registro hoje." % e)
-        dias = []
+    obj = _ler_registro(arq, "dias", list)
+    if obj is None:
+        print("espera.json ainda não existe; começando o registro hoje.")
+    dias = obj["dias"] if obj else []
     filas = {f["id"]: f["espera"]["n"] for f in dados["filas"] if f.get("espera")}
     hoje_s = hoje.isoformat()
     dias = [d for d in dias if d["data"] != hoje_s]
@@ -594,7 +615,8 @@ def _reg_publicado(reg, hoje_s):
     try:
         with urllib.request.urlopen(PUBLICADO + "devolvidas_reg.json", timeout=60) as r:
             pub = json.loads(r.read().decode("utf-8"))
-        assert isinstance(pub.get("dias"), list)
+        if not isinstance(pub.get("dias"), list):
+            raise ValueError("registro publicado sem a lista de dias")
     except Exception as e:
         print("Registro de devolvidas: não li o registro publicado (%s)." % e)
         return
@@ -622,11 +644,9 @@ def historico_devolvidas(dev_det, det, hoje, anterior=None):
     para medir quantas devoluções cada unidade corrige e em quanto tempo. Procedimentos e unidades ficam em listas
     (p, u) e as linhas usam os índices: entradas [pi, ui, código, data da devolução], saídas [..., destino]."""
     arq = PAINEL / "devolvidas_reg.json"
-    try:
-        reg = json.loads(arq.read_text(encoding="utf-8"))
-        assert isinstance(reg.get("dias"), list)
-    except (OSError, ValueError, AssertionError) as e:
-        print("devolvidas_reg.json ausente ou ilegível (%s); começando o registro hoje." % e)
+    reg = _ler_registro(arq, "dias", list)
+    if reg is None:
+        print("devolvidas_reg.json ainda não existe; começando o registro hoje.")
         # estoque por código único (um código pode ter duas datas de devolução), igual ao "estoque" de cada dia
         reg = {"inicio": hoje.isoformat(), "estoque_inicial": len({r[1] for r in dev_det["r"]}), "p": [], "u": [], "dias": []}
     if anterior is None:
@@ -689,11 +709,9 @@ def historico_fila(det, hoje, anterior=None, publicado=None):
     código deixou de constar no Mapa Social sem agendamento). Comparar códigos evita somar séries mensais, que mudam
     para trás a cada recarga. Quem saiu da fila e voltou entre duas coletas não aparece."""
     arq = PAINEL / "fila_reg.json"
-    try:
-        reg = json.loads(arq.read_text(encoding="utf-8"))
-        assert isinstance(reg.get("meses"), dict)
-    except (OSError, ValueError, AssertionError) as e:
-        print("fila_reg.json ausente ou ilegível (%s); começando o registro." % e)
+    reg = _ler_registro(arq, "meses", dict)
+    if reg is None:
+        print("fila_reg.json ainda não existe; começando o registro.")
         reg = {"inicio": None, "ultima": None, "meses": {}}
     if anterior is None:
         try:   # o commit em main pode ter falhado: o que já foi publicado prevalece se estiver mais adiante
@@ -710,6 +728,10 @@ def historico_fila(det, hoje, anterior=None, publicado=None):
     if publicado and (publicado.get("ultima") or "") > (reg.get("ultima") or ""):
         reg = publicado
     if not anterior.get("r"):
+        return reg
+    base = anterior.get("gerado_em")
+    if base and reg.get("base") == base:   # a mesma publicação já foi comparada (nova tentativa, push que falhou): somar de novo contaria as mesmas saídas duas vezes
+        print("Saldo inexplicado: a publicação de %s já foi comparada; nada a somar." % base)
         return reg
     atual = _fila_atual(det)
     antes = {cod: anterior["ids"][k] for k, cod in anterior["r"]}
@@ -732,6 +754,8 @@ def historico_fila(det, hoje, anterior=None, publicado=None):
                 total[k] += 1
     reg["inicio"] = reg["inicio"] or anterior.get("data")
     reg["ultima"] = hoje.isoformat()
+    if base:
+        reg["base"] = base   # publicação usada nesta comparação (ver a guarda acima)
     print("Saldo inexplicado: saíram %d da fila (%s)" % (sum(total), ", ".join("%s %d" % x for x in zip(DESTINOS_FILA, total))))
     return reg
 
@@ -752,14 +776,14 @@ def acumular_fila(dados, reg):
 
 
 def trava_relativa(dados, anterior=None):
-    """Compara a coleta com a publicação anterior; devolve a lista de quedas suspeitas (vazia = pode publicar)."""
+    """Compara a coleta com a publicação anterior; devolve a lista de quedas suspeitas (vazia = pode publicar).
+    Se a publicação anterior não puder ser lida, também devolve um problema: sem base de comparação a trava fecha."""
     if anterior is None:
         try:
             with urllib.request.urlopen(PUBLICADO + "dados.json", timeout=60) as resp:
                 anterior = json.load(resp)
-        except Exception as e:   # sem publicação legível não há com que comparar; os mínimos fixos continuam valendo
-            print("::warning::Trava da coleta: não li a publicação anterior (%s)." % e)
-            return []
+        except Exception as e:   # sem a publicação anterior não dá para conferir queda brusca: trava (liberar_trava libera, p. ex. na primeira publicação)
+            return ["não consegui ler a publicação anterior para conferir queda brusca (%s)." % e]
     problemas = []
     for rotulo, campo in (("Fila", "fila"), ("Devolvidas", "devolvidas")):
         antes, agora = sum(f[campo] for f in anterior["filas"]), sum(f[campo] for f in dados["filas"])
@@ -828,7 +852,6 @@ def main():
                 fraco = "; só %d %s" % (n_at, "caso" if n_at == 1 else "casos") if n_at < MIN_UNIDADE else ""
                 f["alertas"].insert(pos_a, "%s: mediana de %s dias até o atendimento (meta: %d%s)" % (cor.capitalize(), f"{med:,}".replace(",", "."), lim, fraco))
                 pos_a += 1
-    dados["atend_dias"] = ATEND_DIAS
     if len(dados["filas"]) < MIN_FILAS or not dados["solicitacoes_ate"] or dados["solicitacoes_ate"] == "-":
         print(f"ERRO: coleta incompleta ({len(dados['filas'])} filas, solicitações até {dados['solicitacoes_ate']!r}); nada foi gravado.")
         sys.exit(1)
@@ -841,7 +864,7 @@ def main():
     if problemas and "--liberar-trava" not in sys.argv:
         for x in problemas:
             print("::error::Trava da coleta: " + x)
-        print("ERRO: queda brusca em relação à publicação anterior; nada foi gravado. Se a queda for real, rode o workflow com liberar_trava.")
+        print("ERRO: trava da coleta (queda brusca ou publicação anterior ilegível); nada foi gravado. Se a queda for real, ou se for a primeira publicação, rode o workflow com liberar_trava.")
         sys.exit(CODIGO_TRAVA)
     for x in problemas:
         print("::warning::Trava liberada manualmente: " + x)
