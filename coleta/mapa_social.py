@@ -111,7 +111,7 @@ def unidades_norte():
 
 def filtro_unidades(nomes):
     """Trecho de set analysis que filtra pelo código CNES da unidade solicitante."""
-    return "[%s]={%s}" % (COD_U, ",".join("'%s'" % c for c in sorted(nomes)))
+    return "[%s]={%s}" % (COD_U, ",".join("'%s'" % _aspas(c) for c in sorted(nomes)))
 
 
 def nomear(bloco, nomes):
