@@ -27,14 +27,19 @@
   const atrasoTxt = d => { const u = (d.atraso_ultimos || []).filter(x => x != null), mn = Math.min(...u), mx = Math.max(...u);
     return u.length > 1 && mn !== mx ? `${atrasoUnico(d)} hoje (${mn} a ${mx} ${mx === 1 ? "dia" : "dias"} nas últimas ${u.length} medições)` : atrasoUnico(d); };
 
+  // Carrega cada biblioteca uma única vez (a mesma Promise serve a cliques seguidos). Falha não fica guardada: o clique seguinte tenta de novo.
   function lib(url) {
+    if (url === LIBS.excel[0] && window.XLSX) return Promise.resolve();   // a página já pode ter carregado o SheetJS
     if (!carregadas[url]) carregadas[url] = new Promise((ok, erro) => {
       const s = document.createElement("script");
-      s.src = url; s.onload = ok; s.onerror = () => erro(new Error("Falha ao carregar " + url));
+      s.src = url; s.crossOrigin = "anonymous"; s.onload = ok;
+      s.onerror = () => { delete carregadas[url]; erro(new Error("Falha ao carregar " + url)); };
       document.head.appendChild(s);
     });
     return carregadas[url];
   }
+  // nome de arquivo sem os caracteres que o sistema recusa (o nome vem de "Nome nos títulos" ou do procedimento)
+  const nomeArq = s => s.replace(/[\\/:*?"<>|]/g, "-");
 
   function nomeCurto(p) {
     const t = p.trim().replace(/^(CONSULTA|EXAME|PROCEDIMENTO) EM /i, "").replace(/\s*-\s*/g, " - ");
@@ -54,7 +59,7 @@
   // no gráfico). Sequências de mais de 3 meses seguidos contam como mudança de patamar e não são marcadas.
   // Filas pequenas (< 12 meses com movimento ou < 120 solicitações na janela) não são avaliadas.
   // A reta final e o R² são de mínimos quadrados (como no Excel) calculados SEM os aberrantes.
-  // Manter em sincronia com analise.py (aberrantes / analisar_aberrantes).
+  // Mesma regra do programa local (analise.py, aberrantes / analisar_aberrantes): alterar nos dois lugares.
   const ABERR = {k: 4, janela: 24, minMeses: 12, minTotal: 120, maxSeq: 3};
   // Theil-Sen sobre os meses não marcados: inclinação = mediana das inclinações entre pares; intercepto = mediana de y − a·x
   function tsAjuste(y, flag) {
@@ -129,7 +134,7 @@
   // ------------------------------------------------------------------------------ cálculos
   function calcular(d, nomeEscolhido) {
     const notaRef = REF.notas[d.p] || {};
-    const r = {p: d.p, nome: nomeEscolhido || notaRef.nome || nomeCurto(d.p), avisos: [], notas: {}};
+    const r = {p: d.p, nome: nomeEscolhido || notaRef.nome || nomeCurto(d.p), avisos: [...(d.avisosExtra || [])], notas: {}};
     r.extracao = new Date(d.data + "T12:00:00");
     r.solicAte = d.solicitacoes_ate;
     r.atraso = atrasoTxt(d);
@@ -547,13 +552,12 @@
   }
 
   // ------------------------------------------------------------------------------ PDF
-  // chrome = cabeçalho e rodapé institucionais em todas as páginas (false gera o documento sem eles)
-  async function gerarPdf(r, chrome = true) {
+  async function gerarPdf(r) {
     for (const u of LIBS.pdf) await lib(u);
     const {jsPDF} = window.jspdf, N = notas(r);
     const doc = new jsPDF({orientation: "landscape", unit: "mm", format: "a4"});
-    let y = chrome ? 22 : 18, W = 297, M = 20;
-    const LIM = () => (W > 250 ? 200 : 285) - (chrome ? 6 : 0);
+    let y = 22, W = 297, M = 20;
+    const LIM = () => (W > 250 ? 200 : 285) - 6;
     const texto = (t, tam = 12, opt = {}) => {
       doc.setFont("times", opt.negrito ? "bold" : "normal"); doc.setFontSize(tam);
       let ls = doc.splitTextToSize(t, W - 2 * M);
@@ -565,7 +569,7 @@
       });
       y += opt.depois ?? 1;
     };
-    const novaPag = () => { doc.addPage("a4", "portrait"); W = 210; M = 25; y = chrome ? 25 : 22; };
+    const novaPag = () => { doc.addPage("a4", "portrait"); W = 210; M = 25; y = 25; };
     const imagem = (url, larg, alt) => { if (y + alt > LIM()) novaPag(); doc.addImage(url, "PNG", (W - larg) / 2, y, larg, alt, undefined, "FAST"); y += alt + 3; };   // sem "FAST" o PNG vai descomprimido (PDF de ~18 MB)
     const rodape = ls => { ls.forEach((l, i) => texto(l, 9, {depois: i === ls.length - 1 ? 5 : 0})); };
     const garantir = h => { if (y + h > LIM()) novaPag(); };  // mantém título junto da figura/tabela
@@ -631,23 +635,22 @@
     });
     y = doc.lastAutoTable.finalY + 4;
     rodape(N.nt1); rascunho(r.textos.fig4);
-    if (chrome) {
-      const np = doc.getNumberOfPages(), ext = r.extracao.toLocaleDateString("pt-BR");
-      for (let i = 1; i <= np; i++) {
-        doc.setPage(i); const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight(), mm = pw > 250 ? 20 : 25;
-        doc.setFont("times", "normal"); doc.setFontSize(9); doc.setTextColor(60);
-        doc.text(CAB_ESQ, mm, 10);
-        doc.text(CAB_DIR, pw - mm, 10, {align: "right"});
-        doc.setDrawColor(120); doc.setLineWidth(0.3); doc.line(mm, 12.5, pw - mm, 12.5);
-        doc.line(mm, ph - 11, pw - mm, ph - 11);
-        doc.setFontSize(8.5);
-        doc.text(`${N.titulo}  ·  dados extraídos em ${ext}  ·  versão piloto`, mm, ph - 7);
-        doc.text(`Página ${i} de {total}`, pw - mm, ph - 7, {align: "right"});
-      }
-      doc.setTextColor(0);
-      if (typeof doc.putTotalPages === "function") doc.putTotalPages("{total}");
+    // cabeçalho e rodapé institucionais em todas as páginas
+    const np = doc.getNumberOfPages(), ext = r.extracao.toLocaleDateString("pt-BR");
+    for (let i = 1; i <= np; i++) {
+      doc.setPage(i); const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight(), mm = pw > 250 ? 20 : 25;
+      doc.setFont("times", "normal"); doc.setFontSize(9); doc.setTextColor(60);
+      doc.text(CAB_ESQ, mm, 10);
+      doc.text(CAB_DIR, pw - mm, 10, {align: "right"});
+      doc.setDrawColor(120); doc.setLineWidth(0.3); doc.line(mm, 12.5, pw - mm, 12.5);
+      doc.line(mm, ph - 11, pw - mm, ph - 11);
+      doc.setFontSize(8.5);
+      doc.text(`${N.titulo}  ·  dados extraídos em ${ext}  ·  versão piloto`, mm, ph - 7);
+      doc.text(`Página ${i} de {total}`, pw - mm, ph - 7, {align: "right"});
     }
-    doc.save(N.titulo + ".pdf");
+    doc.setTextColor(0);
+    if (typeof doc.putTotalPages === "function") doc.putTotalPages("{total}");
+    doc.save(nomeArq(N.titulo + ".pdf"));
   }
 
   // ------------------------------------------------------------------------------ Word
@@ -705,7 +708,7 @@
           par(N.f4, {depois: 4}), img(graficoNiveis(r), 540, 388), ...rodape(N.n4),
           par(N.t1, {antes: 6, depois: 6}), tUbs, ...rodape(N.nt1), rascunho(r.textos.fig4)]},
     ]});
-    baixar(await D.Packer.toBlob(doc), N.titulo + ".docx");
+    baixar(await D.Packer.toBlob(doc), nomeArq(N.titulo + ".docx"));
   }
 
   // ------------------------------------------------------------------------------ Excel
@@ -737,7 +740,7 @@
       ["TOTAL", r.totAps, 100, r.esfTotal, Math.round(r.totAps / r.esfTotal * 100) / 100, r.t12Aps || "", r.d12Aps || "", r.t12Aps ? Math.round(r.d12Aps / r.t12Aps * 1000) / 10 : ""]], [26, 22, 18, 18, 20, 18, 16, 18]);
     aba("Notas", [[N.titulo], [""], ...[N.n1, N.n2, N.n3, N.ntc, N.n4, N.nt1].flat().map(t => [t])], [160]);
     aba("Avisos", [["Avisos para revisão"], ...(r.avisos.length ? r.avisos : ["Nenhum"]).map(a => [a])], [140]);
-    X.writeFile(wb, `Bases e tabelas - ${r.nome} (${r.extracao.toLocaleDateString("pt-BR").replace(/\//g, "-")}).xlsx`);
+    X.writeFile(wb, nomeArq(`Bases e tabelas - ${r.nome} (${r.extracao.toLocaleDateString("pt-BR").replace(/\//g, "-")}).xlsx`));
   }
 
   function baixar(blob, nome) {
@@ -747,11 +750,14 @@
 
   // analises/<id>.json não traz a média/mediana de espera por prioridade (cor_stats): vem do dados.json
   async function carregarAnalise(id, cache) {
-    const d = await (await fetch(`analises/${id}.json`, cache ? {cache} : undefined)).json();
-    try { const dj = await (await fetch("dados.json", cache ? {cache} : undefined)).json(); const fj = dj.filas.find(x => x.id === id) || {}; d.cor_stats = fj.cor_stats || null; d.ag12 = fj.ag12 || null; d.agm = fj.agm || null; d.agm_meses = dj.meses || null; } catch { d.cor_stats = null; d.ag12 = null; d.agm = null; d.agm_meses = null; }
+    const ra = await fetch(`analises/${id}.json`, cache ? {cache} : undefined);
+    if (!ra.ok) throw new Error(`analises/${id}.json: erro ${ra.status}`);
+    const d = await ra.json();
+    d.avisosExtra = [];   // falhas de leitura de arquivos complementares: entram nos avisos do documento
+    try { const rd = await fetch("dados.json", cache ? {cache} : undefined); if (!rd.ok) throw new Error(rd.status); const dj = await rd.json(); const fj = dj.filas.find(x => x.id === id) || {}; d.cor_stats = fj.cor_stats || null; d.ag12 = fj.ag12 || null; d.agm = fj.agm || null; d.agm_meses = dj.meses || null; } catch { d.cor_stats = null; d.ag12 = null; d.agm = null; d.agm_meses = null; d.avisosExtra.push("Não foi possível ler o dados.json: médias e medianas de espera por cor e a análise dos agendamentos ficaram de fora."); }
     // % de devolvidas nos últimos 12 meses por unidade (Tabela 1): devolvidas.json, d12[id] = [[índice da unidade, devolvidas, solicitações], ...]
-    try { const dv = await (await fetch("devolvidas.json", cache ? {cache} : undefined)).json(); const u = {};
-      (dv.d12 && dv.d12[id] || []).forEach(([ui, dd_, tt]) => { u[dv.unidades[ui][0]] = [dd_, tt]; }); d.dev12 = {janela: dv.janela12 || null, u}; } catch { d.dev12 = null; }
+    try { const rv = await fetch("devolvidas.json", cache ? {cache} : undefined); if (!rv.ok) throw new Error(rv.status); const dv = await rv.json(); const u = {};
+      (dv.d12 && dv.d12[id] || []).forEach(([ui, dd_, tt]) => { u[dv.unidades[ui][0]] = [dd_, tt]; }); d.dev12 = {janela: dv.janela12 || null, u}; } catch { d.dev12 = null; d.avisosExtra.push("Não foi possível ler o devolvidas.json: a % de devolvidas dos últimos 12 meses ficou de fora."); }
     return d;
   }
   window.gerarAnalise = async function (id, formato, nome) {
@@ -801,7 +807,7 @@
     X.utils.book_append_sheet(wb, folha(X, leiaMe(d, [["Procedimento", p],
       ["Aba Solicitações", "Pendentes e reenviadas ao regulador (fila), devolvidas e em fila de espera (status PENDENTE / FILA DE ESPERA), uma linha por solicitação."],
       ["Aba Agendamentos", `Agendamentos com data a partir de ${dd(d.agendamentos_desde)}, inclusive os marcados à frente, com cancelados e faltas (mesma regra do OUTPUT).`]]), [30, 110]), "Leia-me");
-    X.writeFile(wb, `Dados detalhados - ${nome} (${dd(d.data).replace(/\//g, "-")}).xlsx`);
+    X.writeFile(wb, nomeArq(`Dados detalhados - ${nome} (${dd(d.data).replace(/\//g, "-")}).xlsx`));
     return {s: S.length, a: A.length};
   };
   let DEV_DET = null;
@@ -825,7 +831,7 @@
     X.utils.book_append_sheet(wb, folha(X, leiaMe(DEV_DET, [["Conteúdo", "Solicitações devolvidas pelo regulador (status DEVOLVIDA / REGULADOR), uma linha por solicitação, sem recorte de ano."],
       ["Filtro", [filtro.unidades && filtro.unidades.length <= 5 ? "Unidade(s): " + filtro.unidades.join("; ") : filtro.unidades ? `${filtro.unidades.length} unidades` : "",
         filtro.procs ? "Procedimento: " + filtro.procs.join("; ") : "", filtro.tipo ? "Tipo: " + filtro.tipo : "", filtro.nivel ? "Nível: " + filtro.nivel : ""].filter(Boolean).join(" · ") || "nenhum"]]), [30, 110]), "Leia-me");
-    X.writeFile(wb, `${filtro.titulo} (${dd(DEV_DET.data).replace(/\//g, "-")}).xlsx`.replace(/[\\/:*?"<>|]/g, "-"));
+    X.writeFile(wb, nomeArq(`${filtro.titulo} (${dd(DEV_DET.data).replace(/\//g, "-")}).xlsx`));
     return L.length;
   };
 
